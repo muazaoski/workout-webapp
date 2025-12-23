@@ -1,173 +1,129 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Mail, Lock, User, Loader2, Dumbbell } from 'lucide-react';
 import { useAuthStore } from '../stores/authStore';
+import Button from './ui/Button';
+import Input from './ui/Input';
+import { Mail, Lock, User, Dumbbell, Zap } from 'lucide-react';
 
 interface AuthModalProps {
     isOpen: boolean;
-    onClose?: () => void;
-    showCloseButton?: boolean;
 }
 
-type AuthMode = 'login' | 'register';
-
-const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, showCloseButton = false }) => {
-    const [mode, setMode] = useState<AuthMode>('login');
+const AuthModal: React.FC<AuthModalProps> = ({ isOpen }) => {
+    const [isLogin, setIsLogin] = useState(true);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [name, setName] = useState('');
-    const { login, register, isLoading, error, clearError } = useAuthStore();
+    const { login, register, isLoading, error } = useAuthStore();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        clearError();
-
-        if (mode === 'login') {
+        if (isLogin) {
             await login(email, password);
         } else {
-            if (!name.trim()) {
-                return;
-            }
-            await register(email, password, name);
+            await register(name, email, password);
         }
-    };
-
-    const switchMode = () => {
-        setMode(mode === 'login' ? 'register' : 'login');
-        clearError();
     };
 
     if (!isOpen) return null;
 
     return (
-        <AnimatePresence>
-            <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
-            >
-                <motion.div
-                    initial={{ scale: 0.95, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    exit={{ scale: 0.95, opacity: 0 }}
-                    className="relative w-full max-w-md overflow-hidden bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl shadow-2xl border border-gray-700/50"
-                >
-                    {/* Close button */}
-                    {showCloseButton && onClose && (
-                        <button
-                            onClick={onClose}
-                            className="absolute top-4 right-4 p-2 text-gray-400 hover:text-white transition-colors rounded-lg hover:bg-white/10"
+        <motion.div
+            initial={{ opacity: 0, scale: 0.9, rotate: -1 }}
+            animate={{ opacity: 1, scale: 1, rotate: 0 }}
+            className="w-full max-w-md punk-card border-4 border-punk-white bg-punk-dark shadow-yellow relative"
+        >
+            {/* DECORATIVE ELEMENTS */}
+            <div className="absolute -top-6 -left-6 bg-punk-yellow text-punk-black p-2 -rotate-12 font-black italic text-xs border-2 border-punk-black z-10">
+                PROTOCOL_V2.0
+            </div>
+            <div className="absolute top-0 right-0 w-24 h-24 bg-punk-yellow/5 -rotate-45 translate-x-12 -translate-y-12" />
+
+            <div className="text-center mb-10 mt-4">
+                <div className="inline-block bg-punk-yellow p-3 mb-4 -skew-x-12 border-2 border-punk-black shadow-white">
+                    <Dumbbell className="text-punk-black w-10 h-10" />
+                </div>
+                <h2 className="text-4xl font-black italic tracking-tighter uppercase leading-none">
+                    SYSTEM_<span className="text-punk-yellow">{isLogin ? 'ACCESS' : 'ENROLL'}</span>
+                </h2>
+                <p className="text-[10px] font-mono text-punk-white/40 mt-2 tracking-[4px]">IDENTITY_VERIFICATION_REQUIRED</p>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-6 relative z-10">
+                <AnimatePresence mode="wait">
+                    {!isLogin && (
+                        <motion.div
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0, x: 20 }}
                         >
-                            <X size={20} />
-                        </button>
+                            <Input
+                                label="OPERATOR_NAME"
+                                type="text"
+                                placeholder="JACK_REACHER"
+                                value={name}
+                                onChange={(e) => setName(e.target.value)}
+                                icon={<User size={18} />}
+                                required
+                            />
+                        </motion.div>
                     )}
+                </AnimatePresence>
 
-                    {/* Header */}
-                    <div className="p-6 pb-0 text-center">
-                        <div className="mx-auto mb-4 w-16 h-16 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-                            <Dumbbell className="w-8 h-8 text-white" />
-                        </div>
-                        <h2 className="text-2xl font-bold text-white mb-1">
-                            {mode === 'login' ? 'Welcome Back!' : 'Create Account'}
-                        </h2>
-                        <p className="text-gray-400 text-sm">
-                            {mode === 'login'
-                                ? 'Sign in to track your workouts'
-                                : 'Start your fitness journey today'}
-                        </p>
+                <Input
+                    label="ACCESS_EMAIL"
+                    type="email"
+                    placeholder="OPERATOR@IRONGRIT.IO"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    icon={<Mail size={18} />}
+                    required
+                />
+
+                <Input
+                    label="ENCRYPTION_KEY"
+                    type="password"
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    icon={<Lock size={18} />}
+                    required
+                />
+
+                {error && (
+                    <div className="bg-red-500/10 border-l-4 border-red-500 p-3 flex items-start gap-3">
+                        <div className="bg-red-500 text-white p-1 text-[10px] font-black italic">ERROR</div>
+                        <p className="text-[10px] font-mono text-red-500 font-bold uppercase">{error}</p>
                     </div>
+                )}
 
-                    {/* Form */}
-                    <form onSubmit={handleSubmit} className="p-6 space-y-4">
-                        {mode === 'register' && (
-                            <div className="relative">
-                                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                                <input
-                                    type="text"
-                                    placeholder="Your name"
-                                    value={name}
-                                    onChange={(e) => setName(e.target.value)}
-                                    required
-                                    className="w-full pl-11 pr-4 py-3 bg-gray-800/50 border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all"
-                                />
-                            </div>
-                        )}
+                <Button
+                    fullWidth
+                    variant="yellow"
+                    size="lg"
+                    type="submit"
+                    loading={isLoading}
+                    icon={<Zap size={20} />}
+                >
+                    {isLogin ? 'AUTHENTICATE' : 'INITIALIZE_ACCOUNT'}
+                </Button>
+            </form>
 
-                        <div className="relative">
-                            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                            <input
-                                type="email"
-                                placeholder="Email address"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                required
-                                className="w-full pl-11 pr-4 py-3 bg-gray-800/50 border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all"
-                            />
-                        </div>
+            <div className="mt-8 text-center border-t-2 border-punk-white/5 pt-6">
+                <button
+                    onClick={() => setIsLogin(!isLogin)}
+                    className="text-[10px] font-black uppercase tracking-widest text-punk-white/40 hover:text-punk-yellow transition-colors italic underline underline-offset-4 decoration-2"
+                >
+                    {isLogin ? 'NO_IDENTITY?_CREATE_NEW_PROFILE' : 'ALREADY_ENROLLED?_BACK_TO_LOGIN'}
+                </button>
+            </div>
 
-                        <div className="relative">
-                            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                            <input
-                                type="password"
-                                placeholder="Password"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                required
-                                minLength={6}
-                                className="w-full pl-11 pr-4 py-3 bg-gray-800/50 border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all"
-                            />
-                        </div>
-
-                        {/* Error message */}
-                        <AnimatePresence>
-                            {error && (
-                                <motion.div
-                                    initial={{ opacity: 0, y: -10 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    exit={{ opacity: 0, y: -10 }}
-                                    className="p-3 bg-red-500/20 border border-red-500/30 rounded-lg text-red-400 text-sm text-center"
-                                >
-                                    {error}
-                                </motion.div>
-                            )}
-                        </AnimatePresence>
-
-                        {/* Submit button */}
-                        <button
-                            type="submit"
-                            disabled={isLoading}
-                            className="w-full py-3.5 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold rounded-xl shadow-lg shadow-blue-500/25 transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
-                        >
-                            {isLoading ? (
-                                <>
-                                    <Loader2 className="w-5 h-5 animate-spin" />
-                                    <span>{mode === 'login' ? 'Signing in...' : 'Creating account...'}</span>
-                                </>
-                            ) : (
-                                <span>{mode === 'login' ? 'Sign In' : 'Create Account'}</span>
-                            )}
-                        </button>
-
-                        {/* Switch mode */}
-                        <div className="text-center">
-                            <button
-                                type="button"
-                                onClick={switchMode}
-                                className="text-gray-400 hover:text-white text-sm transition-colors"
-                            >
-                                {mode === 'login'
-                                    ? "Don't have an account? Sign up"
-                                    : 'Already have an account? Sign in'}
-                            </button>
-                        </div>
-                    </form>
-
-                    {/* Footer decoration */}
-                    <div className="h-1 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500" />
-                </motion.div>
-            </motion.div>
-        </AnimatePresence>
+            <div className="mt-6 flex justify-between items-center opacity-10">
+                <div className="h-[1px] flex-grow bg-punk-white" />
+                <span className="text-[8px] font-black mx-2">SECURE_CHANNEL_ESTABLISHED</span>
+                <div className="h-[1px] flex-grow bg-punk-white" />
+            </div>
+        </motion.div>
     );
 };
 

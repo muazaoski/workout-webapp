@@ -1,73 +1,56 @@
 import React from 'react';
-import { motion } from 'framer-motion';
 
 interface ProgressRingProps {
-  progress: number; // 0 to 100
+  progress: number;
   size?: number;
   strokeWidth?: number;
-  backgroundColor?: string;
-  progressColor?: string;
-  showPercentage?: boolean;
-  className?: string;
+  color?: string;
   children?: React.ReactNode;
 }
 
 const ProgressRing: React.FC<ProgressRingProps> = ({
   progress,
-  size = 120,
+  size = 100,
   strokeWidth = 8,
-  backgroundColor = '#2a2a2a',
-  progressColor = '#ffffff',
-  showPercentage = true,
-  className = '',
+  color = '#FFFF00',
   children,
 }) => {
-  const normalizedRadius = (size - strokeWidth) / 2;
-  const circumference = normalizedRadius * 2 * Math.PI;
-  const strokeDashoffset = circumference - (progress / 100) * circumference;
+  const radius = (size - strokeWidth) / 2;
+  const circumference = radius * 2 * Math.PI;
+  const offset = circumference - (progress / 100) * circumference;
 
   return (
-    <div className={`relative inline-flex items-center justify-center ${className}`}>
+    <div className="relative inline-flex items-center justify-center">
       <svg
-        height={size}
         width={size}
+        height={size}
         className="transform -rotate-90"
       >
-  
-        {/* Background circle */}
+        {/* Background circuit/industrial track */}
         <circle
-          stroke={backgroundColor}
-          fill="transparent"
-          strokeWidth={strokeWidth}
-          r={normalizedRadius}
           cx={size / 2}
           cy={size / 2}
+          r={radius}
+          stroke="rgba(255, 255, 255, 0.05)"
+          strokeWidth={strokeWidth}
+          fill="transparent"
         />
-
-        {/* Progress circle */}
-        <motion.circle
-          stroke={progressColor}
-          fill="transparent"
-          strokeWidth={strokeWidth}
-          strokeDasharray={circumference + ' ' + circumference}
-          strokeDashoffset={strokeDashoffset}
-          r={normalizedRadius}
+        {/* Progress track */}
+        <circle
           cx={size / 2}
           cy={size / 2}
-          strokeLinecap="round"
-          initial={{ strokeDashoffset: circumference }}
-          animate={{ strokeDashoffset }}
-          transition={{ duration: 0.5, ease: "easeInOut" }}
+          r={radius}
+          stroke={color}
+          strokeWidth={strokeWidth}
+          strokeDasharray={circumference}
+          strokeDashoffset={offset}
+          strokeLinecap="square" // Punk style uses square caps
+          fill="transparent"
+          className="transition-all duration-500 ease-out"
         />
       </svg>
-
-      {/* Center content */}
-      <div className="absolute inset-0 flex flex-col items-center justify-center">
-        {children || (showPercentage && (
-          <span className="text-2xl font-bold text-white">
-            {Math.round(progress)}%
-          </span>
-        ))}
+      <div className="absolute inset-0 flex items-center justify-center">
+        {children}
       </div>
     </div>
   );

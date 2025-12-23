@@ -1,12 +1,11 @@
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useWorkoutStore } from '../stores/workoutStore';
 import Timer from './Timer';
 import Button from './ui/Button';
-import Card, { CardHeader, CardTitle, CardContent, CardFooter } from './ui/Card';
 import Input from './ui/Input';
 import ProgressRing from './ui/ProgressRing';
-import { Plus, X, ChevronLeft, ChevronRight, Check, Square } from 'lucide-react';
+import { Plus, X, ChevronLeft, ChevronRight, Check, Square, Zap, Activity } from 'lucide-react';
 
 const ActiveWorkout: React.FC = () => {
   const {
@@ -36,12 +35,10 @@ const ActiveWorkout: React.FC = () => {
         completed: true,
       });
 
-      // Move to next set or exercise
       if (activeSetIndex < currentExercise.sets.length - 1) {
         setSetReps('');
         setSetWeight('');
       } else {
-        // Move to next exercise
         if (activeExerciseIndex < currentWorkout.exercises.length - 1) {
           nextExercise();
           setSetReps('');
@@ -51,207 +48,138 @@ const ActiveWorkout: React.FC = () => {
     }
   };
 
-  const handleAddSet = () => {
-    if (currentExercise) {
-      updateSet(activeExerciseIndex, currentExercise.sets.length, {
-        reps: 0,
-        weight: 0,
-        completed: false,
-      });
-    }
-  };
-
   const completedSets = currentExercise?.sets.filter(set => set.completed).length || 0;
   const totalSets = currentExercise?.sets.length || 0;
   const progress = totalSets > 0 ? (completedSets / totalSets) * 100 : 0;
 
   return (
-    <div className="space-y-4">
-      {/* Current Exercise */}
-      <div className="text-center py-6">
-        <div className="text-5xl mb-3">
-          {currentExercise?.exercise.icon || '🏋️'}
+    <div className="space-y-8 animate-in fade-in zoom-in-95 duration-500">
+      {/* STATUS HEADER */}
+      <div className="flex justify-between items-center border-b-4 border-punk-white pb-4">
+        <div className="flex items-center gap-3">
+          <div className="bg-punk-yellow p-2 rotate-12">
+            <Zap size={24} className="text-punk-black" />
+          </div>
+          <h2 className="text-3xl font-black italic uppercase tracking-tighter">IN_TRAINING</h2>
         </div>
-        <h2 className="text-2xl font-semibold text-white mb-1">
-          {currentExercise?.exercise.name || 'No exercise selected'}
-        </h2>
-        <p className="text-gray-400 text-sm">
-          {currentExercise?.exercise.muscleGroups.join(', ') || ''}
+        <Button variant="danger" size="sm" onClick={() => { }} className="bg-red-600">
+          ABORT_SECX
+        </Button>
+      </div>
+
+      {/* CORE DISPLAY */}
+      <div className="punk-card bg-punk-yellow !text-punk-black border-punk-black shadow-white py-10 flex flex-col items-center justify-center text-center">
+        <span className="text-8xl mb-2">{currentExercise?.exercise.icon || '🏋️'}</span>
+        <h3 className="text-4xl font-black italic tracking-widest uppercase mb-2 leading-none">
+          {currentExercise?.exercise.name || 'NO_EXR_SELECTED'}
+        </h3>
+        <p className="text-xs font-black uppercase opacity-60 tracking-[4px]">
+          {currentExercise?.exercise.muscleGroups.join(' + ') || ''}
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* Exercise Progress */}
-        <div className="text-center">
-          <div className="text-sm text-gray-400 mb-2">Progress</div>
-          <ProgressRing progress={progress} size={80}>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* PROGRESS BLOCK */}
+        <div className="punk-card flex flex-col items-center justify-center bg-punk-dark hover:border-punk-yellow transition-colors group">
+          <div className="text-[10px] font-mono text-punk-yellow mb-4 tracking-widest uppercase">VOLUME_COMPLETION</div>
+          <ProgressRing progress={progress} size={120} strokeWidth={12} color="#FFFF00">
             <div className="text-center">
-              <div className="text-lg font-semibold text-white">
-                {completedSets}/{totalSets}
+              <div className="text-3xl font-black italic group-hover:scale-110 transition-transform">
+                {completedSets}<span className="text-sm opacity-40">/</span>{totalSets}
               </div>
+              <div className="text-[8px] opacity-40 font-black">SETS</div>
             </div>
           </ProgressRing>
-          <div className="flex justify-center space-x-1 mt-3">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={previousExercise}
-              disabled={activeExerciseIndex === 0}
-            >
-              <ChevronLeft size={14} />
+          <div className="flex gap-4 mt-6">
+            <Button variant="ghost" size="sm" onClick={previousExercise} disabled={activeExerciseIndex === 0} className="border-punk-white/10">
+              <ChevronLeft size={20} />
             </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={nextExercise}
-              disabled={activeExerciseIndex === currentWorkout.exercises.length - 1}
-            >
-              <ChevronRight size={14} />
+            <Button variant="ghost" size="sm" onClick={nextExercise} disabled={activeExerciseIndex === currentWorkout.exercises.length - 1} className="border-punk-white/10">
+              <ChevronRight size={20} />
             </Button>
           </div>
         </div>
 
-        {/* Timer */}
-        <div className="text-center">
-          <div className="text-sm text-gray-400 mb-2">Timer</div>
-          <div className="scale-75 origin-center">
-            <Timer />
-          </div>
+        {/* TIMER BLOCK */}
+        <div className="punk-card flex flex-col items-center justify-center bg-punk-dark border-dashed border-punk-white/20">
+          <div className="text-[10px] font-mono text-punk-yellow mb-2 tracking-widest uppercase">REST_CHRONO</div>
+          <Timer />
         </div>
 
-        {/* Quick Stats */}
-        <div className="text-center">
-          <div className="text-sm text-gray-400 mb-2">Workout</div>
-          <div className="space-y-1">
-            <div className="text-lg font-semibold text-white">
-              {currentWorkout.exercises.length}
+        {/* DATA BLOCK */}
+        <div className="punk-card flex flex-col items-center justify-center bg-punk-dark border-punk-yellow/30">
+          <div className="text-[10px] font-mono text-punk-yellow mb-4 tracking-widest uppercase">TOTAL_IMPACT</div>
+          <div className="text-center space-y-4 w-full">
+            <div className="border-b-2 border-punk-white/5 pb-2">
+              <div className="text-3xl font-black italic">{currentWorkout.exercises.length}</div>
+              <div className="text-[8px] opacity-40 uppercase font-black">EXERCISES_TOTAL</div>
             </div>
-            <div className="text-xs text-gray-400">Exercises</div>
+            <div>
+              <Activity size={32} className="mx-auto text-punk-yellow/20 animate-pulse" />
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Current Set */}
-      {currentExercise && (
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-medium text-white">Set {activeSetIndex + 1}</h3>
-            <div className="flex items-center space-x-1">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleAddSet}
-              >
-                <Plus size={14} />
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => removeExerciseFromWorkout(currentExercise.exercise.id)}
-              >
-                <X size={14} />
-              </Button>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <Input
-              type="number"
-              placeholder="Reps"
-              value={setReps}
-              onChange={(e) => setSetReps(e.target.value)}
-              min="0"
-            />
-            <Input
-              type="number"
-              placeholder="Weight"
-              value={setWeight}
-              onChange={(e) => setSetWeight(e.target.value)}
-              min="0"
-              step="0.5"
-            />
-          </div>
-
-          <Button
-            className="w-full"
-            onClick={handleCompleteSet}
-            disabled={!setReps || currentSet?.completed}
+      {/* INPUT PANEL: RAW MECHANICAL */}
+      <AnimatePresence mode="wait">
+        {currentExercise && (
+          <motion.div
+            key={activeSetIndex}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="space-y-6"
           >
-            {currentSet?.completed ? (
-              <>
-                <Check size={16} />
-                Completed
-              </>
-            ) : (
-              <>
-                <Square size={16} />
-                Complete Set
-              </>
-            )}
-          </Button>
-        </div>
-      )}
-
-      {/* Sets History */}
-      {currentExercise && currentExercise.sets.length > 1 && (
-        <div>
-          <h3 className="text-sm font-medium text-gray-400 mb-2">Previous Sets</h3>
-          <div className="space-y-1">
-            {currentExercise.sets.map((set, index) => (
-              <div
-                key={index}
-                className={`flex items-center justify-between p-2 rounded border text-sm ${index === activeSetIndex
-                    ? 'border-white bg-white/10'
-                    : 'border-gray-700'
-                  }`}
-              >
-                <div className="flex items-center space-x-2">
-                  <span className="text-white">Set {index + 1}</span>
-                  {set.completed && (
-                    <Check size={12} className="text-green-400" />
-                  )}
-                </div>
-                <div className="flex items-center space-x-3 text-gray-400">
-                  <span>{set.reps} reps</span>
-                  {(set.weight ?? 0) > 0 && (
-                    <span>{set.weight} lbs</span>
-                  )}
-                </div>
+            <div className="flex items-center gap-4">
+              <div className="bg-punk-white text-punk-black px-4 py-1 text-2xl font-black italic skew-x-[-12deg]">
+                SET_{activeSetIndex + 1}
               </div>
-            ))}
-          </div>
-        </div>
-      )}
+              <div className="h-1 flex-grow bg-punk-white/10" />
+            </div>
 
-      {/* Exercise Navigation */}
-      {currentWorkout.exercises.length > 1 && (
-        <div>
-          <h3 className="text-sm font-medium text-gray-400 mb-2">Exercises</h3>
-          <div className="space-y-1">
-            {currentWorkout.exercises.map((we, index) => {
-              const completedSets = we.sets.filter(set => set.completed).length;
-              const totalSets = we.sets.length;
-              return (
-                <div
-                  key={we.exercise.id}
-                  className={`flex items-center justify-between p-2 rounded border cursor-pointer text-sm ${index === activeExerciseIndex
-                      ? 'border-white bg-white/10'
-                      : 'border-gray-700'
-                    }`}
-                >
-                  <div className="flex items-center space-x-2">
-                    <span>{we.exercise.icon}</span>
-                    <span className="text-white">{we.exercise.name}</span>
-                  </div>
-                  <span className="text-gray-400">
-                    {completedSets}/{totalSets} sets
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
+            <div className="grid grid-cols-2 gap-6">
+              <Input
+                label="REPETITIONS"
+                type="number"
+                placeholder="00"
+                value={setReps}
+                onChange={(e) => setSetReps(e.target.value)}
+                autoFocus
+              />
+              <Input
+                label="LOAD_KG"
+                type="number"
+                placeholder="0.0"
+                value={setWeight}
+                onChange={(e) => setSetWeight(e.target.value)}
+              />
+            </div>
+
+            <Button
+              fullWidth
+              variant="yellow"
+              size="lg"
+              onClick={handleCompleteSet}
+              disabled={!setReps || currentSet?.completed}
+            >
+              {currentSet?.completed ? 'SET_LOCKED' : 'COMMIT_SET_DATA'}
+            </Button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* FINISH BUTTON */}
+      <div className="pt-10 border-t-4 border-punk-white/10">
+        <Button
+          fullWidth
+          variant="primary"
+          size="lg"
+          onClick={finishWorkout}
+          className="bg-punk-white text-punk-black font-black text-4xl py-6 italic shadow-yellow hover:scale-[1.02]"
+        >
+          FINALIZE_WORKOUT
+        </Button>
+      </div>
     </div>
   );
 };

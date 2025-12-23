@@ -1,148 +1,68 @@
 import React from 'react';
+import { useWorkoutStore } from '../stores/workoutStore';
 import { motion } from 'framer-motion';
-import type { UserLevel } from '../stores/workoutStore';
-import ProgressRing from './ui/ProgressRing';
-import { Star, Zap, Crown, Flame } from 'lucide-react';
+import { Zap, TrendingUp } from 'lucide-react';
 
-interface LevelProgressProps {
-  userLevel: UserLevel;
-  compact?: boolean;
-}
+const LevelProgress: React.FC = () => {
+  const { userLevel } = useWorkoutStore();
 
-const LevelProgress: React.FC<LevelProgressProps> = ({ userLevel, compact = false }) => {
   const progress = (userLevel.currentXP / userLevel.xpToNext) * 100;
 
-  const getLevelIcon = () => {
-    if (userLevel.level >= 50) return <Crown className="w-4 h-4" />;
-    if (userLevel.level >= 30) return <Zap className="w-4 h-4" />;
-    if (userLevel.level >= 10) return <Flame className="w-4 h-4" />;
-    return <Star className="w-4 h-4" />;
-  };
-
-  const getLevelColor = () => {
-    if (userLevel.level >= 50) return 'text-yellow-400';
-    if (userLevel.level >= 30) return 'text-purple-400';
-    if (userLevel.level >= 10) return 'text-blue-400';
-    return 'text-gray-400';
-  };
-
-  if (compact) {
-    return (
-      <div className="flex items-center space-x-3">
-        <div className={`flex items-center justify-center w-8 h-8 rounded-full bg-dark-tertiary border border-white/20 ${getLevelColor()}`}>
-          {getLevelIcon()}
-        </div>
-        <div className="flex flex-col">
-          <span className="text-xs font-semibold text-white">
-            Level {userLevel.level} {userLevel.title}
-          </span>
-          <div className="flex items-center space-x-2">
-            <div className="flex-1 h-2 bg-dark-tertiary rounded-full overflow-hidden">
-              <motion.div
-                initial={{ width: 0 }}
-                animate={{ width: `${progress}%` }}
-                transition={{ duration: 0.5, ease: "easeOut" }}
-                className="h-full bg-gradient-to-r from-white to-white/80"
-              />
-            </div>
-            <span className="text-xs text-gray-400">
-              {userLevel.currentXP}/{userLevel.xpToNext}
-            </span>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="bg-dark-secondary border border-white/20 rounded-xl p-6 space-y-4"
-    >
-      {/* Level Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-3">
-          <motion.div
-            whileHover={{ scale: 1.1, rotate: 360 }}
-            transition={{ duration: 0.5 }}
-            className={`flex items-center justify-center w-12 h-12 rounded-full bg-dark-tertiary border-2 border-white/30 ${getLevelColor()}`}
-          >
-            {getLevelIcon()}
-          </motion.div>
-          <div>
-            <h3 className="text-lg font-bold text-white">
-              Level {userLevel.level}
-            </h3>
-            <p className={`text-sm font-medium ${getLevelColor()}`}>
-              {userLevel.title}
-            </p>
-          </div>
+    <div className="space-y-4">
+      <div className="flex justify-between items-end">
+        <div>
+          <h4 className="text-[10px] font-black text-punk-yellow tracking-widest uppercase mb-1 flex items-center gap-2">
+            <Zap size={10} /> CURRENT_RANK
+          </h4>
+          <span className="text-4xl font-black italic uppercase tracking-tighter leading-none">
+            {userLevel.title}
+          </span>
         </div>
         <div className="text-right">
-          <div className="text-2xl font-bold text-white">
-            {userLevel.totalXP}
+          <div className="text-[10px] font-black opacity-40 uppercase tracking-widest mb-1">EVOLUTION_XP</div>
+          <div className="text-xl font-black italic tabular-nums leading-none">
+            {userLevel.currentXP} <span className="text-[10px] opacity-20">/</span> {userLevel.xpToNext}
           </div>
-          <div className="text-xs text-gray-400">Total XP</div>
         </div>
       </div>
 
-      {/* Progress Ring */}
-      <div className="flex justify-center">
-        <ProgressRing
-          progress={progress}
-          size={120}
-          strokeWidth={8}
+      {/* RAW PROGRESS BAR */}
+      <div className="relative h-10 border-4 border-punk-white bg-punk-black overflow-hidden group">
+        <motion.div
+          initial={{ width: 0 }}
+          animate={{ width: `${progress}%` }}
+          transition={{ duration: 1, ease: 'easeOut' }}
+          className="absolute inset-y-0 left-0 bg-punk-yellow"
         >
-          <div className="text-center">
-            <div className="text-2xl font-bold text-white">
-              {Math.floor(progress)}%
-            </div>
-            <div className="text-sm text-gray-400">
-              {userLevel.currentXP} / {userLevel.xpToNext} XP
-            </div>
-          </div>
-        </ProgressRing>
-      </div>
+          {/* Animated "energy" pulse in the bar */}
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent w-full h-full animate-in slide-in-from-left-full duration-1000 iteration-infinite"
+            style={{ animation: 'shimmer 2s infinite linear' }} />
+        </motion.div>
 
-      {/* Progress Bar */}
-      <div className="space-y-2">
-        <div className="flex justify-between text-sm">
-          <span className="text-gray-400">Progress to Level {userLevel.level + 1}</span>
-          <span className="text-white font-medium">{userLevel.xpToNext - userLevel.currentXP} XP to go</span>
-        </div>
-        <div className="h-3 bg-dark-tertiary rounded-full overflow-hidden">
-          <motion.div
-            initial={{ width: 0 }}
-            animate={{ width: `${progress}%` }}
-            transition={{ duration: 0.8, ease: "easeOut" }}
-            className="h-full bg-gradient-to-r from-white via-white to-white/80 relative"
-          >
-            <motion.div
-              animate={{ x: ["0%", "100%"] }}
-              transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-              className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
-            />
-          </motion.div>
+        {/* PROGRESS PERCENTAGE READOUT */}
+        <div className="absolute inset-0 flex items-center justify-center mix-blend-difference">
+          <span className="text-xs font-black italic tracking-[8px] uppercase">
+            LOAD_PROGRESS: {Math.round(progress)}%
+          </span>
         </div>
       </div>
 
-      {/* Level Milestones */}
-      <div className="grid grid-cols-3 gap-2 text-center">
-        <div className="bg-dark-tertiary/50 rounded-lg p-2">
-          <div className="text-lg font-bold text-white">{userLevel.level}</div>
-          <div className="text-xs text-gray-400">Current</div>
-        </div>
-        <div className="bg-dark-tertiary/50 rounded-lg p-2">
-          <div className="text-lg font-bold text-blue-400">{userLevel.level + 1}</div>
-          <div className="text-xs text-gray-400">Next</div>
-        </div>
-        <div className="bg-dark-tertiary/50 rounded-lg p-2">
-          <div className="text-lg font-bold text-purple-400">{userLevel.level + 5}</div>
-          <div className="text-xs text-gray-400">Goal</div>
-        </div>
+      <style>{`
+        @keyframes shimmer {
+          0% { transform: translateX(-100%); }
+          100% { transform: translateX(100%); }
+        }
+      `}</style>
+
+      {/* NEXT PHASE INDICATOR */}
+      <div className="flex items-center gap-2 opacity-30 group-hover:opacity-100 transition-opacity">
+        <TrendingUp size={12} className="text-punk-yellow" />
+        <span className="text-[8px] font-black uppercase tracking-widest italic">
+          REMAINING_XP_FOR_LEVEL_{userLevel.level + 1}_UPGRADE: {userLevel.xpToNext - userLevel.currentXP}
+        </span>
       </div>
-    </motion.div>
+    </div>
   );
 };
 

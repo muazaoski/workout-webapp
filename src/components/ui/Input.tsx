@@ -4,39 +4,36 @@ interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string;
   error?: string;
   icon?: React.ReactNode;
-  className?: string;
 }
 
-const Input: React.FC<InputProps> = ({
-  label,
-  error,
-  icon,
-  className = '',
-  ...props
-}) => {
-  const baseClasses = 'minimal-input w-full';
-  const errorClasses = error ? 'border-red-500 focus:border-red-500 focus:ring-red-500/50' : '';
-
+const Input: React.FC<InputProps> = ({ label, error, icon, className = '', ...props }) => {
   return (
-    <div className="space-y-2">
+    <div className="w-full space-y-1">
       {label && (
-        <label className="block text-sm font-medium text-gray-300">
+        <label className="text-[10px] uppercase font-black tracking-widest text-punk-yellow ml-1">
           {label}
         </label>
       )}
-      <div className="relative">
+      <div className="relative group">
         {icon && (
-          <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+          <div className="absolute left-4 top-1/2 -translate-y-1/2 text-punk-white/40 group-focus-within:text-punk-yellow transition-colors">
             {icon}
           </div>
         )}
         <input
-          className={`${baseClasses} ${errorClasses} ${icon ? 'pl-10' : ''} ${className}`}
+          className={`
+            punk-input 
+            ${icon ? 'pl-12' : ''} 
+            ${error ? 'border-red-500' : ''} 
+            ${className}
+          `}
           {...props}
         />
       </div>
       {error && (
-        <p className="text-sm text-red-400">{error}</p>
+        <p className="text-[10px] font-mono text-red-500 uppercase mt-1 ml-1 font-bold">
+          ! ERROR: {error}
+        </p>
       )}
     </div>
   );

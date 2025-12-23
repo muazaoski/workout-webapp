@@ -1,34 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import type { Workout, Exercise, WorkoutStats, TimerState } from '../types/workout';
-
-// Achievement and gamification types
-export interface Achievement {
-  id: string;
-  name: string;
-  description: string;
-  icon: string;
-  unlocked: boolean;
-  unlockedAt?: Date;
-  category: 'workout' | 'streak' | 'strength' | 'consistency' | 'special';
-  requirement: {
-    type: 'totalWorkouts' | 'streak' | 'totalReps' | 'totalWeight' | 'custom';
-    value: number;
-  };
-}
-
-export interface Challenge {
-  id: string;
-  name: string;
-  description: string;
-  startDate: Date;
-  endDate?: Date;
-  isActive: boolean;
-  isCompleted: boolean;
-  icon: string;
-  color: string;
-  checkIns: Date[];
-}
+import type { Workout, Exercise, WorkoutStats, TimerState, Achievement, Challenge } from '../types/workout';
 
 export interface UserLevel {
   level: number;
@@ -98,17 +70,16 @@ interface WorkoutStore {
   checkAchievements: () => void;
   addXP: (amount: number) => void;
   calculateLevel: () => void;
-  createChallenge: (challenge: Omit<Challenge, 'id' | 'checkIns' | 'isActive'>) => void;
-  updateChallenge: (challengeId: string, updates: Partial<Challenge>) => void;
+  addChallenge: (challenge: Challenge) => void;
+  toggleChallenge: (challengeId: string) => void;
   deleteChallenge: (challengeId: string) => void;
   checkInChallenge: (challengeId: string) => void;
   hideAchievementModal: () => void;
 }
 
 const defaultTimer: TimerState = {
-  isActive: false,
-  isPaused: false,
-  time: 0,
+  isRunning: false,
+  timeLeft: 0,
   duration: 0,
   type: 'work',
 };
@@ -118,6 +89,7 @@ const defaultStats: WorkoutStats = {
   totalExercises: 0,
   totalSets: 0,
   totalReps: 0,
+  totalVolume: 0,
   totalWeight: 0,
   streak: 0,
   favoriteExercises: [],
@@ -139,6 +111,7 @@ const defaultAchievements: Achievement[] = [
     description: 'Complete your first workout',
     icon: '🎯',
     unlocked: false,
+    xpReward: 50,
     category: 'workout',
     requirement: { type: 'totalWorkouts', value: 1 },
   },
@@ -148,6 +121,7 @@ const defaultAchievements: Achievement[] = [
     description: 'Complete 10 workouts',
     icon: '💪',
     unlocked: false,
+    xpReward: 100,
     category: 'consistency',
     requirement: { type: 'totalWorkouts', value: 10 },
   },
@@ -157,6 +131,7 @@ const defaultAchievements: Achievement[] = [
     description: 'Complete 50 workouts',
     icon: '🏆',
     unlocked: false,
+    xpReward: 250,
     category: 'consistency',
     requirement: { type: 'totalWorkouts', value: 50 },
   },
@@ -166,6 +141,7 @@ const defaultAchievements: Achievement[] = [
     description: 'Complete 100 workouts',
     icon: '👑',
     unlocked: false,
+    xpReward: 500,
     category: 'consistency',
     requirement: { type: 'totalWorkouts', value: 100 },
   },
@@ -175,6 +151,7 @@ const defaultAchievements: Achievement[] = [
     description: 'Maintain a 7-day workout streak',
     icon: '🔥',
     unlocked: false,
+    xpReward: 150,
     category: 'streak',
     requirement: { type: 'streak', value: 7 },
   },
@@ -184,6 +161,7 @@ const defaultAchievements: Achievement[] = [
     description: 'Maintain a 30-day workout streak',
     icon: '⚡',
     unlocked: false,
+    xpReward: 400,
     category: 'streak',
     requirement: { type: 'streak', value: 30 },
   },
@@ -193,6 +171,7 @@ const defaultAchievements: Achievement[] = [
     description: 'Complete 1000 total reps',
     icon: '💯',
     unlocked: false,
+    xpReward: 200,
     category: 'strength',
     requirement: { type: 'totalReps', value: 1000 },
   },
@@ -202,6 +181,7 @@ const defaultAchievements: Achievement[] = [
     description: 'Lift 10,000 kg total weight',
     icon: '🏋️',
     unlocked: false,
+    xpReward: 300,
     category: 'strength',
     requirement: { type: 'totalWeight', value: 10000 },
   },
@@ -407,9 +387,8 @@ export const useWorkoutStore = create<WorkoutStore>()(
       startTimer: (duration, type) => {
         set({
           timer: {
-            isActive: true,
-            isPaused: false,
-            time: duration,
+            isRunning: true,
+            timeLeft: duration,
             duration,
             type,
           },
@@ -420,8 +399,7 @@ export const useWorkoutStore = create<WorkoutStore>()(
         set((state) => ({
           timer: {
             ...state.timer,
-            isPaused: true,
-            isActive: false,
+            isRunning: false,
           },
         }));
       },
@@ -430,8 +408,7 @@ export const useWorkoutStore = create<WorkoutStore>()(
         set((state) => ({
           timer: {
             ...state.timer,
-            isPaused: false,
-            isActive: true,
+            isRunning: true,
           },
         }));
       },
@@ -444,12 +421,11 @@ export const useWorkoutStore = create<WorkoutStore>()(
 
       updateTimer: () => {
         set((state) => {
-          if (!state.timer.isActive || state.timer.time <= 0) {
+          if (!state.timer.isRunning || state.timer.timeLeft <= 0) {
             return {
               timer: {
                 ...state.timer,
-                isActive: false,
-                isPaused: false,
+                isRunning: false,
               },
             };
           }
@@ -457,7 +433,7 @@ export const useWorkoutStore = create<WorkoutStore>()(
           return {
             timer: {
               ...state.timer,
-              time: state.timer.time - 1,
+              timeLeft: state.timer.timeLeft - 1,
             },
           };
         });
@@ -682,54 +658,33 @@ export const useWorkoutStore = create<WorkoutStore>()(
         });
       },
 
-      createChallenge: (challenge) => {
-        const newChallenge: Challenge = {
-          ...challenge,
-          id: Date.now().toString(),
-          checkIns: [],
-          isActive: true,
-        };
-
+      addChallenge: (challenge: Challenge) => {
         set((state) => ({
-          challenges: [...state.challenges, newChallenge],
+          challenges: [...state.challenges, challenge],
         }));
       },
 
-      updateChallenge: (challengeId, updates) => {
+      toggleChallenge: (challengeId: string) => {
         set((state) => ({
-          challenges: state.challenges.map(challenge =>
-            challenge.id === challengeId ? { ...challenge, ...updates } : challenge
+          challenges: state.challenges.map(c =>
+            c.id === challengeId ? { ...c, completed: !c.completed } : c
           ),
         }));
       },
 
-      deleteChallenge: (challengeId) => {
+      deleteChallenge: (challengeId: string) => {
         set((state) => ({
           challenges: state.challenges.filter(challenge => challenge.id !== challengeId),
         }));
       },
 
-      checkInChallenge: (challengeId) => {
-        set((state) => {
-          const updatedChallenges = state.challenges.map(challenge => {
-            if (challenge.id === challengeId && challenge.isActive) {
-              const newCheckIns = [...challenge.checkIns, new Date()];
-
-              // Check if challenge is completed (30 check-ins for monthly challenges)
-              const isCompleted = newCheckIns.length >= 30;
-
-              return {
-                ...challenge,
-                checkIns: newCheckIns,
-                isCompleted,
-                isActive: !isCompleted,
-              };
-            }
-            return challenge;
-          });
-
-          return { challenges: updatedChallenges };
-        });
+      checkInChallenge: (challengeId: string) => {
+        // Simple completion for the new punk version
+        set((state) => ({
+          challenges: state.challenges.map(c =>
+            c.id === challengeId ? { ...c, completed: true } : c
+          ),
+        }));
       },
 
       hideAchievementModal: () => {
@@ -762,9 +717,10 @@ function calculateStats(workouts: Workout[], exercises: Exercise[]): WorkoutStat
     totalExercises: 0,
     totalSets: 0,
     totalReps: 0,
+    totalVolume: 0,
     totalWeight: 0,
     streak: 0,
-    lastWorkoutDate: workouts[0]?.endTime,
+    lastWorkoutDate: workouts[0]?.endTime ? new Date(workouts[0].endTime) : undefined,
     favoriteExercises: [],
     weakMuscleGroups: [],
   };
@@ -777,7 +733,9 @@ function calculateStats(workouts: Workout[], exercises: Exercise[]): WorkoutStat
         if (set.completed) {
           stats.totalSets++;
           stats.totalReps += set.reps;
-          stats.totalWeight += (set.weight || 0) * set.reps;
+          const weight = set.weight || 0;
+          stats.totalWeight += weight * set.reps;
+          stats.totalVolume += weight * set.reps;
         }
       });
     });

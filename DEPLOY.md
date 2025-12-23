@@ -1,4 +1,4 @@
-# Workout Counter - VPS Deployment Guide
+# IRON & GRIT - VPS Deployment Guide
 
 ## VPS Details
 - **IP:** 51.79.161.63

@@ -1,8 +1,7 @@
 import React from 'react';
-import { motion } from 'framer-motion';
 
 interface ButtonProps {
-  variant?: 'primary' | 'secondary' | 'ghost' | 'danger';
+  variant?: 'primary' | 'yellow' | 'ghost' | 'danger';
   size?: 'sm' | 'md' | 'lg';
   loading?: boolean;
   icon?: React.ReactNode;
@@ -10,6 +9,7 @@ interface ButtonProps {
   className?: string;
   disabled?: boolean;
   onClick?: () => void;
+  fullWidth?: boolean;
   type?: 'button' | 'submit' | 'reset';
 }
 
@@ -22,48 +22,52 @@ const Button: React.FC<ButtonProps> = ({
   className = '',
   disabled,
   onClick,
-  type = 'button',
+  fullWidth = false,
+  type = 'button'
 }) => {
-  const baseClasses = 'inline-flex items-center justify-center font-medium rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-white/20 disabled:opacity-50 disabled:cursor-not-allowed';
-
-  const variantClasses = {
-    primary: 'bg-white text-dark-primary hover:scale-105 hover:shadow-lg hover:shadow-white/20 active:scale-95',
-    secondary: 'bg-dark-secondary border border-gray-700 text-white hover:border-white/50 hover:bg-dark-tertiary/50',
-    ghost: 'bg-transparent text-gray-400 hover:text-white hover:bg-dark-secondary/50',
-    danger: 'bg-red-600/20 border border-red-600/50 text-red-400 hover:bg-red-600/30 hover:border-red-600 hover:text-red-300',
+  const getVariantStyles = () => {
+    switch (variant) {
+      case 'yellow': return 'punk-button-yellow';
+      case 'danger': return 'bg-red-600 border-2 border-white text-white shadow-[4px_4px_0px_#000] active:translate-x-1 active:translate-y-1 active:shadow-none';
+      case 'ghost': return 'bg-transparent border-2 border-transparent text-white hover:border-punk-yellow';
+      default: return 'punk-button';
+    }
   };
 
-  const sizeClasses = {
-    sm: 'px-3 py-1.5 text-sm gap-1.5',
-    md: 'px-4 py-2 text-sm gap-2',
-    lg: 'px-6 py-3 text-base gap-2',
+  const getSizeStyles = () => {
+    switch (size) {
+      case 'sm': return 'text-[10px] py-1 px-3 tracking-tighter';
+      case 'lg': return 'text-xl py-4 px-8';
+      default: return 'text-sm py-3 px-6';
+    }
   };
-
-  const classes = `${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${className}`;
 
   return (
-    <motion.button
-      whileHover={loading || disabled ? undefined : { scale: 1.02 }}
-      whileTap={loading || disabled ? undefined : { scale: 0.98 }}
-      className={classes}
+    <button
+      type={type}
       disabled={disabled || loading}
       onClick={onClick}
-      type={type}
+      className={`
+        ${getVariantStyles()} 
+        ${getSizeStyles()} 
+        ${fullWidth ? 'w-full' : ''} 
+        ${className} 
+        disabled:grayscale disabled:opacity-50 disabled:cursor-not-allowed
+        font-black italic tracking-widest uppercase
+      `}
     >
       {loading ? (
+        <div className="flex items-center gap-2">
+          <div className="w-4 h-4 border-2 border-current border-t-transparent animate-spin" />
+          <span>PROCESSING...</span>
+        </div>
+      ) : (
         <>
-          <div className="w-4 h-4 border-2 border-current/20 border-t-current rounded-full animate-spin mr-2" />
-          {children}
-        </>
-      ) : icon ? (
-        <>
-          <span className="flex-shrink-0 mr-2">{icon}</span>
+          {icon && <span className="flex-shrink-0">{icon}</span>}
           <span className="truncate">{children}</span>
         </>
-      ) : (
-        children
       )}
-    </motion.button>
+    </button>
   );
 };
 

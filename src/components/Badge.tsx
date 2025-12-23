@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import type { Achievement } from '../stores/workoutStore';
+import type { Achievement } from '../types/workout';
 
 interface BadgeProps {
   achievement: Achievement;

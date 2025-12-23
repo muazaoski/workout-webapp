@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useWorkoutStore } from './stores/workoutStore';
 import { useAuthStore } from './stores/authStore';
 import type { Workout } from './types/workout';
-import Timer from './components/Timer';
 import ExerciseLibrary from './components/ExerciseLibrary';
 import ActiveWorkout from './components/ActiveWorkout';
 import AchievementModal from './components/AchievementModal';
@@ -12,9 +11,23 @@ import Achievements from './components/Achievements';
 import ChallengeCreator from './components/ChallengeCreator';
 import AuthModal from './components/AuthModal';
 import Button from './components/ui/Button';
-import Card, { CardHeader, CardTitle, CardContent } from './components/ui/Card';
-import FireIcon from './components/FireIcon';
-import { Dumbbell, TrendingUp, Clock, Plus, BookOpen, Trash2, Edit, X, ChevronUp, ChevronDown, Calendar, Trophy, Target, Star, LogOut, User } from 'lucide-react';
+import {
+  Dumbbell,
+  TrendingUp,
+  Clock,
+  Plus,
+  BookOpen,
+  Trash2,
+  X,
+  Trophy,
+  Target,
+  LogOut,
+  User as UserIcon,
+  Zap,
+  LayoutDashboard,
+  Dna,
+  Calendar
+} from 'lucide-react';
 
 const App: React.FC = () => {
   const {
@@ -22,650 +35,185 @@ const App: React.FC = () => {
     stats,
     startNewWorkout,
     workoutHistory,
-    exercises,
-    finishWorkout,
-    cancelWorkout,
-    addExerciseToWorkout,
     deleteWorkout,
-    updateWorkout,
     userLevel,
     showAchievementModal,
     recentAchievement,
     hideAchievementModal
   } = useWorkoutStore();
 
-  const { isAuthenticated, user, logout } = useAuthStore();
-
-  const [currentView, setCurrentView] = useState<'home' | 'achievements' | 'challenges'>('home');
+  const { isAuthenticated, logout } = useAuthStore();
+  const [currentView, setCurrentView] = useState<'dashboard' | 'achievements' | 'challenges' | 'history'>('dashboard');
   const [showExerciseLibrary, setShowExerciseLibrary] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [selectedWorkout, setSelectedWorkout] = useState<Workout | null>(null);
-  const [showEditExerciseLibrary, setShowEditExerciseLibrary] = useState(false);
 
-  // Show auth modal if not authenticated
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-dark-primary">
+      <div className="min-h-screen bg-punk-black flex items-center justify-center p-4">
+        <div className="scanline" />
         <AuthModal isOpen={true} />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-dark-primary text-white">
-      {/* Header */}
-      <header className="border-b border-gray-800/50">
-        <div className="max-w-4xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <Button
-              variant="ghost"
-              onClick={() => {
-                setCurrentView('home');
-                setShowExerciseLibrary(false);
-                cancelWorkout();
-              }}
-              className="p-2 h-auto"
-            >
-              <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center">
-                  <Dumbbell size={18} className="text-dark-primary" />
-                </div>
-                <h1 className="text-xl font-semibold text-white">Workout Counter</h1>
-              </div>
-            </Button>
+    <div className="min-h-screen bg-punk-black text-punk-white relative overflow-x-hidden selection:bg-punk-yellow selection:text-punk-black font-mono">
+      <div className="scanline" />
 
-            {/* Navigation */}
-            {!currentWorkout && (
-              <nav className="flex items-center space-x-2">
-                <Button
-                  variant={currentView === 'achievements' ? 'primary' : 'ghost'}
-                  size="sm"
-                  onClick={() => setCurrentView('achievements')}
-                  icon={<Trophy size={16} />}
-                >
-                  Achievements
-                </Button>
-                <Button
-                  variant={currentView === 'challenges' ? 'primary' : 'ghost'}
-                  size="sm"
-                  onClick={() => setCurrentView('challenges')}
-                  icon={<Target size={16} />}
-                >
-                  Challenges
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={logout}
-                  icon={<LogOut size={16} />}
-                  className="text-gray-400 hover:text-red-400"
-                >
-                  Logout
-                </Button>
-              </nav>
-            )}
+      {/* INDUSTRIAL OVERLAY TEXTURE */}
+      <div className="fixed inset-0 pointer-events-none opacity-[0.03] z-50 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')]" />
+
+      {/* HEADER */}
+      <header className="border-b-4 border-punk-white sticky top-0 bg-punk-black z-40">
+        <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="bg-punk-yellow p-1 -skew-x-12">
+              <Dumbbell className="text-punk-black w-7 h-7" />
+            </div>
+            <h1 className="text-2xl font-black italic tracking-tighter sm:text-3xl">
+              IRON <span className="text-punk-yellow">GRIT</span>
+            </h1>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <div className="hidden sm:block text-right mr-3">
+              <div className="text-[9px] uppercase text-punk-yellow font-black leading-none tracking-widest">RANK: {userLevel.title}</div>
+              <div className="text-xs font-black uppercase">LEVEL_{userLevel.level}</div>
+            </div>
+            <Button variant="ghost" size="sm" onClick={logout} className="p-2 border-punk-white/10 hover:border-punk-yellow hover:text-punk-yellow">
+              <LogOut size={18} />
+            </Button>
           </div>
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="max-w-4xl mx-auto px-4 py-6">
-        {showExerciseLibrary && !currentWorkout && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-          >
-            <ExerciseLibrary />
-          </motion.div>
-        )}
+      {/* TACTICAL NAVIGATION */}
+      <nav className="fixed bottom-0 left-0 right-0 bg-punk-black border-t-4 border-punk-white z-40 sm:bottom-auto sm:top-[76px] sm:left-4 sm:right-auto sm:w-20 sm:border-r-4 sm:border-l-4 sm:border-t-4 sm:h-[calc(100vh-100px)] sm:flex-col flex justify-around py-2 sm:justify-center sm:gap-8 px-4 shadow-[0_-10px_20px_rgba(0,0,0,0.5)]">
+        <NavIcon icon={<LayoutDashboard />} label="DASH" active={currentView === 'dashboard'} onClick={() => setCurrentView('dashboard')} />
+        <NavIcon icon={<Zap />} label="WORK" active={currentView === 'history'} onClick={() => setCurrentView('history')} />
+        <NavIcon icon={<Trophy />} label="WINS" active={currentView === 'achievements'} onClick={() => setCurrentView('achievements')} />
+        <NavIcon icon={<Target />} label="GOAL" active={currentView === 'challenges'} onClick={() => setCurrentView('challenges')} />
+      </nav>
 
-        {!currentWorkout && !showExerciseLibrary && currentView === 'home' && (
-          // Home Screen
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="space-y-8"
-          >
-            {/* Hero Section */}
-            <div className="text-center py-8">
-              <h2 className="text-3xl font-semibold text-white mb-4">
-                Ready to start?
-              </h2>
-              <p className="text-gray-400 mb-8">
-                Track your workouts and build consistency
-              </p>
-
-              <div className="flex justify-center space-x-3">
-                <Button
-                  onClick={() => setShowExerciseLibrary(true)}
-                  size="lg"
-                >
-                  <span className="flex items-center space-x-2">
-                    <BookOpen size={20} />
-                    <span>Browse Exercises</span>
-                  </span>
-                </Button>
-                <Button
-                  onClick={() => startNewWorkout(`Workout ${stats.totalWorkouts + 1}`)}
-                  size="lg"
-                >
-                  <span className="flex items-center space-x-2">
-                    <Plus size={20} />
-                    <span>Start Workout</span>
-                  </span>
-                </Button>
-              </div>
-            </div>
-
-            {/* Level Progress */}
-            <LevelProgress userLevel={userLevel} compact={true} />
-
-            {/* Simple Stats */}
-            <div className="flex justify-center space-x-8 text-sm">
-              <div className="text-center">
-                <div className="text-2xl font-semibold text-white">{stats.streak}</div>
-                <div className="flex items-center justify-center space-x-1 text-gray-400">
-                  <FireIcon streak={stats.streak} size={14} />
-                  <span>Day Streak</span>
-                </div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-semibold text-white">{stats.totalWorkouts}</div>
-                <div className="text-gray-400">Workouts</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-semibold text-white">{stats.totalSets}</div>
-                <div className="text-gray-400">Total Sets</div>
-              </div>
-            </div>
-
-            {/* Quick Exercises */}
-            <div>
-              <h3 className="text-lg font-medium text-white mb-4">Quick Start</h3>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                {exercises.slice(0, 6).map((exercise) => (
-                  <Button
-                    key={exercise.id}
-                    variant="secondary"
-                    onClick={() => {
-                      startNewWorkout(`${exercise.name} Workout`);
-                      addExerciseToWorkout(exercise);
-                    }}
-                    className="h-auto py-3 text-left justify-start"
-                  >
-                    <span className="text-xl mr-2">{exercise.icon}</span>
-                    <span className="text-sm">{exercise.name}</span>
-                  </Button>
-                ))}
-              </div>
-            </div>
-
-            {/* Recent Workouts */}
-            {workoutHistory.length > 0 && (
-              <div>
-                <h3 className="text-lg font-medium text-white mb-4">Recent</h3>
-                <div className="space-y-2">
-                  {workoutHistory.slice(0, 3).map((workout) => (
-                    <div
-                      key={workout.id}
-                      className="group flex items-center justify-between p-3 rounded-lg border border-gray-800/50 hover:border-white/30 transition-all duration-200"
-                    >
-                      <div>
-                        <div className="font-medium text-white">{workout.name}</div>
-                        <div className="text-sm text-gray-400 mb-2">
-                          {workout.exercises.length} exercises
-                        </div>
-                        <div className="flex flex-wrap gap-1">
-                          {workout.exercises.slice(0, 3).map((we, index) => (
-                            <span
-                              key={`${we.exercise.id}-${index}`}
-                              className="px-1.5 py-0.5 bg-white/10 border border-white/20 rounded text-xs text-white"
-                            >
-                              {we.exercise.name}
-                            </span>
-                          ))}
-                          {workout.exercises.length > 3 && (
-                            <span className="px-1.5 py-0.5 bg-gray-700/30 rounded text-xs text-gray-400">
-                              +{workout.exercises.length - 3} more
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <div className="text-right">
-                          <div className="text-sm text-gray-400">
-                            {new Date(workout.endTime!).toLocaleDateString()}
-                          </div>
-                          <div className="text-xs text-gray-500">
-                            {new Date(workout.endTime!).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                          </div>
-                        </div>
-                        <button
-                          onClick={() => {
-                            setSelectedWorkout(workout);
-                            setShowEditModal(true);
-                          }}
-                          className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-blue-600/20 text-blue-400 transition-all duration-200"
+      <main className="max-w-5xl mx-auto px-4 pt-6 pb-28 sm:pl-28 sm:pt-10">
+        <AnimatePresence mode="wait">
+          {currentWorkout ? (
+            <motion.div
+              key="active"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+            >
+              <ActiveWorkout />
+            </motion.div>
+          ) : (
+            <div className="space-y-12">
+              {currentView === 'dashboard' && (
+                <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                  {/* HERO: START WORKOUT */}
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div className="lg:col-span-2 punk-card bg-punk-yellow !text-punk-black border-punk-black shadow-white">
+                      <div className="relative z-10">
+                        <h2 className="text-5xl font-black mb-1 italic tracking-tighter leading-none">NO_LIMIT <br />RAW_POWER</h2>
+                        <p className="font-bold uppercase text-[10px] mb-8 opacity-80 decoration-2 tracking-widest">PROTOCOL: INTENSITY_MAX_LEVEL</p>
+                        <Button
+                          variant="primary"
+                          size="lg"
+                          onClick={() => startNewWorkout('SESSION_' + new Date().toLocaleDateString())}
+                          className="bg-punk-black text-punk-white border-punk-black shadow-white hover:shadow-none hover:translate-x-1 hover:translate-y-1"
                         >
-                          <Edit size={14} />
-                        </button>
-                        <button
-                          onClick={() => deleteWorkout(workout.id)}
-                          className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-red-600/20 text-red-400 transition-all duration-200"
-                        >
-                          <Trash2 size={14} />
-                        </button>
+                          INITIATE_SESSION
+                        </Button>
                       </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </motion.div>
-        )}
-
-        {/* Active Workout Screen */}
-        {currentWorkout && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="space-y-4"
-          >
-            {/* Workout Header */}
-            <div className="flex items-center justify-between py-4">
-              <div>
-                <h2 className="text-2xl font-semibold text-white">{currentWorkout.name}</h2>
-                <p className="text-sm text-gray-400">
-                  {new Date(currentWorkout.startTime).toLocaleTimeString()}
-                </p>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setShowExerciseLibrary(!showExerciseLibrary)}
-                  icon={<Plus size={16} />}
-                >
-                  Add
-                </Button>
-                <Button
-                  variant="danger"
-                  size="sm"
-                  onClick={() => finishWorkout()}
-                >
-                  Finish
-                </Button>
-              </div>
-            </div>
-
-            {/* Exercise Library Overlay */}
-            {showExerciseLibrary && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="border border-gray-800/50 rounded-lg p-4"
-              >
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-medium text-white">Add Exercise</h3>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setShowExerciseLibrary(false)}
-                  >
-                    <Plus size={16} className="rotate-45" />
-                  </Button>
-                </div>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                  {exercises.map((exercise) => (
-                    <button
-                      key={exercise.id}
-                      onClick={() => {
-                        const store = useWorkoutStore.getState();
-                        store.addExerciseToWorkout(exercise);
-                        setShowExerciseLibrary(false);
-                      }}
-                      className="p-3 rounded-lg border border-gray-700 hover:border-white/50 transition-all duration-200 text-left"
-                    >
-                      <div className="flex items-center space-x-2">
-                        <span className="text-xl">{exercise.icon}</span>
-                        <div>
-                          <div className="font-medium text-white text-sm">{exercise.name}</div>
-                          <div className="text-xs text-gray-400">
-                            {exercise.muscleGroups.slice(0, 2).join(', ')}
-                          </div>
-                        </div>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </motion.div>
-            )}
-
-            {/* Active Workout Component */}
-            <ActiveWorkout />
-          </motion.div>
-        )}
-      </main>
-
-      {/* Edit Workout Modal */}
-      {showEditModal && selectedWorkout && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50"
-          onClick={() => setShowEditModal(false)}
-        >
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="bg-dark-secondary border border-gray-800/50 rounded-lg p-6 max-w-3xl w-full max-h-[85vh] overflow-y-auto"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-semibold text-white">Edit Workout</h2>
-              <button
-                onClick={() => {
-                  setShowEditModal(false);
-                  setShowEditExerciseLibrary(false);
-                  setSelectedWorkout(null);
-                }}
-                className="text-gray-400 hover:text-white transition-colors"
-              >
-                <X size={20} />
-              </button>
-            </div>
-
-            {/* Workout Details Section */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Workout Name</label>
-                <input
-                  type="text"
-                  value={selectedWorkout.name}
-                  onChange={(e) => {
-                    const updatedWorkout = { ...selectedWorkout, name: e.target.value };
-                    setSelectedWorkout(updatedWorkout);
-                  }}
-                  className="minimal-input w-full"
-                  placeholder="Workout name"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Date & Time</label>
-                <input
-                  type="datetime-local"
-                  value={new Date(selectedWorkout.endTime || selectedWorkout.startTime).toISOString().slice(0, 16)}
-                  onChange={(e) => {
-                    const newDate = new Date(e.target.value);
-                    const updatedWorkout = {
-                      ...selectedWorkout,
-                      startTime: newDate,
-                      endTime: newDate
-                    };
-                    setSelectedWorkout(updatedWorkout);
-                  }}
-                  className="minimal-input w-full"
-                />
-              </div>
-            </div>
-
-            {/* Add Exercise Button */}
-            <div className="mb-4">
-              <Button
-                onClick={() => setShowEditExerciseLibrary(!showEditExerciseLibrary)}
-                className="w-full"
-                variant="secondary"
-                icon={<Plus size={16} />}
-              >
-                {showEditExerciseLibrary ? 'Hide' : 'Add'} Exercises
-              </Button>
-            </div>
-
-            {/* Exercise Library for Edit Modal */}
-            {showEditExerciseLibrary && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="border border-gray-800/50 rounded-lg p-4 mb-6"
-              >
-                <h3 className="text-lg font-medium text-white mb-4">Add Exercises</h3>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-60 overflow-y-auto">
-                  {exercises.map((exercise) => {
-                    const isAlreadyAdded = selectedWorkout.exercises.some(we => we.exercise.id === exercise.id);
-                    return (
-                      <button
-                        key={exercise.id}
-                        onClick={() => {
-                          if (!isAlreadyAdded) {
-                            const updatedWorkout = {
-                              ...selectedWorkout,
-                              exercises: [
-                                ...selectedWorkout.exercises,
-                                {
-                                  exercise,
-                                  sets: [{ reps: 0, weight: 0, completed: false }]
-                                }
-                              ]
-                            };
-                            setSelectedWorkout(updatedWorkout);
-                          }
-                        }}
-                        disabled={isAlreadyAdded}
-                        className={`p-3 rounded-lg border transition-all duration-200 text-left ${isAlreadyAdded
-                          ? 'border-gray-700 bg-gray-800/50 opacity-50 cursor-not-allowed'
-                          : 'border-gray-700 hover:border-white/50 cursor-pointer'
-                          }`}
-                      >
-                        <div className="flex items-center space-x-2">
-                          <span className="text-xl">{exercise.icon}</span>
-                          <div>
-                            <div className="font-medium text-white text-sm">{exercise.name}</div>
-                            <div className="text-xs text-gray-400">
-                              {exercise.muscleGroups.slice(0, 2).join(', ')}
-                            </div>
-                          </div>
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              </motion.div>
-            )}
-
-            {/* Exercises Section */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-medium text-white">Exercises</h3>
-
-              {selectedWorkout.exercises.length === 0 ? (
-                <div className="text-center py-8 text-gray-400 border border-gray-800/50 rounded-lg">
-                  <p>No exercises in this workout</p>
-                </div>
-              ) : (
-                selectedWorkout.exercises.map((workoutExercise, exerciseIndex) => (
-                  <div key={exerciseIndex} className="border border-gray-800/50 rounded-lg p-4">
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center space-x-3">
-                        <span className="text-xl">{workoutExercise.exercise.icon}</span>
-                        <h3 className="font-medium text-white">{workoutExercise.exercise.name}</h3>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        {/* Reorder buttons */}
-                        <button
-                          onClick={() => {
-                            if (exerciseIndex > 0) {
-                              const updatedWorkout = { ...selectedWorkout };
-                              const newExercises = [...updatedWorkout.exercises];
-                              [newExercises[exerciseIndex], newExercises[exerciseIndex - 1]] =
-                                [newExercises[exerciseIndex - 1], newExercises[exerciseIndex]];
-                              updatedWorkout.exercises = newExercises;
-                              setSelectedWorkout(updatedWorkout);
-                            }
-                          }}
-                          disabled={exerciseIndex === 0}
-                          className="p-1 rounded hover:bg-gray-700 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-                        >
-                          <ChevronUp size={16} />
-                        </button>
-                        <button
-                          onClick={() => {
-                            if (exerciseIndex < selectedWorkout.exercises.length - 1) {
-                              const updatedWorkout = { ...selectedWorkout };
-                              const newExercises = [...updatedWorkout.exercises];
-                              [newExercises[exerciseIndex], newExercises[exerciseIndex + 1]] =
-                                [newExercises[exerciseIndex + 1], newExercises[exerciseIndex]];
-                              updatedWorkout.exercises = newExercises;
-                              setSelectedWorkout(updatedWorkout);
-                            }
-                          }}
-                          disabled={exerciseIndex === selectedWorkout.exercises.length - 1}
-                          className="p-1 rounded hover:bg-gray-700 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-                        >
-                          <ChevronDown size={16} />
-                        </button>
-                        <button
-                          onClick={() => {
-                            const updatedWorkout = {
-                              ...selectedWorkout,
-                              exercises: selectedWorkout.exercises.filter((_, index) => index !== exerciseIndex)
-                            };
-                            setSelectedWorkout(updatedWorkout);
-                          }}
-                          className="text-red-400 hover:text-red-300 transition-colors"
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
+                      <Dna className="absolute -right-12 -bottom-12 w-56 h-56 text-punk-black opacity-10 rotate-12" />
                     </div>
 
-                    <div className="space-y-2">
-                      {workoutExercise.sets.map((set, setIndex) => (
-                        <div key={setIndex} className="flex items-center space-x-2">
-                          <span className="text-gray-400 text-sm w-8">Set {setIndex + 1}</span>
-                          <input
-                            type="number"
-                            value={set.reps}
-                            onChange={(e) => {
-                              const updatedWorkout = { ...selectedWorkout };
-                              updatedWorkout.exercises[exerciseIndex].sets[setIndex].reps = parseInt(e.target.value) || 0;
-                              setSelectedWorkout(updatedWorkout);
-                            }}
-                            className="minimal-input w-20 text-center"
-                            min="0"
-                            max="999"
-                          />
-                          <span className="text-gray-400 text-sm">reps</span>
-                          <input
-                            type="number"
-                            value={set.weight}
-                            onChange={(e) => {
-                              const updatedWorkout = { ...selectedWorkout };
-                              updatedWorkout.exercises[exerciseIndex].sets[setIndex].weight = parseFloat(e.target.value) || 0;
-                              setSelectedWorkout(updatedWorkout);
-                            }}
-                            className="minimal-input w-24 text-center"
-                            min="0"
-                            max="999"
-                            step="0.5"
-                          />
-                          <span className="text-gray-400 text-sm">kg</span>
-                          <input
-                            type="checkbox"
-                            checked={set.completed}
-                            onChange={(e) => {
-                              const updatedWorkout = { ...selectedWorkout };
-                              updatedWorkout.exercises[exerciseIndex].sets[setIndex].completed = e.target.checked;
-                              setSelectedWorkout(updatedWorkout);
-                            }}
-                            className="w-4 h-4 text-white bg-gray-700 border-gray-600 rounded focus:ring-white"
-                          />
-                          <span className="text-gray-400 text-sm">completed</span>
-                        </div>
-                      ))}
-                    </div>
-
-                    <div className="flex items-center space-x-2 mt-3">
-                      <button
-                        onClick={() => {
-                          const updatedWorkout = { ...selectedWorkout };
-                          updatedWorkout.exercises[exerciseIndex].sets.push({
-                            reps: 0,
-                            weight: 0,
-                            completed: false
-                          });
-                          setSelectedWorkout(updatedWorkout);
-                        }}
-                        className="px-3 py-1 bg-white/10 border border-white/20 rounded text-xs text-white hover:bg-white/20 transition-colors"
-                      >
-                        + Add Set
-                      </button>
-                      {workoutExercise.sets.length > 1 && (
-                        <button
-                          onClick={() => {
-                            const updatedWorkout = { ...selectedWorkout };
-                            updatedWorkout.exercises[exerciseIndex].sets.pop();
-                            setSelectedWorkout(updatedWorkout);
-                          }}
-                          className="px-3 py-1 bg-red-600/20 border border-red-600/50 rounded text-xs text-red-400 hover:bg-red-600/30 transition-colors"
-                        >
-                          - Remove Set
-                        </button>
-                      )}
+                    <div className="punk-card bg-punk-dark border-punk-yellow shadow-white">
+                      <h3 className="text-[10px] font-black text-punk-yellow mb-5 border-b border-punk-yellow/30 w-full pb-1 tracking-[4px]">BIO_METRICS</h3>
+                      <div className="space-y-5 font-mono">
+                        <StatRow label="SESSIONS" value={stats.totalWorkouts} unit="CT" />
+                        <StatRow label="MASS_MOVED" value={stats.totalVolume} unit="KG" />
+                        <StatRow label="INTENSITY" value={stats.totalReps} unit="RP" />
+                      </div>
                     </div>
                   </div>
-                ))
+
+                  {/* EVOLUTION TRACKER */}
+                  <div className="punk-card border-dashed border-punk-white/40 shadow-none">
+                    <h3 className="text-xs font-black mb-6 flex items-center gap-2 tracking-widest underline underline-offset-8 decoration-punk-yellow">
+                      <TrendingUp size={14} className="text-punk-yellow" />
+                      EVOLUTION_XP_STATUS
+                    </h3>
+                    <LevelProgress />
+                  </div>
+
+                  {/* QUICK ACCESS GRID */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                    <QuickAction icon={<BookOpen />} label="INDEX" onClick={() => setShowExerciseLibrary(true)} />
+                    <QuickAction icon={<Target />} label="TARGETS" onClick={() => setCurrentView('challenges')} />
+                    <QuickAction icon={<Clock />} label="LOGS" onClick={() => setCurrentView('history')} />
+                    <QuickAction icon={<UserIcon />} label="USER_ID" onClick={() => { }} />
+                  </div>
+                </div>
               )}
 
+              {currentView === 'history' && (
+                <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
+                  <header className="flex justify-between items-end border-b-4 border-punk-white pb-3">
+                    <h2 className="text-4xl font-black uppercase italic tracking-tighter">PHASE_<span className="text-punk-yellow">HISTORY</span></h2>
+                    <span className="text-[10px] font-mono opacity-50 block mb-1">TOTAL_RECORDS: {workoutHistory.length}</span>
+                  </header>
+                  <div className="grid grid-cols-1 gap-4">
+                    {workoutHistory.map((w) => (
+                      <HistoryCard key={w.id} workout={w} onDelete={() => deleteWorkout(w.id)} />
+                    ))}
+                    {workoutHistory.length === 0 && (
+                      <div className="text-center py-24 border-4 border-dashed border-punk-white/10">
+                        <p className="opacity-20 uppercase font-black tracking-[10px]">MEMORY_BANK_EMPTY</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {currentView === 'achievements' && <Achievements />}
+              {currentView === 'challenges' && <ChallengeCreator />}
             </div>
+          )}
+        </AnimatePresence>
+      </main>
 
-            <div className="flex justify-end space-x-3 mt-6">
-              <Button
-                variant="ghost"
-                onClick={() => {
-                  setShowEditModal(false);
-                  setShowEditExerciseLibrary(false);
-                  setSelectedWorkout(null);
-                }}
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={() => {
-                  if (selectedWorkout) {
-                    updateWorkout(selectedWorkout.id, selectedWorkout);
-                    setShowEditModal(false);
-                    setShowEditExerciseLibrary(false);
-                    setSelectedWorkout(null);
-                  }
-                }}
-              >
-                Save Changes
-              </Button>
-            </div>
-          </motion.div>
-        </motion.div>
-      )}
+      {/* TACTICAL DRAWER: EXERCISE LIBRARY */}
+      <AnimatePresence>
+        {showExerciseLibrary && (
+          <>
+            <motion.div
+              className="fixed inset-0 bg-punk-black/95 backdrop-blur-md z-[60]"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowExerciseLibrary(false)}
+            />
+            <motion.div
+              className="fixed right-0 top-0 bottom-0 w-full sm:w-[500px] bg-punk-dark border-l-4 border-punk-white z-[70] p-8 shadow-[-20px_0_50px_rgba(0,0,0,0.8)]"
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: 'spring', damping: 30, stiffness: 200 }}
+            >
+              <div className="flex justify-between items-center mb-10 border-b-2 border-punk-yellow/50 pb-5">
+                <h2 className="text-3xl italic tracking-tighter">EXERCISE_<span className="text-punk-yellow">SCHEMA</span></h2>
+                <Button variant="ghost" size="sm" onClick={() => setShowExerciseLibrary(false)} className="p-1 border-none hover:text-punk-yellow">
+                  <X size={32} />
+                </Button>
+              </div>
+              <div className="overflow-y-auto h-[calc(100vh-160px)] pr-2 custom-scrollbar">
+                <ExerciseLibrary />
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
-      {/* Achievements View */}
-      {!currentWorkout && currentView === 'achievements' && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-        >
-          <Achievements />
-        </motion.div>
-      )}
-
-      {/* Challenges View */}
-      {!currentWorkout && currentView === 'challenges' && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-        >
-          <ChallengeCreator />
-        </motion.div>
-      )}
-
-      {/* Achievement Modal */}
       <AchievementModal
         achievement={recentAchievement}
         isVisible={showAchievementModal}
@@ -674,5 +222,64 @@ const App: React.FC = () => {
     </div>
   );
 };
+
+// PUNK COMPONENT: NAV ICON
+const NavIcon = ({ icon, label, active, onClick }: { icon: any, label: string, active: boolean, onClick: () => void }) => (
+  <button
+    onClick={onClick}
+    className={`flex flex-col items-center justify-center transition-all group ${active ? 'text-punk-yellow' : 'text-punk-white opacity-40 hover:opacity-100'}`}
+  >
+    <div className={`p-2 transition-all duration-75 ${active ? 'bg-punk-yellow text-punk-black shadow-white -translate-y-1' : 'group-hover:translate-x-[-2px] group-hover:translate-y-[-2px] group-hover:shadow-[2px_2px_0_white] group-hover:border-2 group-hover:border-punk-white'}`}>
+      {React.cloneElement(icon, { size: 24 })}
+    </div>
+    <span className="text-[9px] font-black mt-2 uppercase tracking-widest">{label}</span>
+  </button>
+);
+
+// PUNK COMPONENT: STAT ROW
+const StatRow = ({ label, value, unit }: { label: string, value: any, unit: string }) => (
+  <div className="flex justify-between items-end border-b-2 border-punk-white/5 pb-2">
+    <span className="text-[9px] uppercase font-black opacity-40 tracking-widest">{label}</span>
+    <div className="text-right">
+      <span className="text-2xl font-black italic mr-1 tabular-nums">{value}</span>
+      <span className="text-[8px] opacity-30 uppercase font-black">{unit}</span>
+    </div>
+  </div>
+);
+
+// PUNK COMPONENT: QUICK ACTION
+const QuickAction = ({ icon, label, onClick }: { icon: any, label: string, onClick: () => void }) => (
+  <button
+    onClick={onClick}
+    className="punk-card flex flex-col items-center justify-center aspect-square hover:bg-punk-yellow hover:text-punk-black transition-all group border-punk-white/10 shadow-none hover:shadow-white active:scale-95"
+  >
+    <div className="mb-3 group-hover:scale-110 transition-transform">{React.cloneElement(icon, { size: 28 })}</div>
+    <span className="text-[10px] font-black uppercase tracking-widest italic">{label}</span>
+  </button>
+);
+
+// PUNK COMPONENT: HISTORY CARD
+const HistoryCard = ({ workout, onDelete }: { workout: Workout, onDelete: () => void }) => (
+  <div className="punk-card bg-punk-gray/30 border-punk-white/10 hover:border-punk-yellow hover:shadow-yellow transition-all flex justify-between items-center group">
+    <div className="flex items-center gap-5">
+      <div className="w-14 h-14 bg-punk-black flex flex-col items-center justify-center border-2 border-punk-white font-black leading-none group-hover:border-punk-yellow transition-colors">
+        <span className="text-[10px] opacity-40 mb-1">{workout.startTime ? new Date(workout.startTime).toLocaleDateString('en-US', { month: 'short' }).toUpperCase() : '??'}</span>
+        <span className="text-lg italic">{workout.startTime ? new Date(workout.startTime).getDate() : '??'}</span>
+      </div>
+      <div>
+        <h4 className="text-xl italic leading-none group-hover:text-punk-yellow transition-colors mb-2 uppercase font-black">{workout.name}</h4>
+        <div className="flex gap-4 text-[9px] font-mono tracking-widest">
+          <span className="flex items-center gap-1"><BookOpen size={10} /> {workout.exercises.length}_EXR</span>
+          <span className="flex items-center gap-1"><Clock size={10} /> {workout.duration || 0}_MIN</span>
+        </div>
+      </div>
+    </div>
+    <div className="flex gap-3">
+      <Button variant="ghost" size="sm" onClick={onDelete} className="p-2 border-none text-red-500 hover:bg-red-500/10 hover:text-red-500">
+        <Trash2 size={20} />
+      </Button>
+    </div>
+  </div>
+);
 
 export default App;

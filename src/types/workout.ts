@@ -3,7 +3,7 @@ export interface Exercise {
   name: string;
   category: ExerciseCategory;
   muscleGroups: MuscleGroup[];
-  instructions?: string;
+  instructions?: string[];
   icon?: string;
 }
 
@@ -38,6 +38,7 @@ export interface WorkoutStats {
   totalExercises: number;
   totalSets: number;
   totalReps: number;
+  totalVolume: number;
   totalWeight: number;
   streak: number;
   lastWorkoutDate?: Date;
@@ -74,10 +75,35 @@ export type WorkoutMood =
   | 'focused'
   | 'relaxed';
 
+export interface Achievement {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  unlocked: boolean;
+  unlockedAt?: Date;
+  xpReward: number;
+  category: 'workout' | 'streak' | 'strength' | 'consistency' | 'special';
+  requirement: {
+    type: 'totalWorkouts' | 'streak' | 'totalReps' | 'totalWeight' | 'custom';
+    value: number;
+  };
+}
+
+export interface Challenge {
+  id: string;
+  title: string;
+  description: string;
+  type: 'workouts' | 'volume' | 'reps';
+  targetValue: number;
+  currentValue: number;
+  completed: boolean;
+  xpReward: number;
+}
+
 export interface TimerState {
-  isActive: boolean;
-  isPaused: boolean;
-  time: number;
+  isRunning: boolean;
+  timeLeft: number;
   duration: number;
   type: 'work' | 'rest' | 'prepare';
 }

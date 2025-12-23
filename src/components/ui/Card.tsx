@@ -4,32 +4,20 @@ import { motion } from 'framer-motion';
 interface CardProps {
   children: React.ReactNode;
   className?: string;
-  hover?: boolean;
-  glow?: boolean;
   onClick?: () => void;
+  hover?: boolean;
 }
 
-const Card: React.FC<CardProps> = ({
-  children,
-  className = '',
-  hover = true,
-  glow = false,
-  onClick,
-}) => {
-  const baseClasses = 'bg-dark-secondary/50 border border-gray-800/50 rounded-lg p-4 relative overflow-hidden';
-  const hoverClasses = hover ? 'hover:border-white/30 transition-all duration-200' : '';
-  const glowClasses = glow ? 'shadow-sm' : '';
-  const interactiveClasses = onClick ? 'cursor-pointer' : '';
-
-  const classes = `${baseClasses} ${hoverClasses} ${glowClasses} ${interactiveClasses} ${className}`;
-
+const Card: React.FC<CardProps> = ({ children, className = '', onClick, hover = false }) => {
   return (
     <motion.div
-      whileHover={hover && !onClick ? { y: -1 } : undefined}
-      whileTap={onClick ? { scale: 0.98 } : undefined}
-      className={classes}
+      whileHover={hover || onClick ? { scale: 1.01 } : undefined}
+      whileTap={onClick ? { scale: 0.99 } : undefined}
+      className={`punk-card ${onClick ? 'cursor-pointer' : ''} ${className}`}
       onClick={onClick}
     >
+      {/* Decorative corner element */}
+      <div className="absolute top-0 right-0 w-8 h-8 bg-punk-yellow/10 -rotate-45 translate-x-4 -translate-y-4" />
       {children}
     </motion.div>
   );
@@ -37,45 +25,34 @@ const Card: React.FC<CardProps> = ({
 
 export const CardHeader: React.FC<{ children: React.ReactNode; className?: string }> = ({
   children,
-  className = '',
+  className = ''
 }) => (
-  <div className={`flex items-center justify-between mb-3 ${className}`}>
+  <div className={`mb-4 border-b-2 border-punk-white/10 pb-2 ${className}`}>
     {children}
   </div>
 );
 
 export const CardTitle: React.FC<{ children: React.ReactNode; className?: string }> = ({
   children,
-  className = '',
+  className = ''
 }) => (
-  <h3 className={`text-lg font-medium text-white ${className}`}>
+  <h3 className={`text-xl font-black italic tracking-tighter uppercase ${className}`}>
     {children}
   </h3>
 );
 
-export const CardDescription: React.FC<{ children: React.ReactNode; className?: string }> = ({
-  children,
-  className = '',
-}) => (
-  <p className={`text-gray-400 text-sm ${className}`}>
-    {children}
-  </p>
-);
-
 export const CardContent: React.FC<{ children: React.ReactNode; className?: string }> = ({
   children,
-  className = '',
+  className = ''
 }) => (
-  <div className={`${className}`}>
-    {children}
-  </div>
+  <div className={className}>{children}</div>
 );
 
 export const CardFooter: React.FC<{ children: React.ReactNode; className?: string }> = ({
   children,
-  className = '',
+  className = ''
 }) => (
-  <div className={`flex items-center justify-between mt-4 pt-3 border-t border-gray-800 ${className}`}>
+  <div className={`mt-4 pt-4 border-t-2 border-punk-white/10 ${className}`}>
     {children}
   </div>
 );
