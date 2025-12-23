@@ -6,7 +6,7 @@ services:
       dockerfile: Dockerfile
     restart: unless-stopped
     networks:
-      - shared-caddy
+      - workout-network
 
   api:
     container_name: workout-api
@@ -24,8 +24,7 @@ services:
         condition: service_healthy
     restart: unless-stopped
     networks:
-      - shared-caddy
-      - workout-internal
+      - workout-network
 
   db:
     container_name: workout-db
@@ -43,17 +42,31 @@ services:
       retries: 5
     restart: unless-stopped
     networks:
-      - workout-internal
+      - workout-network
+
+  caddy:
+    container_name: workout-caddy
+    image: caddy:2-alpine
+    ports:
+      - "3080:80"
+      - "3443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - frontend
+      - api
+    restart: unless-stopped
+    networks:
+      - workout-network
 
 volumes:
   postgres_data:
+  caddy_data:
+  caddy_config:
 
 
 networks:
-  # Connect to froggame's Caddy network
-  shared-caddy:
-    external: true
-    name: froggame_default
-  # Internal network for DB
-  workout-internal:
+  workout-network:
     driver: bridge

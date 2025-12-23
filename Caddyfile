@@ -1,15 +1,10 @@
-workout.muazaoski.online {
-    reverse_proxy frontend:80
-    
-    # Enable compression
-    encode gzip
-    
+:3080, :3443 {
     # Handle API requests
     handle /api/* {
         reverse_proxy api:3001
     }
     
-    # SPA fallback for frontend routing
+    # Handle frontend
     handle {
         reverse_proxy frontend:80
     }
