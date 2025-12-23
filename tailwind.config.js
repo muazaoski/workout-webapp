@@ -15,13 +15,13 @@ export default {
           border: "rgba(255, 255, 255, 0.1)",
         },
         primary: {
-          DEFAULT: "#6366f1",
-          foreground: "#ffffff",
-          soft: "rgba(99, 102, 241, 0.15)",
+          DEFAULT: "#facc15", // Yellow-400
+          foreground: "#000000",
+          soft: "rgba(250, 204, 21, 0.15)",
         },
         accent: {
-          DEFAULT: "#06b6d4",
-          foreground: "#ffffff",
+          DEFAULT: "#fbbf24", // Amber-400
+          foreground: "#000000",
         },
         muted: {
           DEFAULT: "#1f1f1f",

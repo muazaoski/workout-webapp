@@ -18,7 +18,8 @@ const ActiveWorkout: React.FC = () => {
     previousExercise,
     finishWorkout,
     removeExerciseFromWorkout,
-    stats
+    stats,
+    startNewWorkout
   } = useWorkoutStore();
 
   const [reps, setReps] = useState('');
@@ -27,7 +28,31 @@ const ActiveWorkout: React.FC = () => {
   if (!currentWorkout) return null;
 
   const currentExercise = currentWorkout.exercises[activeExerciseIndex];
-  const currentSet = currentExercise?.sets[activeSetIndex];
+
+  if (!currentExercise) {
+    return (
+      <div className="max-w-5xl mx-auto space-y-10 py-20 text-center animate-in fade-in zoom-in-95 duration-500">
+        <div className="relative inline-block">
+          <Dumbbell size={80} className="mx-auto text-primary/20 mb-6 animate-pulse" />
+          <div className="absolute top-0 right-0 h-4 w-4 bg-primary rounded-full animate-ping" />
+        </div>
+        <h2 className="text-4xl font-extrabold tracking-tight">System Idle</h2>
+        <p className="text-muted-foreground max-w-sm mx-auto mt-4 text-lg">
+          Workout session initialized with zero movements. Please select an exercise from the database.
+        </p>
+        <div className="flex flex-col sm:flex-row justify-center gap-4 mt-12 px-6">
+          <Button size="lg" variant="secondary" onClick={() => { }} className="rounded-3xl border-dashed">
+            <Dumbbell size={18} className="mr-2" /> Add Selection
+          </Button>
+          <Button variant="danger" size="lg" onClick={finishWorkout} className="rounded-3xl">
+            Terminate Session
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  const currentSet = currentExercise.sets?.[activeSetIndex];
 
   const handleCompleteSet = () => {
     if (currentExercise && currentSet && reps) {
@@ -37,7 +62,7 @@ const ActiveWorkout: React.FC = () => {
         completed: true,
       });
 
-      if (activeSetIndex < currentExercise.sets.length - 1) {
+      if (activeSetIndex < (currentExercise.sets?.length || 0) - 1) {
         setReps('');
         setWeight('');
       } else {
@@ -50,8 +75,8 @@ const ActiveWorkout: React.FC = () => {
     }
   };
 
-  const completedSets = currentExercise?.sets.filter(s => s.completed).length || 0;
-  const totalSets = currentExercise?.sets.length || 0;
+  const completedSets = currentExercise.sets?.filter(s => s.completed).length || 0;
+  const totalSets = currentExercise.sets?.length || 0;
   const progress = totalSets > 0 ? (completedSets / totalSets) * 100 : 0;
 
   return (
@@ -59,30 +84,30 @@ const ActiveWorkout: React.FC = () => {
       {/* HEADER SECTION */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 pb-10 border-b border-white/5">
         <div className="flex items-start gap-6">
-          <div className="h-20 w-20 rounded-[2.5rem] bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-5xl shadow-2xl shadow-indigo-500/10">
-            {currentExercise?.exercise.icon || '🏋️'}
+          <div className="h-24 w-24 rounded-[2.5rem] bg-primary/10 border border-primary/20 flex items-center justify-center text-6xl shadow-2xl shadow-primary/10">
+            {currentExercise.exercise.icon || '🏋️'}
           </div>
           <div>
             <div className="flex items-center gap-2 mb-2">
-              <span className="h-2 w-2 rounded-full bg-indigo-500 animate-pulse" />
-              <span className="text-[10px] font-black uppercase tracking-[0.3em] text-indigo-400">Current Objective</span>
+              <span className="h-2 w-2 rounded-full bg-primary animate-pulse shadow-[0_0_8px_rgba(250,204,21,0.8)]" />
+              <span className="text-[10px] font-black uppercase tracking-[0.3em] text-primary">Live Monitoring</span>
             </div>
-            <h2 className="text-5xl font-extrabold tracking-tighter">
-              {currentExercise?.exercise.name}
+            <h2 className="text-5xl font-black tracking-tighter uppercase italic">
+              {currentExercise.exercise.name}
             </h2>
             <p className="text-muted-foreground mt-2 text-lg font-medium opacity-60">
-              Targeting {currentExercise?.exercise.muscleGroups.join(' & ')}
+              Targeting {currentExercise.exercise.muscleGroups.join(' & ')}
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-4 bg-white/5 p-2 rounded-3xl border border-white/5">
+        <div className="flex items-center gap-4 bg-card p-2 rounded-3xl border border-white/5 glass-card shadow-xl">
           <Button variant="ghost" size="icon" onClick={previousExercise} disabled={activeExerciseIndex === 0} className="rounded-2xl h-12 w-12">
             <ChevronLeft size={24} />
           </Button>
           <div className="px-6 py-2 flex flex-col items-center">
-            <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Exercise</span>
-            <span className="text-xl font-bold font-mono">{activeExerciseIndex + 1} / {currentWorkout.exercises.length}</span>
+            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none mb-1">Movement</span>
+            <span className="text-2xl font-black font-mono leading-none">{activeExerciseIndex + 1} / {currentWorkout.exercises.length}</span>
           </div>
           <Button variant="ghost" size="icon" onClick={nextExercise} disabled={activeExerciseIndex === currentWorkout.exercises.length - 1} className="rounded-2xl h-12 w-12">
             <ChevronRight size={24} />
@@ -93,9 +118,9 @@ const ActiveWorkout: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
         {/* PERFORMANCE PANEL */}
         <div className="lg:col-span-2 space-y-10">
-          <Card className="!p-10 relative overflow-hidden group border-indigo-500/20 glow-indigo">
-            <div className="absolute top-0 right-0 p-8 h-40 w-40 opacity-5 group-hover:opacity-10 transition-opacity">
-              <Dumbbell size={160} className="-rotate-12" />
+          <Card className="!p-10 relative overflow-hidden group border-primary/20 glow-primary !bg-black/40">
+            <div className="absolute top-0 right-0 p-8 h-48 w-48 opacity-5 group-hover:opacity-10 transition-opacity pointer-events-none">
+              <Dumbbell size={180} className="-rotate-12 text-primary" />
             </div>
 
             <AnimatePresence mode="wait">
@@ -104,17 +129,17 @@ const ActiveWorkout: React.FC = () => {
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
-                className="space-y-10 relative z-10"
+                className="space-y-12 relative z-10"
               >
                 <div className="flex items-center justify-between">
-                  <h3 className="text-3xl font-extrabold tracking-tight">Set {activeSetIndex + 1}</h3>
+                  <h3 className="text-4xl font-black italic tracking-tighter text-white">SET_0{activeSetIndex + 1}</h3>
                   <div className="flex gap-2">
-                    {currentExercise.sets.map((s, i) => (
+                    {currentExercise.sets?.map((s, i) => (
                       <div
                         key={i}
-                        className={`h-2.5 w-10 rounded-full transition-all duration-500 ${i === activeSetIndex
-                          ? 'bg-indigo-500 shadow-lg shadow-indigo-500/40 w-16'
-                          : i < activeSetIndex ? 'bg-indigo-500/40' : 'bg-white/5'
+                        className={`h-2 w-12 rounded-full transition-all duration-500 ${i === activeSetIndex
+                          ? 'bg-primary shadow-[0_0_15px_rgba(250,204,21,0.5)] w-20'
+                          : i < activeSetIndex ? 'bg-primary/40' : 'bg-white/5'
                           }`}
                       />
                     ))}
@@ -123,21 +148,21 @@ const ActiveWorkout: React.FC = () => {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-10">
                   <Input
-                    label="Repetitions"
+                    label="Volume (Reps)"
                     type="number"
                     placeholder="0"
                     value={reps}
                     onChange={e => setReps(e.target.value)}
                     autoFocus
-                    className="text-4xl font-bold h-24 rounded-3xl bg-white/5 border-transparent focus:bg-white/10"
+                    className="text-5xl font-black h-28 rounded-3xl bg-white/5 border-transparent focus:bg-primary/10 focus:border-primary/30 transition-all"
                   />
                   <Input
-                    label="Weight (kg)"
+                    label="Load (kg)"
                     type="number"
                     placeholder="0.0"
                     value={weight}
                     onChange={e => setWeight(e.target.value)}
-                    className="text-center text-4xl font-bold h-24 rounded-3xl bg-white/5 border-transparent focus:bg-white/10"
+                    className="text-center text-5xl font-black h-28 rounded-3xl bg-white/5 border-transparent focus:bg-primary/10 focus:border-primary/30 transition-all"
                   />
                 </div>
 
@@ -145,44 +170,45 @@ const ActiveWorkout: React.FC = () => {
                   variant="primary"
                   size="lg"
                   fullWidth
-                  disabled={!reps || currentSet?.completed}
+                  disabled={!reps || (currentSet && currentSet.completed)}
                   onClick={handleCompleteSet}
-                  className="h-20 text-2xl font-bold rounded-[2rem] shadow-2xl shadow-indigo-500/30"
+                  className="h-24 text-3xl font-black italic tracking-tighter rounded-[2.5rem] shadow-2xl shadow-primary/40 glow-primary active:scale-95 transition-transform"
                 >
-                  {currentSet?.completed ? 'Log Confirmed' : 'Commit Performance'}
+                  {currentSet?.completed ? 'DATA_SYNCED' : 'COMMIT_LOG'}
                 </Button>
               </motion.div>
             </AnimatePresence>
           </Card>
 
           <div className="grid grid-cols-2 gap-6">
-            <Card className="!p-8 text-center flex flex-col items-center justify-center">
-              <Activity size={32} className="text-accent mb-4" />
-              <p className="text-3xl font-bold font-mono tabular-nums">{stats.totalReps + (parseInt(reps) || 0)}</p>
-              <p className="text-xs text-muted-foreground uppercase font-black tracking-widest mt-2">Cumulative Reps</p>
+            <Card className="!p-8 text-center flex flex-col items-center justify-center bg-black/40 border-white/5">
+              <Activity size={32} className="text-primary mb-4" />
+              <p className="text-4xl font-black font-mono tabular-nums leading-none mb-1">{stats.totalReps + (parseInt(reps) || 0)}</p>
+              <p className="text-[10px] text-muted-foreground uppercase font-black tracking-[0.2em] opacity-40">Cumulative_Reps</p>
             </Card>
-            <Card className="!p-8 text-center flex flex-col items-center justify-center">
-              <Zap size={32} className="text-amber-400 mb-4" />
-              <p className="text-3xl font-bold font-mono tabular-nums">{(parseFloat(weight) || 0).toFixed(1)}</p>
-              <p className="text-xs text-muted-foreground uppercase font-black tracking-widest mt-2">Active Load (kg)</p>
+            <Card className="!p-8 text-center flex flex-col items-center justify-center bg-black/40 border-white/5">
+              <Zap size={32} className="text-primary mb-4" />
+              <p className="text-4xl font-black font-mono tabular-nums leading-none mb-1">{(parseFloat(weight) || 0).toFixed(1)}</p>
+              <p className="text-[10px] text-muted-foreground uppercase font-black tracking-[0.2em] opacity-40">Active_Threshold</p>
             </Card>
           </div>
         </div>
 
         {/* MONITOR AREA */}
         <div className="space-y-8">
-          <Card title="Volume Progress" description="Real-time set completion tracking." className="text-center">
+          <Card title="Volume Matrix" description="Real-time completion telemetry." className="text-center bg-black/40">
             <div className="flex justify-center py-6">
-              <ProgressRing progress={progress} size={180} strokeWidth={12} color="#6366f1">
+              <ProgressRing progress={progress} size={200} strokeWidth={15} color="#facc15">
                 <div className="flex flex-col items-center">
-                  <span className="text-5xl font-black italic tracking-tighter leading-none">{completedSets}</span>
-                  <span className="text-[10px] text-muted-foreground uppercase font-black tracking-widest mt-2">of {totalSets} sets</span>
+                  <span className="text-6xl font-black italic tracking-tighter leading-none text-white drop-shadow-[0_0_10px_rgba(250,204,21,0.3)]">{completedSets}</span>
+                  <div className="h-px w-10 bg-primary/30 my-3" />
+                  <span className="text-[11px] text-muted-foreground uppercase font-black tracking-[0.2em]">of {totalSets} sets</span>
                 </div>
               </ProgressRing>
             </div>
           </Card>
 
-          <Card title="Rest Recovery" description="Optimal restoration between sets.">
+          <Card title="Recovery Module" description="Neural restoration interval." className="bg-black/40">
             <Timer />
           </Card>
         </div>
@@ -195,17 +221,17 @@ const ActiveWorkout: React.FC = () => {
           size="lg"
           fullWidth
           onClick={finishWorkout}
-          className="md:order-2 h-24 text-3xl font-black italic tracking-tighter rounded-[2.5rem] shadow-2xl shadow-indigo-500/40 glow-indigo"
+          className="md:order-2 h-28 text-4xl font-black italic tracking-tighter rounded-[3rem] shadow-2xl shadow-primary/40 glow-primary"
         >
-          Finalize Session
+          COMPLETE_SESSION
         </Button>
         <Button
           variant="danger"
           size="lg"
           onClick={() => { }}
-          className="md:order-1 h-24 text-lg font-bold rounded-[2.5rem] border-none bg-red-500/5 hover:bg-red-500/10 text-red-500 px-10"
+          className="md:order-1 h-28 text-lg font-black uppercase tracking-widest rounded-[3rem] border-none bg-red-500/5 hover:bg-red-500/10 text-red-500 px-12 transition-all"
         >
-          Terminate Session
+          ABORT_PROTOCOL
         </Button>
       </div>
     </div>

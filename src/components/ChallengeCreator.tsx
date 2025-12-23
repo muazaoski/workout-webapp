@@ -1,157 +1,157 @@
 import React, { useState } from 'react';
 import { useWorkoutStore } from '../stores/workoutStore';
-import { Plus, Target, CheckCircle2, Trash2, ArrowRight, Zap, Target as TargetIcon, Activity } from 'lucide-react';
+import { Target, Plus, CheckCircle2, Zap, Trash2, Trophy, Clock, Flame } from 'lucide-react';
 import Button from './ui/Button';
 import Input from './ui/Input';
 import Card from './ui/Card';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import type { Challenge } from '../types/workout';
 
 const ChallengeCreator: React.FC = () => {
-  const { challenges, addChallenge, toggleChallenge, deleteChallenge } = useWorkoutStore();
-  const [showAdd, setShowAdd] = useState(false);
+  const { challenges, addChallenge, deleteChallenge, toggleChallenge } = useWorkoutStore();
   const [title, setTitle] = useState('');
-  const [targetValue, setTargetValue] = useState('');
   const [type, setType] = useState<Challenge['type']>('workouts');
+  const [targetValue, setTargetValue] = useState('');
+  const [showCreator, setShowCreator] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleCreate = (e: React.FormEvent) => {
     e.preventDefault();
     if (title && targetValue) {
       addChallenge({
         id: Date.now().toString(),
         title,
-        description: '',
+        description: `Goal: ${targetValue} ${type}`,
         type,
         targetValue: parseInt(targetValue),
         currentValue: 0,
         completed: false,
-        xpReward: Math.round(parseInt(targetValue) * 10),
+        xpReward: 200,
       });
       setTitle('');
       setTargetValue('');
-      setShowAdd(false);
+      setShowCreator(false);
     }
   };
 
   return (
-    <div className="space-y-12 fade-in pb-20">
-      <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 px-1">
+    <div className="space-y-12 fade-in">
+      <header className="flex flex-col md:flex-row md:items-end justify-between gap-8 px-1">
         <div>
-          <div className="flex items-center gap-2 mb-2">
-            <TargetIcon size={16} className="text-accent animate-pulse" />
-            <span className="text-xs font-black uppercase tracking-[0.3em] text-accent">Active Missions</span>
+          <div className="flex items-center gap-2 mb-3">
+            <Target size={16} className="text-primary" />
+            <span className="text-[10px] font-black uppercase tracking-[0.5em] text-primary">Strategic_Ops</span>
           </div>
-          <h2 className="text-4xl font-extrabold tracking-tight">Objectives Matrix</h2>
-          <p className="text-muted-foreground font-medium mt-1">Set targets, break records, earn XP.</p>
+          <h2 className="text-5xl font-black tracking-tighter uppercase italic">Mission_Center</h2>
+          <p className="text-muted-foreground font-medium mt-3 text-lg opacity-60">Establish and monitors primary training objectives.</p>
         </div>
-        {!showAdd && (
-          <Button onClick={() => setShowAdd(true)} size="lg" className="rounded-full px-8 bg-accent shadow-xl shadow-accent/20">
-            <Plus size={20} className="mr-2" /> New Objective
-          </Button>
-        )}
       </header>
 
-      {/* ADD MODULE */}
-      <AnimatePresence>
-        {showAdd && (
-          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}>
-            <Card title="Initialize Target" description="Define the parameters for your next evolution phase.">
-              <form onSubmit={handleSubmit} className="space-y-8 mt-6">
-                <Input label="Mission Designation" placeholder="E.g. Operation 500" value={title} onChange={e => setTitle(e.target.value)} required />
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  <Input label="Target Value" type="number" placeholder="500" value={targetValue} onChange={e => setTargetValue(e.target.value)} required />
-                  <div className="space-y-3">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Metric Type</label>
-                    <div className="flex gap-2 p-1 bg-white/5 rounded-2xl border border-white/5">
-                      {(['workouts', 'volume'] as const).map(t => (
-                        <button
-                          key={t} type="button" onClick={() => setType(t)}
-                          className={`flex-1 py-3 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${type === t
-                              ? 'bg-accent text-white shadow-lg shadow-accent/20'
-                              : 'text-muted-foreground hover:bg-white/5 hover:text-white'
-                            }`}
-                        >
-                          {t}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-                <div className="flex gap-4 justify-end">
-                  <Button variant="ghost" size="lg" onClick={() => setShowAdd(false)}>Cancel</Button>
-                  <Button type="submit" variant="primary" size="lg" className="px-10 bg-accent hover:bg-accent/90">Deploy Target</Button>
-                </div>
-              </form>
-            </Card>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {!showCreator ? (
+        <button
+          onClick={() => setShowCreator(true)}
+          className="w-full py-14 border-2 border-dashed border-white/5 rounded-[3.5rem] flex flex-col items-center justify-center gap-6 text-muted-foreground hover:text-primary hover:border-primary/40 hover:bg-primary/5 transition-all group overflow-hidden relative"
+        >
+          <div className="h-20 w-20 rounded-[1.75rem] bg-white/5 flex items-center justify-center transition-all group-hover:scale-110 group-hover:bg-primary group-hover:text-black shadow-inner">
+            <Plus size={40} />
+          </div>
+          <div className="text-center space-y-2">
+            <span className="font-black uppercase tracking-[0.4em] text-xs italic block">Establish_New_Objective</span>
+            <p className="text-[9px] font-bold opacity-30 tracking-[0.2em] uppercase">Initialize Session Parameters</p>
+          </div>
+        </button>
+      ) : (
+        <Card title="Initialize_Objective" description="Configure mission parameters for neural integration." className="border-primary/20 bg-black/50 p-12">
+          <form onSubmit={handleCreate} className="space-y-10">
+            <Input label="Mission Designation" value={title} onChange={e => setTitle(e.target.value)} placeholder="E.g. Strength Paradigm I" required className="bg-white/5 border-transparent h-16 font-bold uppercase italic" />
 
-      {/* CATALOGUE */}
-      <div className="grid grid-cols-1 gap-6">
-        {challenges.map(challenge => {
-          const progress = (challenge.currentValue / challenge.targetValue) * 100;
-          return (
-            <div
-              key={challenge.id}
-              className={`p-10 bg-white/5 rounded-[3rem] border transition-all hover:bg-white/10 group ${challenge.completed ? 'border-indigo-500/20 opacity-60' : 'border-white/5'
-                }`}
-            >
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-10">
-                <div className="flex items-center gap-6">
-                  <div className={`w-16 h-16 rounded-[2rem] flex items-center justify-center shadow-xl shadow-current opacity-60 ${challenge.completed ? 'bg-indigo-500/10 text-indigo-400' : 'bg-accent/10 text-accent'
-                    }`}>
-                    {challenge.completed ? <CheckCircle2 size={32} /> : <Target size={32} />}
-                  </div>
-                  <div className="space-y-1">
-                    <h3 className="text-2xl font-extrabold tracking-tighter leading-none">{challenge.title}</h3>
-                    <div className="flex items-center gap-3">
-                      <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/50">{challenge.targetValue} {challenge.type}</span>
-                      <span className="h-1 w-1 rounded-full bg-muted-foreground/20" />
-                      <div className="flex items-center gap-1 text-[10px] font-black text-indigo-400 uppercase tracking-widest">
-                        <Zap size={10} />
-                        <span>+{challenge.xpReward} XP Reward</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex-grow max-w-sm space-y-3">
-                  <div className="flex justify-between items-end">
-                    <span className="text-[9px] font-black text-muted-foreground uppercase tracking-[0.3em]">Integrity_Meter</span>
-                    <span className={`text-xl font-bold font-mono ${challenge.completed ? 'text-indigo-400' : 'text-accent'}`}>{Math.round(progress)}%</span>
-                  </div>
-                  <div className="h-3 bg-white/5 rounded-full relative overflow-hidden shadow-inner">
-                    <motion.div
-                      initial={{ width: 0 }}
-                      animate={{ width: `${Math.min(progress, 100)}%` }}
-                      className={`h-full rounded-full shadow-lg ${challenge.completed ? 'bg-indigo-500 shadow-indigo-500/40' : 'bg-accent shadow-accent/40'}`}
-                    />
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3">
-                  {!challenge.completed && (
-                    <Button
-                      variant="outline"
-                      size="md"
-                      onClick={() => toggleChallenge(challenge.id)}
-                      className="rounded-2xl border-white/10 hover:border-accent hover:text-accent font-black tracking-widest text-xs"
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+              <div className="space-y-4">
+                <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/40 ml-1">Metric_Type</label>
+                <div className="grid grid-cols-2 gap-3">
+                  {(['workouts', 'volume'] as const).map(t => (
+                    <button
+                      key={t}
+                      type="button"
+                      onClick={() => setType(t)}
+                      className={`py-5 rounded-2xl text-[10px] font-black uppercase tracking-widest border-2 transition-all ${type === t
+                        ? 'bg-primary border-primary text-black'
+                        : 'bg-white/5 border-transparent text-muted-foreground hover:bg-white/10'
+                        }`}
                     >
-                      SYNC_METRIC
-                    </Button>
-                  )}
-                  <button
-                    onClick={() => deleteChallenge(challenge.id)}
-                    className="h-12 w-12 rounded-2xl bg-red-500/5 text-red-500 hover:bg-red-500 hover:text-white flex items-center justify-center transition-all opacity-0 group-hover:opacity-100"
-                  >
-                    <Trash2 size={20} />
-                  </button>
+                      {t}
+                    </button>
+                  ))}
                 </div>
               </div>
+              <Input label="Target_Threshold" type="number" value={targetValue} onChange={e => setTargetValue(e.target.value)} placeholder="0" required className="bg-white/5 border-transparent h-16 font-bold" />
             </div>
-          );
-        })}
+
+            <div className="flex gap-4 pt-4">
+              <Button type="submit" variant="primary" fullWidth className="h-18 rounded-[1.75rem] text-sm font-black uppercase tracking-[0.2em]">Deploy_Objective</Button>
+              <Button variant="ghost" className="h-18 px-12 rounded-[1.75rem] font-black uppercase tracking-widest text-[10px]" onClick={() => setShowCreator(false)}>Cancel</Button>
+            </div>
+          </form>
+        </Card>
+      )}
+
+      <div className="grid grid-cols-1 gap-8">
+        {challenges.map(challenge => (
+          <Card key={challenge.id} className="relative overflow-hidden group border-white/5 bg-black/40 p-10">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-10">
+              <div className="flex items-center gap-8 flex-1">
+                <div className={`h-20 w-20 rounded-[1.75rem] flex items-center justify-center shadow-inner transition-all duration-700 group-hover:scale-110 ${challenge.completed
+                  ? 'bg-primary text-black shadow-primary/20'
+                  : 'bg-white/5 text-muted-foreground'
+                  }`}>
+                  {challenge.completed ? <CheckCircle2 size={32} /> : <Target size={32} />}
+                </div>
+                <div className="space-y-4 flex-1">
+                  <div className="flex items-center gap-4">
+                    <h4 className={`font-black text-3xl uppercase tracking-tighter italic ${challenge.completed ? 'text-primary' : 'text-white'}`}>
+                      {challenge.title}
+                    </h4>
+                    <div className={`text-[10px] font-black uppercase tracking-[0.3em] px-3 py-1 rounded-lg ${challenge.completed ? 'bg-primary/10 text-primary border border-primary/20' : 'bg-white/5 text-muted-foreground opacity-40'
+                      }`}>
+                      {challenge.completed ? 'COMPLETED' : 'ACTIVE_OPS'}
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-end text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 mb-1">
+                      <span>Target: {challenge.targetValue} {challenge.type}</span>
+                      <span className="text-primary opacity-60 italic">Progress: {Math.round((challenge.currentValue / challenge.targetValue) * 100)}%</span>
+                    </div>
+                    <div className="h-3 bg-white/5 rounded-full overflow-hidden p-0.5 border border-white/5">
+                      <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${Math.min((challenge.currentValue / challenge.targetValue) * 100, 100)}%` }}
+                        className={`h-full rounded-full ${challenge.completed ? 'bg-primary shadow-[0_0_15px_rgba(250,204,21,0.5)]' : 'bg-primary/40'
+                          }`}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-4">
+                <div className="text-right px-8 py-4 bg-white/5 rounded-2xl border border-white/10">
+                  <p className="text-[9px] font-black text-muted-foreground uppercase tracking-widest opacity-40 mb-1">Merit_Reward</p>
+                  <div className="flex items-center gap-2 group cursor-pointer">
+                    <Zap size={14} className="text-primary group-hover:animate-bounce" />
+                    <span className="font-black text-2xl italic tracking-tighter text-white">{challenge.xpReward}</span>
+                    <span className="text-xs font-black text-primary italic opacity-60">XP</span>
+                  </div>
+                </div>
+                <button
+                  onClick={() => deleteChallenge(challenge.id)}
+                  className="h-16 w-16 rounded-[1.25rem] bg-red-500/5 text-red-500/40 hover:bg-red-500 hover:text-white transition-all flex items-center justify-center border border-red-500/10"
+                >
+                  <Trash2 size={24} />
+                </button>
+              </div>
+            </div>
+          </Card>
+        ))}
       </div>
     </div>
   );

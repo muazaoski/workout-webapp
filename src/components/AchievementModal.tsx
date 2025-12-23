@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Trophy, X, Star, Zap, Sparkles } from 'lucide-react';
+import { Trophy, Zap, Star, X } from 'lucide-react';
 import Button from './ui/Button';
 import type { Achievement } from '../types/workout';
 
@@ -21,62 +21,76 @@ const AchievementModal: React.FC<AchievementModalProps> = ({ achievement, isVisi
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="absolute inset-0 bg-background/80 backdrop-blur-xl"
+            className="absolute inset-0 bg-black/90 backdrop-blur-2xl"
             onClick={onClose}
           />
 
           <motion.div
-            initial={{ scale: 0.9, opacity: 0, y: 30 }}
+            initial={{ scale: 0.8, opacity: 0, y: 40 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
-            exit={{ scale: 1.1, opacity: 0, y: -30 }}
-            className="relative w-full max-w-sm glass-card !p-12 text-center overflow-hidden border-indigo-500/30 glow-indigo"
+            exit={{ scale: 0.8, opacity: 0, y: 40 }}
+            transition={{ type: "spring", damping: 25, stiffness: 300 }}
+            className="relative w-full max-w-xl overflow-hidden glass-card !p-0 border-primary/20 bg-background/40 shadow-[0_0_100px_rgba(250,204,21,0.2)]"
           >
-            {/* Ambient Background Rays */}
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full bg-gradient-to-b from-indigo-500/10 to-transparent pointer-events-none" />
+            {/* Top Shine/Glow Effect */}
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[300px] bg-primary/10 blur-[120px] rounded-full pointer-events-none" />
 
-            <div className="relative mb-8 pt-4">
-              <div className="w-24 h-24 bg-indigo-500 rounded-[2.5rem] mx-auto flex items-center justify-center shadow-2xl shadow-indigo-500/50 relative z-10">
-                <Trophy size={48} className="text-white" />
+            <div className="p-12 text-center relative z-10">
+              <div className="flex justify-center mb-10">
+                <div className="relative">
+                  {/* Rotating Rings */}
+                  <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
+                    className="absolute inset-x-[-40px] inset-y-[-40px] border border-dashed border-primary/20 rounded-full"
+                  />
+                  <motion.div
+                    animate={{ rotate: -360 }}
+                    transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
+                    className="absolute inset-x-[-25px] inset-y-[-25px] border-2 border-primary/10 rounded-full"
+                  />
+
+                  <div className="h-44 w-44 rounded-[3.5rem] bg-gradient-to-br from-yellow-400 to-primary text-black flex items-center justify-center text-7xl shadow-[0_0_60px_rgba(250,204,21,0.4)] rotate-12 transition-transform hover:rotate-0 duration-500">
+                    {achievement.icon}
+                  </div>
+                </div>
               </div>
 
-              {/* Outer Ring Animation */}
-              <motion.div
-                animate={{ rotate: 360 }}
-                transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
-                className="absolute top-0 left-1/2 -translate-x-1/2 h-40 w-40 border border-indigo-500/10 rounded-full flex items-center justify-center opacity-40"
+              <div className="space-y-4 mb-10">
+                <div className="flex items-center justify-center gap-3">
+                  <div className="h-px w-10 bg-primary/30" />
+                  <span className="text-[11px] font-black uppercase tracking-[0.5em] text-primary">Mission_Complete</span>
+                  <div className="h-px w-10 bg-primary/30" />
+                </div>
+                <h2 className="text-6xl font-black tracking-tighter uppercase italic">{achievement.name}</h2>
+                <p className="text-muted-foreground text-xl font-medium max-w-md mx-auto opacity-70 leading-relaxed italic">
+                  "{achievement.description}"
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4 mb-12">
+                <div className="p-6 rounded-3xl bg-white/5 border border-white/5 flex flex-col items-center">
+                  <Zap className="text-primary mb-2" size={24} />
+                  <span className="text-2xl font-black italic tracking-tighter">{achievement.xpReward}</span>
+                  <span className="text-[10px] font-black uppercase tracking-widest text-primary opacity-60">Merit_XP</span>
+                </div>
+                <div className="p-6 rounded-3xl bg-white/5 border border-white/5 flex flex-col items-center">
+                  <Star className="text-primary mb-2" size={24} />
+                  <span className="text-2xl font-black italic tracking-tighter">ELITE</span>
+                  <span className="text-[10px] font-black uppercase tracking-widest text-primary opacity-60">Archive_Status</span>
+                </div>
+              </div>
+
+              <Button
+                variant="primary"
+                size="lg"
+                fullWidth
+                onClick={onClose}
+                className="h-20 text-2xl font-black italic tracking-tighter rounded-[2.5rem] shadow-2xl shadow-primary/30 glow-primary"
               >
-                <div className="absolute top-0 h-2 w-2 bg-indigo-500 rounded-full" />
-              </motion.div>
+                INITIALIZE_SYNC
+              </Button>
             </div>
-
-            <div className="space-y-3 mb-10 relative z-10">
-              <div className="flex items-center justify-center gap-2 text-indigo-400">
-                <Sparkles size={14} />
-                <span className="text-[10px] font-black uppercase tracking-[0.4em]">Achievement_Unlocked</span>
-              </div>
-              <h2 className="text-4xl font-black italic tracking-tighter leading-none">{achievement.name}</h2>
-              <p className="text-muted-foreground font-medium text-sm leading-relaxed px-4">
-                "{achievement.description}"
-              </p>
-            </div>
-
-            <div className="mb-10 p-6 bg-white/5 rounded-3xl border border-white/5 relative z-10">
-              <div className="flex items-center justify-center gap-2">
-                <Zap size={20} className="text-indigo-400" />
-                <p className="text-4xl font-black italic text-white">+{achievement.xpReward} XP</p>
-              </div>
-              <p className="text-[9px] text-muted-foreground font-black uppercase tracking-[0.3em] mt-3 opacity-30">Experience_Reward_Issued</p>
-            </div>
-
-            <Button
-              fullWidth
-              variant="primary"
-              size="lg"
-              onClick={onClose}
-              className="rounded-[2rem] h-20 text-xl font-black italic tracking-tighter shadow-2xl shadow-indigo-500/30 glow-indigo relative z-10"
-            >
-              Continue Journey
-            </Button>
           </motion.div>
         </div>
       )}
