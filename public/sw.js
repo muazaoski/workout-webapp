@@ -1,6 +1,6 @@
-const CACHE_NAME = 'workout-counter-v1';
-const STATIC_CACHE = 'workout-static-v1';
-const DYNAMIC_CACHE = 'workout-dynamic-v1';
+const CACHE_NAME = 'iron-grit-v1';
+const STATIC_CACHE = 'iron-grit-static-v1';
+const DYNAMIC_CACHE = 'iron-grit-dynamic-v1';
 
 // Static assets to cache on install
 const STATIC_ASSETS = [
@@ -65,12 +65,27 @@ self.addEventListener('fetch', (event) => {
         return;
     }
 
+    // Navigation requests (index.html) - Network First
+    if (request.mode === 'navigate') {
+        event.respondWith(
+            fetch(request)
+                .then((networkResponse) => {
+                    const clonedResponse = networkResponse.clone();
+                    caches.open(STATIC_CACHE).then((cache) => {
+                        cache.put(request, clonedResponse);
+                    });
+                    return networkResponse;
+                })
+                .catch(() => caches.match('/index.html'))
+        );
+        return;
+    }
+
     // Static assets - stale while revalidate
     event.respondWith(
         caches.match(request).then((cachedResponse) => {
             const fetchPromise = fetch(request)
                 .then((networkResponse) => {
-                    // Cache the new response
                     if (networkResponse.ok) {
                         const clonedResponse = networkResponse.clone();
                         caches.open(DYNAMIC_CACHE).then((cache) => {
@@ -80,18 +95,10 @@ self.addEventListener('fetch', (event) => {
                     return networkResponse;
                 })
                 .catch(() => {
-                    // If network fails, return cached response or offline page
-                    if (cachedResponse) {
-                        return cachedResponse;
-                    }
-                    // For navigation requests, return index.html
-                    if (request.mode === 'navigate') {
-                        return caches.match('/index.html');
-                    }
+                    if (cachedResponse) return cachedResponse;
                     return new Response('Offline', { status: 503 });
                 });
 
-            // Return cached response immediately, update in background
             return cachedResponse || fetchPromise;
         })
     );

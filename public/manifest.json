@@ -1,11 +1,11 @@
 {
-    "name": "Workout Counter",
-    "short_name": "Workout",
-    "description": "Track your workouts, build consistency, and achieve your fitness goals",
+    "name": "IRON & GRIT",
+    "short_name": "IRON&GRIT",
+    "description": "Industrial High-Performance Workout Terminal",
     "start_url": "/",
     "display": "standalone",
-    "background_color": "#0a0a0a",
-    "theme_color": "#3b82f6",
+    "background_color": "#000000",
+    "theme_color": "#FFFF00",
     "orientation": "portrait-primary",
     "icons": [
         {
