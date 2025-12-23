@@ -34,98 +34,91 @@ const ChallengeCreator: React.FC = () => {
   };
 
   return (
-    <div className="space-y-12 fade-in">
-      <header className="flex flex-col md:flex-row md:items-end justify-between gap-8 px-1">
+    <div className="space-y-8 fade-in">
+      <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 px-1">
         <div>
-          <div className="flex items-center gap-2 mb-3">
-            <Target size={16} className="text-primary" />
-            <span className="text-[10px] font-black uppercase tracking-[0.5em] text-primary">Strategic_Ops</span>
-          </div>
-          <h2 className="text-5xl font-black tracking-tighter uppercase italic">Mission_Center</h2>
-          <p className="text-muted-foreground font-medium mt-3 text-lg opacity-60">Establish and monitors primary training objectives.</p>
+          <h2 className="text-3xl font-bold tracking-tight">Active Challenges</h2>
+          <p className="text-muted-foreground mt-1">Push your limits with custom goals.</p>
         </div>
       </header>
 
       {!showCreator ? (
         <button
           onClick={() => setShowCreator(true)}
-          className="w-full py-14 border-2 border-dashed border-white/5 rounded-[3.5rem] flex flex-col items-center justify-center gap-6 text-muted-foreground hover:text-primary hover:border-primary/40 hover:bg-primary/5 transition-all group overflow-hidden relative"
+          className="w-full py-10 border-2 border-dashed border-white/5 rounded-[2rem] flex flex-col items-center justify-center gap-4 text-muted-foreground hover:text-primary hover:border-primary/40 hover:bg-primary/5 transition-all group"
         >
-          <div className="h-20 w-20 rounded-[1.75rem] bg-white/5 flex items-center justify-center transition-all group-hover:scale-110 group-hover:bg-primary group-hover:text-black shadow-inner">
-            <Plus size={40} />
+          <div className="h-14 w-14 rounded-2xl bg-white/5 flex items-center justify-center transition-all group-hover:scale-110 group-hover:bg-primary group-hover:text-black shadow-inner">
+            <Plus size={28} />
           </div>
-          <div className="text-center space-y-2">
-            <span className="font-black uppercase tracking-[0.4em] text-xs italic block">Establish_New_Objective</span>
-            <p className="text-[9px] font-bold opacity-30 tracking-[0.2em] uppercase">Initialize Session Parameters</p>
-          </div>
+          <span className="font-bold text-sm tracking-wide">Create New Challenge</span>
         </button>
       ) : (
-        <Card title="Initialize_Objective" description="Configure mission parameters for neural integration." className="border-primary/20 bg-black/50 p-12">
-          <form onSubmit={handleCreate} className="space-y-10">
-            <Input label="Mission Designation" value={title} onChange={e => setTitle(e.target.value)} placeholder="E.g. Strength Paradigm I" required className="bg-white/5 border-transparent h-16 font-bold uppercase italic" />
+        <Card title="New Challenge" description="Define your next performance goal." className="border-primary/20 bg-card p-8">
+          <form onSubmit={handleCreate} className="space-y-8">
+            <Input label="Challenge Title" value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g. Month of Gains" required />
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-              <div className="space-y-4">
-                <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/40 ml-1">Metric_Type</label>
-                <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-muted-foreground uppercase tracking-widest ml-1">Metric Type</label>
+                <div className="grid grid-cols-2 gap-2">
                   {(['workouts', 'volume'] as const).map(t => (
                     <button
                       key={t}
                       type="button"
                       onClick={() => setType(t)}
-                      className={`py-5 rounded-2xl text-[10px] font-black uppercase tracking-widest border-2 transition-all ${type === t
-                        ? 'bg-primary border-primary text-black'
-                        : 'bg-white/5 border-transparent text-muted-foreground hover:bg-white/10'
+                      className={`py-3 rounded-xl text-xs font-bold border transition-all ${type === t
+                          ? 'bg-primary border-primary text-black'
+                          : 'bg-white/5 border-transparent text-muted-foreground hover:bg-white/10'
                         }`}
                     >
-                      {t}
+                      {t.charAt(0).toUpperCase() + t.slice(1)}
                     </button>
                   ))}
                 </div>
               </div>
-              <Input label="Target_Threshold" type="number" value={targetValue} onChange={e => setTargetValue(e.target.value)} placeholder="0" required className="bg-white/5 border-transparent h-16 font-bold" />
+              <Input label="Target Value" type="number" value={targetValue} onChange={e => setTargetValue(e.target.value)} placeholder="0" required />
             </div>
 
-            <div className="flex gap-4 pt-4">
-              <Button type="submit" variant="primary" fullWidth className="h-18 rounded-[1.75rem] text-sm font-black uppercase tracking-[0.2em]">Deploy_Objective</Button>
-              <Button variant="ghost" className="h-18 px-12 rounded-[1.75rem] font-black uppercase tracking-widest text-[10px]" onClick={() => setShowCreator(false)}>Cancel</Button>
+            <div className="flex gap-3">
+              <Button type="submit" variant="primary" fullWidth>Launch Challenge</Button>
+              <Button variant="ghost" onClick={() => setShowCreator(false)}>Cancel</Button>
             </div>
           </form>
         </Card>
       )}
 
-      <div className="grid grid-cols-1 gap-8">
+      <div className="grid grid-cols-1 gap-6">
         {challenges.map(challenge => (
-          <Card key={challenge.id} className="relative overflow-hidden group border-white/5 bg-black/40 p-10">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-10">
-              <div className="flex items-center gap-8 flex-1">
-                <div className={`h-20 w-20 rounded-[1.75rem] flex items-center justify-center shadow-inner transition-all duration-700 group-hover:scale-110 ${challenge.completed
-                  ? 'bg-primary text-black shadow-primary/20'
-                  : 'bg-white/5 text-muted-foreground'
+          <Card key={challenge.id} className="relative overflow-hidden group border-white/5">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-8">
+              <div className="flex items-center gap-6 flex-1">
+                <div className={`h-16 w-16 rounded-2xl flex items-center justify-center transition-all ${challenge.completed
+                    ? 'bg-primary text-black shadow-lg shadow-primary/20'
+                    : 'bg-white/5 text-muted-foreground'
                   }`}>
-                  {challenge.completed ? <CheckCircle2 size={32} /> : <Target size={32} />}
+                  {challenge.completed ? <CheckCircle2 size={24} /> : <Target size={24} />}
                 </div>
-                <div className="space-y-4 flex-1">
-                  <div className="flex items-center gap-4">
-                    <h4 className={`font-black text-3xl uppercase tracking-tighter italic ${challenge.completed ? 'text-primary' : 'text-white'}`}>
+                <div className="space-y-3 flex-1">
+                  <div className="flex items-center gap-3">
+                    <h4 className={`font-bold text-xl ${challenge.completed ? 'text-primary' : 'text-white'}`}>
                       {challenge.title}
                     </h4>
-                    <div className={`text-[10px] font-black uppercase tracking-[0.3em] px-3 py-1 rounded-lg ${challenge.completed ? 'bg-primary/10 text-primary border border-primary/20' : 'bg-white/5 text-muted-foreground opacity-40'
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${challenge.completed ? 'bg-primary/20 text-primary' : 'bg-white/5 text-muted-foreground'
                       }`}>
-                      {challenge.completed ? 'COMPLETED' : 'ACTIVE_OPS'}
-                    </div>
+                      {challenge.completed ? 'COMPLETED' : 'IN PROGRESS'}
+                    </span>
                   </div>
 
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-end text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 mb-1">
-                      <span>Target: {challenge.targetValue} {challenge.type}</span>
-                      <span className="text-primary opacity-60 italic">Progress: {Math.round((challenge.currentValue / challenge.targetValue) * 100)}%</span>
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                      <span>Progress: {challenge.currentValue} / {challenge.targetValue}</span>
+                      <span className="text-primary">{Math.round((challenge.currentValue / challenge.targetValue) * 100)}%</span>
                     </div>
-                    <div className="h-3 bg-white/5 rounded-full overflow-hidden p-0.5 border border-white/5">
+                    <div className="h-2 bg-white/5 rounded-full overflow-hidden">
                       <motion.div
                         initial={{ width: 0 }}
                         animate={{ width: `${Math.min((challenge.currentValue / challenge.targetValue) * 100, 100)}%` }}
-                        className={`h-full rounded-full ${challenge.completed ? 'bg-primary shadow-[0_0_15px_rgba(250,204,21,0.5)]' : 'bg-primary/40'
+                        className={`h-full rounded-full ${challenge.completed ? 'bg-primary' : 'bg-primary/40'
                           }`}
                       />
                     </div>
@@ -134,19 +127,18 @@ const ChallengeCreator: React.FC = () => {
               </div>
 
               <div className="flex items-center gap-4">
-                <div className="text-right px-8 py-4 bg-white/5 rounded-2xl border border-white/10">
-                  <p className="text-[9px] font-black text-muted-foreground uppercase tracking-widest opacity-40 mb-1">Merit_Reward</p>
-                  <div className="flex items-center gap-2 group cursor-pointer">
-                    <Zap size={14} className="text-primary group-hover:animate-bounce" />
-                    <span className="font-black text-2xl italic tracking-tighter text-white">{challenge.xpReward}</span>
-                    <span className="text-xs font-black text-primary italic opacity-60">XP</span>
+                <div className="text-right px-4 py-2 bg-white/5 rounded-xl border border-white/5">
+                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest opacity-40">Reward</p>
+                  <div className="flex items-center gap-1">
+                    <Zap size={14} className="text-primary" />
+                    <span className="font-bold text-lg">{challenge.xpReward} XP</span>
                   </div>
                 </div>
                 <button
                   onClick={() => deleteChallenge(challenge.id)}
-                  className="h-16 w-16 rounded-[1.25rem] bg-red-500/5 text-red-500/40 hover:bg-red-500 hover:text-white transition-all flex items-center justify-center border border-red-500/10"
+                  className="h-10 w-10 rounded-xl bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-all flex items-center justify-center"
                 >
-                  <Trash2 size={24} />
+                  <Trash2 size={20} />
                 </button>
               </div>
             </div>

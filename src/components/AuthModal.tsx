@@ -27,60 +27,51 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen }) => {
     if (!isOpen) return null;
 
     return (
-        <div className="w-full max-w-[440px] mx-auto p-4 animate-in fade-in zoom-in-95 duration-700">
-            <div className="text-center mb-10 space-y-4">
-                <div className="relative inline-block">
-                    {/* Pulsing Aura */}
-                    <div className="absolute inset-0 bg-primary/20 blur-2xl rounded-full animate-pulse-slow" />
-
-                    <div className="relative h-20 w-20 items-center justify-center rounded-[2rem] bg-primary flex shadow-[0_0_40px_rgba(250,204,21,0.4)] border-4 border-black/20">
-                        <Zap size={40} className="text-black fill-black" />
-                    </div>
+        <div className="w-full max-w-[400px] mx-auto p-4 animate-in fade-in zoom-in-95 duration-700">
+            <div className="text-center mb-10 space-y-3">
+                <div className="inline-flex h-16 w-16 items-center justify-center rounded-3xl bg-primary shadow-xl shadow-primary/30">
+                    <Sparkles size={32} className="text-black" />
                 </div>
-
-                <div>
-                    <h1 className="text-4xl font-black tracking-tighter uppercase italic leading-none">ATHLETE_CORE</h1>
-                    <p className="text-primary text-[10px] font-black uppercase tracking-[0.4em] mt-2 opacity-80">Centralized_Identity_Hub</p>
-                </div>
+                <h1 className="text-3xl font-extrabold tracking-tight">Workout Counter</h1>
+                <p className="text-muted-foreground">Log your progress, reach your goals.</p>
             </div>
 
-            <div className="glass-card !bg-black/60 border-white/5 p-10 !rounded-[3rem] shadow-[0_0_80px_rgba(0,0,0,0.5)]">
-                <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="glass-card !bg-card p-8 !rounded-[2.5rem]">
+                <form onSubmit={handleSubmit} className="space-y-5">
                     {!isLogin && (
                         <Input
-                            label="Athlete Designation"
-                            placeholder="OPERATOR_01"
+                            label="Full Name"
+                            placeholder="Alex Smith"
                             value={name}
                             onChange={(e) => setName(e.target.value)}
-                            icon={<User size={20} />}
+                            icon={<User size={18} />}
                             required
-                            className="bg-white/5 border-transparent h-16 font-bold uppercase tracking-tight"
+                            className="bg-white/5 border-transparent"
                         />
                     )}
                     <Input
-                        label="Neural_Link (Email)"
+                        label="Email Address"
                         type="email"
-                        placeholder="identity@grid.net"
+                        placeholder="you@example.com"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        icon={<Mail size={20} />}
+                        icon={<Mail size={18} />}
                         required
-                        className="bg-white/5 border-transparent h-16 font-bold"
+                        className="bg-white/5 border-transparent"
                     />
                     <Input
-                        label="Override_Key (Password)"
+                        label="Password"
                         type="password"
                         placeholder="••••••••"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        icon={<Lock size={20} />}
+                        icon={<Lock size={18} />}
                         required
-                        className="bg-white/5 border-transparent h-16 font-bold"
+                        className="bg-white/5 border-transparent"
                     />
 
                     {error && (
-                        <div className="p-5 rounded-2xl bg-red-500/5 border border-red-500/20 text-red-500 text-[10px] font-black uppercase tracking-widest animate-in slide-in-from-top-4 flex items-center gap-3">
-                            <div className="h-2 w-2 rounded-full bg-red-500 animate-ping" />
+                        <div className="p-4 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-500 text-sm font-medium animate-in slide-in-from-top-2">
                             {error}
                         </div>
                     )}
@@ -91,31 +82,28 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen }) => {
                         size="lg"
                         type="submit"
                         loading={isLoading}
-                        className="h-20 text-2xl font-black italic tracking-tighter rounded-[2rem] shadow-2xl shadow-primary/30 glow-primary"
+                        className="h-14 font-bold rounded-2xl"
                     >
-                        {isLogin ? 'INITIALIZE_SYNC' : 'REGISTER_PROTOCOL'}
+                        {isLogin ? 'Sign In' : 'Join Now'}
                     </Button>
                 </form>
 
-                <div className="mt-10 text-center pt-8 border-t border-white/5">
+                <div className="mt-8 text-center pt-6 border-t border-white/5">
                     <button
                         onClick={() => {
                             setIsLogin(!isLogin);
                             clearError();
                         }}
-                        className="text-[10px] font-black uppercase tracking-[0.25em] text-muted-foreground hover:text-primary transition-all flex items-center justify-center gap-3 mx-auto italic"
+                        className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
                     >
-                        {isLogin ? "Status: No redundant ID? -> REGISTER" : "Status: ID detected? -> AUTHENTICATE"}
+                        {isLogin ? "Need an account? Sign up" : "Already registered? Sign in"}
                     </button>
                 </div>
             </div>
 
-            <div className="mt-10 flex items-center justify-center gap-3 opacity-30 grayscale hover:grayscale-0 hover:opacity-100 transition-all cursor-crosshair">
-                <ShieldCheck size={14} className="text-primary" />
-                <p className="text-[10px] font-black uppercase tracking-[0.5em] text-muted-foreground">
-                    Secure_Link_Established
-                </p>
-            </div>
+            <p className="mt-8 text-center text-[10px] text-muted-foreground uppercase tracking-widest font-bold opacity-30">
+                Secure & Encrypted Session
+            </p>
         </div>
     );
 };
