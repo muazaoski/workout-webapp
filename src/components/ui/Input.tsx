@@ -8,24 +8,24 @@ interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
 
 const Input: React.FC<InputProps> = ({ label, error, icon, className = '', ...props }) => {
   return (
-    <div className="w-full space-y-2">
+    <div className="w-full space-y-2 text-left">
       {label && (
-        <label className="block text-[10px] font-black uppercase tracking-widest text-brand-white/40 ml-1">
+        <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
           {label}
         </label>
       )}
       <div className="relative">
         {icon && (
-          <div className="absolute left-0 top-1/2 -translate-y-1/2 text-brand-white/40">
+          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
             {icon}
           </div>
         )}
         <input
-          className={`minimal-input ${icon ? 'pl-8' : ''} ${error ? 'border-red-500' : ''} ${className}`}
+          className={`flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 ${icon ? 'pl-10' : ''} ${error ? 'border-destructive' : ''} ${className}`}
           {...props}
         />
       </div>
-      {error && <p className="text-[10px] text-red-500 font-bold uppercase tracking-tight">{error}</p>}
+      {error && <p className="text-[0.8rem] font-medium text-destructive">{error}</p>}
     </div>
   );
 };

@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { useWorkoutStore } from '../stores/workoutStore';
-import { Search, Plus, Trash2, Search as SearchIcon } from 'lucide-react';
+import { Search, Plus, Trash2, Dumbbell, ChevronRight } from 'lucide-react';
 import Button from './ui/Button';
 import Input from './ui/Input';
+import Card from './ui/Card';
 import type { Exercise, ExerciseCategory } from '../types/workout';
 
 const ExerciseLibrary: React.FC = () => {
@@ -40,24 +41,24 @@ const ExerciseLibrary: React.FC = () => {
   };
 
   return (
-    <div className="space-y-10">
+    <div className="space-y-8 pb-10">
       {/* SEARCH AND FILTERS */}
-      <div className="space-y-6">
+      <div className="space-y-4">
         <Input
-          placeholder="SEARCH_INDEX..."
+          placeholder="Search exercises..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          icon={<SearchIcon size={18} />}
+          icon={<Search size={18} />}
         />
 
-        <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
+        <div className="flex gap-1.5 overflow-x-auto pb-1 no-scrollbar">
           {['all', 'strength', 'cardio', 'core', 'flexibility'].map(cat => (
             <button
               key={cat}
               onClick={() => setSelectedCategory(cat as any)}
-              className={`px-4 py-1 text-[10px] font-black uppercase tracking-widest border-2 transition-all whitespace-nowrap ${selectedCategory === cat
-                  ? 'bg-brand-white text-brand-black border-brand-white'
-                  : 'border-brand-white/10 text-brand-white/20 hover:border-brand-white/40'
+              className={`px-4 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all capitalize border ${selectedCategory === cat
+                  ? 'bg-slate-900 border-slate-900 text-white dark:bg-white dark:text-black dark:border-white'
+                  : 'bg-slate-50 border-slate-200 text-slate-500 hover:bg-slate-100 dark:bg-slate-800 dark:border-slate-700'
                 }`}
             >
               {cat}
@@ -67,18 +68,18 @@ const ExerciseLibrary: React.FC = () => {
       </div>
 
       {/* ADD FORM */}
-      <div className="border-2 border-dashed border-brand-white/10 p-6">
+      <div className="rounded-2xl border border-dashed border-slate-200 p-4 dark:border-slate-800">
         {!showAdd ? (
-          <Button variant="ghost" fullWidth onClick={() => setShowAdd(true)}>
-            + REGISTER_NEW_EXERCISE
+          <Button variant="ghost" fullWidth onClick={() => setShowAdd(true)} className="text-slate-500 font-medium">
+            + Custom Exercise
           </Button>
         ) : (
-          <form onSubmit={handleAdd} className="space-y-6">
-            <Input label="EXERCISE_NAME" value={name} onChange={e => setName(e.target.value)} required />
-            <Input label="MUSCLE_GROUPS (COMMA)" value={muscleGroups} onChange={e => setMuscleGroups(e.target.value)} required />
+          <form onSubmit={handleAdd} className="space-y-4">
+            <Input label="Exercise Name" value={name} onChange={e => setName(e.target.value)} placeholder="Bench Press" required />
+            <Input label="Muscle Groups" value={muscleGroups} onChange={e => setMuscleGroups(e.target.value)} placeholder="Chest, Triceps" required />
             <div className="flex gap-2 pt-2">
-              <Button type="submit" variant="primary" className="flex-1">COMMIT</Button>
-              <Button variant="ghost" onClick={() => setShowAdd(false)}>CANCEL</Button>
+              <Button type="submit" variant="primary" className="flex-1">Add Exercise</Button>
+              <Button variant="ghost" onClick={() => setShowAdd(false)}>Cancel</Button>
             </div>
           </form>
         )}
@@ -89,33 +90,35 @@ const ExerciseLibrary: React.FC = () => {
         {filtered.map(ex => (
           <div
             key={ex.id}
-            className="group flex items-center justify-between p-4 bg-brand-dark hover:bg-brand-gray border border-brand-white/5 transition-all"
+            className="flex items-center justify-between p-3 rounded-xl hover:bg-slate-50 border border-transparent transition-all dark:hover:bg-slate-800"
           >
-            <div className="flex items-center gap-4">
-              <span className="text-2xl group-hover:scale-110 transition-transform">{ex.icon}</span>
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 bg-slate-100 rounded-lg flex items-center justify-center text-xl dark:bg-slate-800">
+                {ex.icon}
+              </div>
               <div>
-                <h4 className="font-black italic uppercase tracking-tight leading-none mb-1 group-hover:text-brand-yellow transition-colors">{ex.name}</h4>
-                <p className="text-[10px] font-bold text-brand-white/20 uppercase tracking-widest leading-none">
-                  CAT_{ex.category} // {ex.muscleGroups.join('+')}
+                <h4 className="font-semibold text-sm capitalize">{ex.name}</h4>
+                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                  {ex.category} • {ex.muscleGroups.join(', ')}
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1">
               {currentWorkout && (
                 <Button
-                  variant="outline"
+                  variant="secondary"
                   size="sm"
-                  className="!p-1 border-brand-white/10"
                   onClick={() => addExerciseToWorkout(ex)}
+                  className="h-8 shadow-none"
                 >
-                  <Plus size={16} />
+                  Add
                 </Button>
               )}
               <Button
                 variant="ghost"
-                size="sm"
+                size="icon"
                 onClick={() => deleteExercise(ex.id)}
-                className="!p-1 text-red-500/20 hover:text-red-500"
+                className="h-8 w-8 text-slate-300 hover:text-red-500"
               >
                 <Trash2 size={16} />
               </Button>

@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { useAuthStore } from '../stores/authStore';
 import Button from './ui/Button';
 import Input from './ui/Input';
-import { Zap, ShieldCheck, Mail, Lock, User } from 'lucide-react';
+import Card from './ui/Card';
+import { Mail, Lock, User, Github } from 'lucide-react';
 
 interface AuthModalProps {
     isOpen: boolean;
@@ -27,51 +28,50 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen }) => {
     if (!isOpen) return null;
 
     return (
-        <div className="w-full max-w-md space-y-12">
-            <div className="text-center space-y-4">
-                <div className="w-16 h-16 bg-brand-yellow mx-auto flex items-center justify-center">
-                    <Zap size={32} className="text-brand-black" />
+        <div className="w-full max-w-md mx-auto space-y-8 animate-in fade-in zoom-in-95 duration-500">
+            <div className="flex flex-col items-center gap-2 mb-4">
+                <div className="h-12 w-12 bg-slate-900 text-white rounded-2xl flex items-center justify-center dark:bg-white dark:text-black">
+                    <span className="font-black text-xl italic">WC</span>
                 </div>
-                <div>
-                    <h1 className="text-4xl font-black tracking-tighter uppercase italic">IRON_GRIT</h1>
-                    <p className="text-[10px] font-bold text-brand-white/40 uppercase tracking-[0.4em]">AUTHENTICATION_REQUIRED</p>
-                </div>
+                <h1 className="text-2xl font-bold tracking-tight">Welcome Back</h1>
+                <p className="text-slate-500 text-sm">Sign in to sync your fitness journey.</p>
             </div>
 
-            <div className="bg-brand-dark border-2 border-brand-white/5 p-10">
-                <form onSubmit={handleSubmit} className="space-y-8">
+            <Card className="shadow-2xl shadow-black/5">
+                <form onSubmit={handleSubmit} className="space-y-6">
                     {!isLogin && (
                         <Input
-                            label="DISPLAY_NAME"
-                            placeholder="OPERATOR_NAME"
+                            label="What should we call you?"
+                            placeholder="Alex Smith"
                             value={name}
                             onChange={(e) => setName(e.target.value)}
-                            icon={<User size={16} />}
+                            icon={<User size={18} />}
                             required
                         />
                     )}
                     <Input
-                        label="EMAIL_ADDRESS"
+                        label="Email Address"
                         type="email"
-                        placeholder="ID@MISSION.CONTROL"
+                        placeholder="name@example.com"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        icon={<Mail size={16} />}
+                        icon={<Mail size={18} />}
                         required
                     />
                     <Input
-                        label="ACCESS_CODE"
+                        label="Password"
                         type="password"
-                        placeholder="••••••••"
+                        placeholder="Min. 8 characters"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        icon={<Lock size={16} />}
+                        icon={<Lock size={18} />}
                         required
                     />
 
                     {error && (
-                        <div className="bg-red-500/10 border-l-4 border-red-500 p-4 text-red-500 text-[10px] font-bold tracking-widest uppercase">
-                            ERROR: {error}
+                        <div className="bg-red-50 p-4 rounded-xl border border-red-100 flex items-center gap-3 text-red-600 text-sm font-medium">
+                            <span className="flex-shrink-0">✕</span>
+                            {error}
                         </div>
                     )}
 
@@ -81,10 +81,21 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen }) => {
                         size="lg"
                         type="submit"
                         loading={isLoading}
+                        className="rounded-xl"
                     >
-                        {isLogin ? 'AUTHORIZE_SESSION' : 'INITIALIZE_COMMAND'}
+                        {isLogin ? 'Sign In' : 'Create Account'}
                     </Button>
                 </form>
+
+                <div className="relative my-8 text-center">
+                    <div className="absolute inset-0 flex items-center"><div className="w-full border-t"></div></div>
+                    <span className="relative bg-white px-2 text-xs text-slate-400 dark:bg-slate-900 lowercase italic">or continue with</span>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                    <Button variant="outline" icon={<Github size={18} />}>GitHub</Button>
+                    <Button variant="outline" icon={<span>G</span>}>Google</Button>
+                </div>
 
                 <div className="mt-8 text-center">
                     <button
@@ -92,17 +103,16 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen }) => {
                             setIsLogin(!isLogin);
                             clearError();
                         }}
-                        className="text-[10px] font-black uppercase tracking-widest text-brand-white/40 hover:text-brand-yellow transition-colors underline underline-offset-4 decoration-2"
+                        className="text-sm font-medium text-slate-500 hover:text-primary transition-colors"
                     >
-                        {isLogin ? 'REQUEST_NEW_IDENTIFIER' : 'RETURN_TO_LOGIN'}
+                        {isLogin ? "Don't have an account? Sign up" : "Already have an account? Sign in"}
                     </button>
                 </div>
-            </div>
+            </Card>
 
-            <div className="flex items-center justify-center gap-2 opacity-20">
-                <ShieldCheck size={14} />
-                <span className="text-[8px] font-bold tracking-[0.3em] uppercase">ENCRYPTED_DATA_TRANSMISSION</span>
-            </div>
+            <p className="text-center text-xs text-slate-400">
+                By continuing, you agree to our Terms of Service.
+            </p>
         </div>
     );
 };

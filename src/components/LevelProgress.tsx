@@ -7,33 +7,30 @@ const LevelProgress: React.FC = () => {
   const progress = (userLevel.currentXP / userLevel.xpToNext) * 100;
 
   return (
-    <div className="w-full space-y-4">
+    <div className="w-full space-y-3">
       <div className="flex justify-between items-end">
         <div>
-          <span className="text-sm font-black italic mr-2 uppercase">{userLevel.title}</span>
-          <span className="text-[10px] font-bold text-brand-white/40 tracking-widest">RANK_STABILITY</span>
+          <h4 className="font-bold text-lg">{userLevel.title}</h4>
+          <p className="text-xs text-slate-500 font-medium tracking-tight">Level {userLevel.level}</p>
         </div>
         <div className="text-right">
-          <span className="text-sm font-black tabular-nums">{userLevel.currentXP}</span>
-          <span className="text-[10px] text-brand-white/20 mx-1">/</span>
-          <span className="text-sm font-black text-brand-white/40 tabular-nums">{userLevel.xpToNext} XP</span>
+          <span className="font-bold text-slate-900 dark:text-white">{userLevel.currentXP}</span>
+          <span className="text-sm text-slate-400"> / {userLevel.xpToNext} XP</span>
         </div>
       </div>
 
-      <div className="h-4 bg-brand-white/5 border border-brand-white/10 relative overflow-hidden">
+      <div className="h-3 bg-slate-100 rounded-full dark:bg-slate-800 overflow-hidden">
         <motion.div
           initial={{ width: 0 }}
           animate={{ width: `${progress}%` }}
           transition={{ duration: 1, ease: "easeOut" }}
-          className="absolute inset-y-0 left-0 bg-brand-yellow"
+          className="h-full bg-slate-900 dark:bg-white rounded-full"
         />
       </div>
 
-      <div className="flex justify-between items-center text-[9px] font-black text-brand-white/20 tracking-[0.3em] uppercase">
-        <span>ID_{userLevel.level.toString().padStart(2, '0')}</span>
-        <span>LVL_EVOLUTION_ACTIVE</span>
-        <span>NEXT_{userLevel.level + 1}</span>
-      </div>
+      <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider text-center">
+        Approx. {Math.round(userLevel.xpToNext - userLevel.currentXP)} XP needed for next level
+      </p>
     </div>
   );
 };

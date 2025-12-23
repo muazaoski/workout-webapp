@@ -6,7 +6,7 @@ import Button from './ui/Button';
 import Input from './ui/Input';
 import Card from './ui/Card';
 import ProgressRing from './ui/ProgressRing';
-import { ChevronLeft, ChevronRight, Check, Zap, Target, History } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Check, Zap, Play, Pause, Square, Trash2 } from 'lucide-react';
 
 const ActiveWorkout: React.FC = () => {
   const {
@@ -17,10 +17,11 @@ const ActiveWorkout: React.FC = () => {
     nextExercise,
     previousExercise,
     finishWorkout,
+    removeExerciseFromWorkout
   } = useWorkoutStore();
 
-  const [setReps, setSetReps] = useState('');
-  const [setWeight, setSetWeight] = useState('');
+  const [reps, setReps] = useState('');
+  const [weight, setWeight] = useState('');
 
   if (!currentWorkout) return null;
 
@@ -28,148 +29,151 @@ const ActiveWorkout: React.FC = () => {
   const currentSet = currentExercise?.sets[activeSetIndex];
 
   const handleCompleteSet = () => {
-    if (currentExercise && currentSet && setReps) {
+    if (currentExercise && currentSet && reps) {
       updateSet(activeExerciseIndex, activeSetIndex, {
-        reps: parseInt(setReps) || 0,
-        weight: parseFloat(setWeight) || 0,
+        reps: parseInt(reps) || 0,
+        weight: parseFloat(weight) || 0,
         completed: true,
       });
 
       if (activeSetIndex < currentExercise.sets.length - 1) {
-        setSetReps('');
-        setSetWeight('');
+        setReps('');
+        setWeight('');
       } else {
         if (activeExerciseIndex < currentWorkout.exercises.length - 1) {
           nextExercise();
-          setSetReps('');
-          setSetWeight('');
+          setReps('');
+          setWeight('');
         }
       }
     }
   };
 
-  const completedSets = currentExercise?.sets.filter(set => set.completed).length || 0;
+  const completedSets = currentExercise?.sets.filter(s => s.completed).length || 0;
   const totalSets = currentExercise?.sets.length || 0;
   const progress = totalSets > 0 ? (completedSets / totalSets) * 100 : 0;
 
   return (
-    <div className="space-y-12 max-w-4xl mx-auto pb-20">
-      {/* EXERCISE HEADER */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b-2 border-brand-white/10 pb-10">
+    <div className="max-w-4xl mx-auto space-y-8">
+      {/* EXERCISE INFO */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b">
         <div>
-          <div className="flex items-center gap-3 mb-4">
-            <span className="text-3xl">{currentExercise?.exercise.icon || '🏋️'}</span>
-            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-brand-yellow">CURRENT_EXERCISE</span>
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-2xl">{currentExercise?.exercise.icon || '🏋️'}</span>
+            <span className="bg-primary/10 text-primary text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">Active Exercise</span>
           </div>
-          <h2 className="text-6xl font-black italic tracking-tighter uppercase leading-none">
-            {currentExercise?.exercise.name || 'NO_NAME_LOADED'}
+          <h2 className="text-4xl font-bold tracking-tight">
+            {currentExercise?.exercise.name}
           </h2>
-          <p className="text-xs font-bold text-brand-white/40 mt-4 uppercase tracking-widest leading-none">
-            {currentExercise?.exercise.muscleGroups.join(' // ') || 'GENERAL'}
+          <p className="text-slate-500 mt-1 capitalize">
+            Focusing on {currentExercise?.exercise.muscleGroups.join(', ')}
           </p>
         </div>
 
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={previousExercise} disabled={activeExerciseIndex === 0}>
-            <ChevronLeft size={16} />
+        <div className="flex items-center gap-3">
+          <Button variant="outline" size="icon" onClick={previousExercise} disabled={activeExerciseIndex === 0}>
+            <ChevronLeft size={20} />
           </Button>
-          <div className="bg-brand-white/5 px-4 flex items-center">
-            <span className="text-xs font-black italic whitespace-nowrap tabular-nums">DATA_PKT_{activeExerciseIndex + 1}/{currentWorkout.exercises.length}</span>
+          <div className="h-10 px-4 bg-slate-100 rounded-lg flex items-center justify-center font-semibold text-sm dark:bg-slate-800">
+            Exercise {activeExerciseIndex + 1} / {currentWorkout.exercises.length}
           </div>
-          <Button variant="outline" size="sm" onClick={nextExercise} disabled={activeExerciseIndex === currentWorkout.exercises.length - 1}>
-            <ChevronRight size={16} />
+          <Button variant="outline" size="icon" onClick={nextExercise} disabled={activeExerciseIndex === currentWorkout.exercises.length - 1}>
+            <ChevronRight size={20} />
           </Button>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* INPUT CENTER */}
-        <div className="lg:col-span-2 space-y-10">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={`${activeExerciseIndex}-${activeSetIndex}`}
-              initial={{ opacity: 0, scale: 0.98 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 1.02 }}
-              className="space-y-10"
-            >
-              <div className="flex items-center gap-4">
-                <div className="px-6 py-2 bg-brand-yellow text-brand-black text-xl font-black italic">
-                  SET_{activeSetIndex + 1}
-                </div>
-                <div className="h-0.5 flex-grow bg-brand-white/5" />
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-10">
-                <Input
-                  label="REPETITIONS"
-                  type="number"
-                  placeholder="00"
-                  value={setReps}
-                  onChange={(e) => setSetReps(e.target.value)}
-                  autoFocus
-                  className="text-4xl h-auto py-4"
-                />
-                <Input
-                  label="LOAD_WEIGHT (KG)"
-                  type="number"
-                  placeholder="0.0"
-                  value={setWeight}
-                  onChange={(e) => setSetWeight(e.target.value)}
-                  className="text-4xl h-auto py-4"
-                />
-              </div>
-
-              <Button
-                variant="primary"
-                fullWidth
-                size="lg"
-                onClick={handleCompleteSet}
-                disabled={!setReps || currentSet?.completed}
-                className="py-6 text-xl"
+        {/* DATA ENTRY */}
+        <div className="lg:col-span-2">
+          <Card className="h-full">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={`${activeExerciseIndex}-${activeSetIndex}`}
+                initial={{ opacity: 0, x: 10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -10 }}
+                className="space-y-8"
               >
-                {currentSet?.completed ? 'DATA_LOCKED' : 'COMMIT_SET'}
-              </Button>
-            </motion.div>
-          </AnimatePresence>
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-bold">Set {activeSetIndex + 1}</h3>
+                  <div className="flex gap-1">
+                    {currentExercise.sets.map((_, i) => (
+                      <div key={i} className={`h-1.5 w-6 rounded-full ${i === activeSetIndex ? 'bg-primary' : i < activeSetIndex ? 'bg-green-500' : 'bg-slate-200 dark:bg-slate-800'}`} />
+                    ))}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-6">
+                  <Input
+                    label="Reps"
+                    type="number"
+                    placeholder="0"
+                    value={reps}
+                    onChange={e => setReps(e.target.value)}
+                    autoFocus
+                    className="text-center text-2xl h-16"
+                  />
+                  <Input
+                    label="Weight (kg)"
+                    type="number"
+                    placeholder="0"
+                    value={weight}
+                    onChange={e => setWeight(e.target.value)}
+                    className="text-center text-2xl h-16"
+                  />
+                </div>
+
+                <Button
+                  variant="primary"
+                  size="lg"
+                  fullWidth
+                  disabled={!reps || currentSet?.completed}
+                  onClick={handleCompleteSet}
+                  className="h-16 text-lg font-bold rounded-xl"
+                >
+                  {currentSet?.completed ? 'Set Logged ✓' : 'Complete Set'}
+                </Button>
+              </motion.div>
+            </AnimatePresence>
+          </Card>
         </div>
 
-        {/* SIDEBAR METRICS */}
-        <div className="space-y-6">
-          <Card title="PROGRESS" subtitle="SET_VOLUME">
-            <div className="flex flex-col items-center justify-center py-6">
-              <ProgressRing progress={progress} size={140} strokeWidth={8} color="#FFFF00">
-                <div className="text-center font-black">
-                  <span className="text-4xl italic leading-none">{completedSets}</span>
-                  <span className="text-sm opacity-20 mx-1">/</span>
-                  <span className="text-xl opacity-40">{totalSets}</span>
+        {/* STATS AREA */}
+        <div className="space-y-4">
+          <Card title="Progress" className="text-center">
+            <div className="flex justify-center py-4">
+              <ProgressRing progress={progress} size={150} strokeWidth={10} color="hsl(var(--primary))">
+                <div className="flex flex-col items-center">
+                  <span className="text-3xl font-bold">{completedSets}</span>
+                  <span className="text-xs text-slate-500 font-medium">of {totalSets} sets</span>
                 </div>
               </ProgressRing>
             </div>
           </Card>
 
-          <Card title="RECOVERY" subtitle="REST_TIMER">
+          <Card title="Rest Timer">
             <Timer />
           </Card>
         </div>
       </div>
 
-      {/* FOOTER ACTIONS */}
-      <div className="pt-20 border-t-2 border-brand-white/10 flex flex-col md:flex-row gap-6">
+      <div className="pt-8 border-t flex flex-col md:flex-row gap-4">
         <Button
-          variant="secondary"
+          variant="primary"
+          size="lg"
           fullWidth
-          className="md:order-2 border-none font-black text-2xl py-8 shadow-sharp"
           onClick={finishWorkout}
+          className="md:order-2 h-16 text-xl shadow-xl shadow-primary/20"
         >
-          COMPLETE_MISSION_PHASE
+          Finish Workout Session
         </Button>
         <Button
           variant="ghost"
-          className="md:order-1 border-2 border-red-500/20 text-red-500/60 hover:text-red-500 hover:bg-red-500/5 py-8"
           onClick={() => { }}
+          className="md:order-1 h-16 text-slate-400 hover:text-red-500"
         >
-          ABORT_SESSION
+          Discard Session
         </Button>
       </div>
     </div>

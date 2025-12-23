@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { useWorkoutStore } from '../stores/workoutStore';
-import { Plus, Target, CheckCircle2, Trash2 } from 'lucide-react';
+import { Plus, Target, CheckCircle2, Trash2, ArrowRight } from 'lucide-react';
 import Button from './ui/Button';
 import Input from './ui/Input';
 import Card from './ui/Card';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import type { Challenge } from '../types/workout';
 
 const ChallengeCreator: React.FC = () => {
@@ -34,50 +34,51 @@ const ChallengeCreator: React.FC = () => {
   };
 
   return (
-    <div className="space-y-10 fade-in">
-      <header className="flex justify-between items-end border-b-2 border-brand-white/10 pb-4">
-        <h2 className="text-3xl font-black italic uppercase tracking-tighter">MISSION_OBJECTIVES</h2>
-        <span className="text-[10px] font-bold text-brand-white/40 uppercase tracking-widest italic">{challenges.length} ACTIVE_TARGETS</span>
+    <div className="space-y-8 fade-in">
+      <header className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div>
+          <h2 className="text-3xl font-bold tracking-tight">Active Goals</h2>
+          <p className="text-slate-500 font-medium">Focused objectives to keep you moving.</p>
+        </div>
+        {!showAdd && (
+          <Button onClick={() => setShowAdd(true)} className="rounded-full">
+            <Plus size={18} className="mr-2" /> New Goal
+          </Button>
+        )}
       </header>
 
       {/* ADD MISSION */}
-      <div className="border-2 border-dashed border-brand-white/10 p-6">
-        {!showAdd ? (
-          <Button variant="ghost" fullWidth onClick={() => setShowAdd(true)}>
-            + INITIALIZE_NEW_MISSION
-          </Button>
-        ) : (
-          <form onSubmit={handleSubmit} className="space-y-8">
-            <Input label="MISSION_CODE_NAME" placeholder="E.G. OPERATION_STEEL" value={title} onChange={e => setTitle(e.target.value)} required />
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
-              <Input label="TARGET_VALUE" type="number" placeholder="00" value={targetValue} onChange={e => setTargetValue(e.target.value)} required />
-              <div className="space-y-4">
-                <label className="text-[10px] font-black uppercase tracking-widest text-brand-white/40 ml-1">METRIC_TYPE</label>
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setType('workouts')}
-                    className={`flex-1 py-3 text-[10px] font-black uppercase border-2 transition-all ${type === 'workouts' ? 'bg-brand-white text-brand-black border-brand-white' : 'border-brand-white/10 text-brand-white/20'}`}
-                  >
-                    WORKOUTS
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setType('volume')}
-                    className={`flex-1 py-3 text-[10px] font-black uppercase border-2 transition-all ${type === 'volume' ? 'bg-brand-white text-brand-black border-brand-white' : 'border-brand-white/10 text-brand-white/20'}`}
-                  >
-                    VOLUME
-                  </button>
+      <AnimatePresence>
+        {showAdd && (
+          <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
+            <Card title="Set your target" description="What are you working towards today?">
+              <form onSubmit={handleSubmit} className="space-y-6">
+                <Input label="Goal Title" placeholder="e.g. 10 Workouts Month" value={title} onChange={e => setTitle(e.target.value)} required />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <Input label="Target Goal" type="number" placeholder="10" value={targetValue} onChange={e => setTargetValue(e.target.value)} required />
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Metric</label>
+                    <div className="flex gap-2">
+                      {(['workouts', 'volume'] as const).map(t => (
+                        <button
+                          key={t} type="button" onClick={() => setType(t)}
+                          className={`flex-1 py-2 px-4 rounded-lg text-xs font-semibold border transition-all ${type === t ? 'bg-primary border-primary text-primary-foreground shadow-sm' : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50'}`}
+                        >
+                          {t.charAt(0).toUpperCase() + t.slice(1)}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
-            <div className="flex gap-2 pt-4">
-              <Button type="submit" variant="primary" className="flex-1">DEPLOY</Button>
-              <Button variant="ghost" onClick={() => setShowAdd(false)}>CANCEL</Button>
-            </div>
-          </form>
+                <div className="flex gap-2 justify-end">
+                  <Button variant="ghost" onClick={() => setShowAdd(false)}>Cancel</Button>
+                  <Button type="submit" variant="primary" className="px-8">Create Goal</Button>
+                </div>
+              </form>
+            </Card>
+          </motion.div>
         )}
-      </div>
+      </AnimatePresence>
 
       {/* LIST */}
       <div className="grid grid-cols-1 gap-4">
@@ -86,46 +87,47 @@ const ChallengeCreator: React.FC = () => {
           return (
             <div
               key={challenge.id}
-              className={`p-6 border-2 transition-all group ${challenge.completed ? 'border-brand-white/5 opacity-40' : 'border-brand-white/10 hover:border-brand-yellow/40'
+              className={`p-6 bg-white rounded-2xl border transition-all hover:bg-slate-50 group dark:bg-slate-900 ${challenge.completed ? 'border-green-100 opacity-70' : 'border-slate-100'
                 }`}
             >
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                 <div className="flex items-center gap-4">
-                  <div className={`w-12 h-12 flex items-center justify-center border-2 ${challenge.completed ? 'border-brand-white/10 text-brand-white/40' : 'border-brand-yellow bg-brand-yellow text-brand-black'
+                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${challenge.completed ? 'bg-green-100 text-green-600' : 'bg-indigo-100 text-indigo-600'
                     }`}>
                     {challenge.completed ? <CheckCircle2 size={24} /> : <Target size={24} />}
                   </div>
                   <div>
-                    <h3 className="text-xl font-black italic uppercase tracking-tight leading-none mb-1">{challenge.title}</h3>
-                    <p className="text-[10px] font-bold text-brand-white/40 uppercase tracking-widest leading-none">
-                      {challenge.targetValue} {challenge.type.toUpperCase()} // +{challenge.xpReward} XP
+                    <h3 className="text-lg font-bold leading-none mb-1">{challenge.title}</h3>
+                    <p className="text-xs text-slate-400 font-medium">
+                      {challenge.targetValue} {challenge.type} • +{challenge.xpReward} XP Reward
                     </p>
                   </div>
                 </div>
 
                 <div className="flex-grow max-w-sm space-y-2">
-                  <div className="flex justify-between text-[9px] font-black tracking-[0.2em] uppercase">
-                    <span>STATUS_METER</span>
-                    <span className={challenge.completed ? '' : 'text-brand-yellow'}>{Math.round(progress)}%</span>
+                  <div className="flex justify-between text-[10px] font-bold text-slate-400">
+                    <span className="uppercase tracking-widest">Progress</span>
+                    <span className={challenge.completed ? 'text-green-500' : 'text-primary'}>{Math.round(progress)}%</span>
                   </div>
-                  <div className="h-1 bg-brand-white/10 relative overflow-hidden">
+                  <div className="h-2 bg-slate-100 rounded-full dark:bg-slate-800 overflow-hidden">
                     <motion.div
                       initial={{ width: 0 }}
                       animate={{ width: `${Math.min(progress, 100)}%` }}
-                      className={`absolute inset-y-0 left-0 ${challenge.completed ? 'bg-brand-white/40' : 'bg-brand-yellow'}`}
+                      className={`h-full rounded-full ${challenge.completed ? 'bg-green-500' : 'bg-primary'}`}
                     />
                   </div>
                 </div>
 
-                {!challenge.completed && (
-                  <Button variant="ghost" size="sm" onClick={() => toggleChallenge(challenge.id)} className="text-[10px] border-brand-white/10">
-                    SYNC_DATA
+                <div className="flex items-center gap-2">
+                  {!challenge.completed && (
+                    <Button variant="secondary" size="sm" onClick={() => toggleChallenge(challenge.id)}>
+                      Mark Step
+                    </Button>
+                  )}
+                  <Button variant="ghost" size="icon" onClick={() => deleteChallenge(challenge.id)} className="text-slate-300 hover:text-red-500">
+                    <Trash2 size={16} />
                   </Button>
-                )}
-
-                <button onClick={() => deleteChallenge(challenge.id)} className="p-2 text-brand-white/10 hover:text-red-500 transition-colors">
-                  <Trash2 size={16} />
-                </button>
+                </div>
               </div>
             </div>
           );

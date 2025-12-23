@@ -18,10 +18,12 @@ import {
   Target,
   History,
   LogOut,
-  Dumbbell,
   Plus,
-  ArrowRight,
-  User as UserIcon
+  Dumbbell,
+  Search,
+  Settings,
+  User as UserIcon,
+  ChevronRight
 } from 'lucide-react';
 
 const App: React.FC = () => {
@@ -37,172 +39,144 @@ const App: React.FC = () => {
   } = useWorkoutStore();
 
   const { isAuthenticated, logout, user } = useAuthStore();
-  const [currentView, setCurrentView] = useState<'dashboard' | 'achievements' | 'challenges' | 'history'>('dashboard');
+  const [currentView, setCurrentView] = useState<'dashboard' | 'history' | 'achievements' | 'challenges'>('dashboard');
   const [showLibrary, setShowLibrary] = useState(false);
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-brand-black flex items-center justify-center p-6">
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6 dark:bg-slate-950">
         <AuthModal isOpen={true} />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-brand-black text-brand-white font-sans selection:bg-brand-yellow selection:text-brand-black">
-      {/* HEADER */}
-      <header className="fixed top-0 left-0 right-0 z-40 bg-brand-black/80 backdrop-blur-md border-b-2 border-brand-white/5">
-        <div className="max-w-6xl mx-auto px-6 h-20 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="w-10 h-10 bg-brand-yellow flex items-center justify-center">
-              <Dumbbell className="text-brand-black w-6 h-6" />
+    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans dark:bg-slate-950 dark:text-slate-50">
+      {/* NAVIGATION - MODERN SIDEBAR */}
+      <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-slate-200 py-3 px-6 sm:bottom-auto sm:top-0 sm:left-0 sm:w-64 sm:h-full sm:border-r sm:border-t-0 sm:py-8 sm:px-4 dark:bg-slate-900 dark:border-slate-800">
+        <div className="max-w-6xl mx-auto flex sm:flex-col justify-between h-full">
+          <div className="flex sm:flex-col gap-6 w-full items-center sm:items-stretch">
+            <div className="hidden sm:flex items-center gap-3 px-4 mb-8">
+              <div className="h-8 w-8 bg-black text-white rounded-lg flex items-center justify-center dark:bg-white dark:text-black">
+                <Dumbbell size={18} />
+              </div>
+              <span className="font-bold text-xl tracking-tight">Workout Counter</span>
             </div>
-            <div>
-              <h1 className="text-lg font-black tracking-tighter uppercase leading-none">IRON_GRIT</h1>
-              <p className="text-[10px] font-bold text-brand-yellow tracking-widest uppercase mt-0.5">EST. 2025</p>
-            </div>
+
+            <NavItem icon={<LayoutDashboard size={20} />} label="Dashboard" active={currentView === 'dashboard'} onClick={() => setCurrentView('dashboard')} />
+            <NavItem icon={<History size={20} />} label="History" active={currentView === 'history'} onClick={() => setCurrentView('history')} />
+            <NavItem icon={<Trophy size={20} />} label="Awards" active={currentView === 'achievements'} onClick={() => setCurrentView('achievements')} />
+            <NavItem icon={<Target size={20} />} label="Challenges" active={currentView === 'challenges'} onClick={() => setCurrentView('challenges')} />
           </div>
 
-          <div className="flex items-center gap-6">
-            <div className="hidden sm:block text-right">
-              <p className="text-[10px] font-black text-brand-white/40 uppercase tracking-widest leading-none mb-1">CURRENT_RANK</p>
-              <p className="text-sm font-black uppercase">LVL_{userLevel.level} {userLevel.title}</p>
-            </div>
-            <button onClick={logout} className="p-2 text-brand-white/40 hover:text-red-500 transition-colors">
-              <LogOut size={20} />
-            </button>
-          </div>
-        </div>
-      </header>
-
-      {/* NAVIGATION */}
-      <nav className="fixed bottom-0 left-0 right-0 z-40 bg-brand-black border-t-2 border-brand-white/5 sm:bottom-auto sm:top-20 sm:left-0 sm:w-64 sm:h-[calc(100vh-80px)] sm:border-r-2 sm:border-t-0 p-4">
-        <div className="flex sm:flex-col justify-around h-full">
-          <div className="flex sm:flex-col gap-2 w-full">
-            <NavItem
-              icon={<LayoutDashboard size={20} />}
-              label="DASHBOARD"
-              active={currentView === 'dashboard'}
-              onClick={() => setCurrentView('dashboard')}
-            />
-            <NavItem
-              icon={<History size={20} />}
-              label="LOGS"
-              active={currentView === 'history'}
-              onClick={() => setCurrentView('history')}
-            />
-            <NavItem
-              icon={<Trophy size={20} />}
-              label="AWARDS"
-              active={currentView === 'achievements'}
-              onClick={() => setCurrentView('achievements')}
-            />
-            <NavItem
-              icon={<Target size={20} />}
-              label="MISSION"
-              active={currentView === 'challenges'}
-              onClick={() => setCurrentView('challenges')}
-            />
-          </div>
-
-          <div className="hidden sm:block mt-auto pt-6 border-t-2 border-brand-white/5">
-            <div className="flex items-center gap-3 px-4 mb-4">
-              <div className="w-8 h-8 rounded-full bg-brand-white/10 flex items-center justify-center">
-                <UserIcon size={16} />
+          <div className="hidden sm:flex flex-col gap-4 px-2">
+            <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-800">
+              <div className="h-9 w-9 rounded-full bg-slate-200 flex items-center justify-center dark:bg-slate-700">
+                <UserIcon size={18} className="text-slate-500" />
               </div>
               <div className="overflow-hidden">
-                <p className="text-[10px] font-black uppercase tracking-widest text-brand-white/40 leading-none mb-1">USER_SESSION</p>
-                <p className="text-xs font-bold truncate">{user?.name || 'OPERATOR_01'}</p>
+                <p className="text-sm font-semibold truncate leading-none">{user?.name || 'User'}</p>
+                <p className="text-xs text-slate-500 mt-1">Free Tier</p>
               </div>
             </div>
+            <Button variant="ghost" fullWidth onClick={logout} className="justify-start text-slate-500 hover:text-red-500">
+              <LogOut size={18} className="mr-2" /> Sign Out
+            </Button>
           </div>
         </div>
       </nav>
 
-      <main className="max-w-6xl mx-auto px-6 pt-32 pb-32 sm:pl-72 sm:pt-40">
+      <main className="max-w-6xl mx-auto px-6 pt-8 pb-32 sm:pl-72 sm:pt-12 sm:pb-12">
         <AnimatePresence mode="wait">
           {currentWorkout ? (
             <motion.div
               key="active"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.98 }}
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0 }}
             >
               <ActiveWorkout />
             </motion.div>
           ) : (
-            <div className="space-y-12">
+            <div className="space-y-8">
+              {/* TOP HEADER FOR MOBILE/MD */}
+              <div className="flex items-center justify-between sm:hidden mb-6">
+                <span className="font-bold text-xl">Dashboard</span>
+                <div className="h-8 w-8 bg-black text-white rounded-lg flex items-center justify-center">
+                  <Dumbbell size={18} />
+                </div>
+              </div>
+
               {currentView === 'dashboard' && (
-                <div className="space-y-12 fade-in">
-                  {/* HERO STATS */}
-                  <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-                    <Card className="lg:col-span-2 !bg-brand-yellow !text-brand-black border-none relative overflow-hidden group">
-                      <div className="relative z-10 flex flex-col justify-between h-full min-h-[160px]">
-                        <div>
-                          <p className="text-[10px] font-black uppercase tracking-[0.3em] mb-4 opacity-70">READY_FOR_DEPLOYMENT</p>
-                          <h2 className="text-4xl font-black italic tracking-tighter leading-tight uppercase">START_NEW<br />SESSION</h2>
-                        </div>
-                        <Button
-                          variant="secondary"
-                          className="w-fit !bg-brand-black !text-brand-white hover:!bg-brand-white hover:!text-brand-black group-hover:px-10"
-                          onClick={() => startNewWorkout('SESSION_' + new Date().toLocaleDateString())}
-                        >
-                          INITIATE <ArrowRight size={16} className="ml-2" />
-                        </Button>
-                      </div>
-                      <Dumbbell size={200} className="absolute -right-20 -bottom-20 opacity-5 rotate-12" />
-                    </Card>
+                <div className="space-y-8 fade-in">
+                  <header className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+                    <div>
+                      <h2 className="text-3xl font-bold tracking-tight">Progress Overview</h2>
+                      <p className="text-slate-500">Tracking your evolution every single day.</p>
+                    </div>
+                    <Button onClick={() => startNewWorkout('Workout ' + new Date().toLocaleDateString())} className="rounded-full shadow-lg shadow-black/10">
+                      <Plus size={18} className="mr-2" /> Start New Session
+                    </Button>
+                  </header>
 
-                    <Card title="WORKOUTS" subtitle="TOTAL_COUNT">
-                      <div className="text-5xl font-black italic data-value">{stats.totalWorkouts}</div>
-                    </Card>
-
-                    <Card title="VOLUME" subtitle="MASS_KG">
-                      <div className="text-5xl font-black italic data-value">{(stats.totalVolume / 1000).toFixed(1)}k</div>
-                    </Card>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <StatCard label="Total Workouts" value={stats.totalWorkouts} />
+                    <StatCard label="Total Volume" value={`${(stats.totalVolume / 1000).toFixed(1)}k`} unit="kg" />
+                    <StatCard label="Total Reps" value={stats.totalReps} />
+                    <StatCard label="Current Level" value={userLevel.level} />
                   </div>
 
-                  {/* LEVEL TRACKER */}
-                  <Card title="EVOLUTION_PROGRESS" subtitle="XP_TRACKER">
+                  <Card title="Current Level" description="Gain XP to level up your rank.">
                     <LevelProgress />
                   </Card>
 
-                  {/* QUICK ACCESS */}
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                    <QuickLink label="EXERCISES" onClick={() => setShowLibrary(true)} />
-                    <QuickLink label="MESSAGES" onClick={() => { }} />
-                    <QuickLink label="SETTINGS" onClick={() => { }} />
-                    <QuickLink label="SYNC_DATA" onClick={() => { }} />
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <Card title="Quick Actions" className="md:col-span-2">
+                      <div className="grid grid-cols-2 gap-4">
+                        <ActionTile icon={<Search size={20} />} label="Browse Library" onClick={() => setShowLibrary(true)} />
+                        <ActionTile icon={<Settings size={20} />} label="Account Settings" onClick={() => { }} />
+                      </div>
+                    </Card>
+                    <Card title="Sync Status" description="Cloud backup active.">
+                      <div className="flex items-center gap-2 text-green-500 font-medium text-sm">
+                        <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
+                        Connected
+                      </div>
+                    </Card>
                   </div>
                 </div>
               )}
 
               {currentView === 'history' && (
                 <div className="space-y-6 fade-in">
-                  <header className="flex justify-between items-end border-b-2 border-brand-white/10 pb-4">
-                    <h2 className="text-3xl font-black italic uppercase tracking-tighter">DATA_LOGS</h2>
-                    <span className="text-[10px] font-bold text-brand-white/40 uppercase tracking-widest italic">{workoutHistory.length} RECORDS_FOUND</span>
+                  <header>
+                    <h2 className="text-3xl font-bold tracking-tight">Workout History</h2>
+                    <p className="text-slate-500">{workoutHistory.length} sessions recorded</p>
                   </header>
-                  <div className="grid grid-cols-1 gap-4">
+                  <div className="grid grid-cols-1 gap-3">
                     {workoutHistory.map(w => (
-                      <Card key={w.id} className="!p-4 bg-brand-dark hover:bg-brand-gray border-brand-white/5 transition-colors">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-6">
-                            <div className="text-center w-12 border-r-2 border-brand-white/10 pr-6 mr-6">
-                              <p className="text-[10px] font-black text-brand-white/40 uppercase">{new Date(w.startTime).toLocaleDateString('en-US', { month: 'short' })}</p>
-                              <p className="text-xl font-black italic leading-none">{new Date(w.startTime).getDate()}</p>
-                            </div>
-                            <div>
-                              <h4 className="font-black italic uppercase tracking-tight text-lg mb-1">{w.name}</h4>
-                              <p className="text-[10px] font-bold text-brand-white/40 uppercase tracking-widest">{w.exercises.length} EXERCISES // {w.duration || 0} MINS</p>
-                            </div>
+                      <div key={w.id} className="flex items-center justify-between p-4 bg-white border border-slate-200 rounded-xl hover:shadow-md transition-shadow dark:bg-slate-900 dark:border-slate-800">
+                        <div className="flex items-center gap-4">
+                          <div className="h-12 w-12 rounded-full bg-slate-100 flex items-center justify-center dark:bg-slate-800 text-slate-500">
+                            <History size={20} />
                           </div>
-                          <Button variant="ghost" size="sm" onClick={() => { }} className="text-red-500/40 hover:text-red-500">
-                            REMOVE
-                          </Button>
+                          <div>
+                            <p className="font-semibold">{w.name}</p>
+                            <p className="text-xs text-slate-500">
+                              {new Date(w.startTime).toLocaleDateString()} • {w.duration || 0} mins • {w.exercises.length} Exercises
+                            </p>
+                          </div>
                         </div>
-                      </Card>
+                        <Button variant="ghost" size="icon" className="group">
+                          <ChevronRight size={18} className="text-slate-400 group-hover:text-primary transition-colors" />
+                        </Button>
+                      </div>
                     ))}
+                    {workoutHistory.length === 0 && (
+                      <div className="text-center py-20 bg-slate-100 rounded-2xl dark:bg-slate-900">
+                        <p className="text-slate-500 italic">No workouts saved yet. Time to start training!</p>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
@@ -214,29 +188,25 @@ const App: React.FC = () => {
         </AnimatePresence>
       </main>
 
-      {/* EXERCISE LIBRARY OVERLAY */}
+      {/* DRAWER FOR LIBRARY */}
       <AnimatePresence>
         {showLibrary && (
           <>
             <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 z-50 bg-brand-black/90 backdrop-blur-xl"
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="fixed inset-0 z-50 bg-black/20 backdrop-blur-sm dark:bg-black/60"
               onClick={() => setShowLibrary(false)}
             />
             <motion.div
-              initial={{ x: '100%' }}
-              animate={{ x: 0 }}
-              exit={{ x: '100%' }}
-              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="fixed right-0 top-0 bottom-0 w-full md:w-[600px] z-[60] bg-brand-black border-l-2 border-brand-white/10 p-10 flex flex-col"
+              initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }}
+              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+              className="fixed right-0 top-0 bottom-0 w-full sm:w-[450px] z-[60] bg-white border-l shadow-2xl p-8 dark:bg-slate-950 dark:border-slate-800"
             >
-              <div className="flex justify-between items-center mb-10">
-                <h2 className="text-3xl font-black italic uppercase tracking-tighter">DATA_LIBRARY</h2>
-                <Button variant="ghost" className="!p-1 border-none" onClick={() => setShowLibrary(false)}>CLOSE</Button>
+              <div className="flex items-center justify-between mb-8">
+                <h2 className="text-2xl font-bold">Exercise Database</h2>
+                <Button variant="ghost" size="icon" onClick={() => setShowLibrary(false)}>✕</Button>
               </div>
-              <div className="flex-grow overflow-y-auto custom-scrollbar">
+              <div className="overflow-y-auto h-[calc(100vh-160px)] no-scrollbar">
                 <ExerciseLibrary />
               </div>
             </motion.div>
@@ -256,17 +226,34 @@ const App: React.FC = () => {
 const NavItem = ({ icon, label, active, onClick }: { icon: React.ReactNode, label: string, active: boolean, onClick: () => void }) => (
   <button
     onClick={onClick}
-    className={`nav-item ${active ? 'nav-item-active' : 'nav-item-inactive'} whitespace-nowrap`}
+    className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${active
+        ? 'bg-slate-900 text-white dark:bg-white dark:text-black'
+        : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800'
+      }`}
   >
     {icon}
     <span className="sm:block hidden">{label}</span>
   </button>
 );
 
-const QuickLink = ({ label, onClick }: { label: string, onClick: () => void }) => (
-  <Button variant="outline" fullWidth className="!text-[10px] !tracking-[0.2em]" onClick={onClick}>
-    {label}
-  </Button>
+const StatCard = ({ label, value, unit }: { label: string, value: any, unit?: string }) => (
+  <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm dark:bg-slate-900 dark:border-slate-800">
+    <p className="text-sm text-slate-500 font-medium mb-1">{label}</p>
+    <div className="flex items-baseline gap-1">
+      <span className="text-2xl font-bold tracking-tight">{value}</span>
+      {unit && <span className="text-xs text-slate-400 font-bold">{unit}</span>}
+    </div>
+  </div>
+);
+
+const ActionTile = ({ icon, label, onClick }: { icon: React.ReactNode, label: string, onClick: () => void }) => (
+  <button
+    onClick={onClick}
+    className="flex flex-col items-center justify-center gap-3 p-6 rounded-2xl bg-slate-50 border border-slate-200 hover:border-slate-400 transition-all dark:bg-slate-800 dark:border-slate-700"
+  >
+    <div className="h-10 w-10 bg-white rounded-xl shadow-sm flex items-center justify-center dark:bg-slate-700">{icon}</div>
+    <span className="text-sm font-medium">{label}</span>
+  </button>
 );
 
 export default App;

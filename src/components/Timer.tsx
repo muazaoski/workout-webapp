@@ -30,54 +30,51 @@ const Timer: React.FC = () => {
 
   return (
     <div className="w-full space-y-6">
-      <div className="relative text-center">
-        <div className={`text-6xl font-black italic tracking-tighter tabular-nums transition-colors duration-300 ${timer.isRunning ? 'text-brand-yellow' : 'text-brand-white'}`}>
+      <div className="text-center">
+        <div className={`text-5xl font-bold tracking-tight tabular-nums transition-colors duration-300 ${timer.isRunning ? 'text-primary' : 'text-slate-400'}`}>
           {formatTime(timer.timeLeft)}
         </div>
-        <p className="text-[10px] font-black tracking-[0.4em] text-brand-white/20 mt-2">CHRONO_READOUT</p>
       </div>
 
       <div className="flex justify-center gap-2">
         {timer.timeLeft === 0 || !timer.isRunning ? (
           <Button
-            variant="outline"
-            size="sm"
-            onClick={() => timer.timeLeft > 0 ? resumeTimer() : startTimer(60, 'rest')}
+            variant="secondary"
             className="flex-1"
+            onClick={() => timer.timeLeft > 0 ? resumeTimer() : startTimer(60, 'rest')}
           >
-            <Play size={16} />
+            <Play size={18} className="mr-2" /> Start
           </Button>
         ) : (
           <Button
-            variant="secondary"
-            size="sm"
-            onClick={pauseTimer}
+            variant="outline"
             className="flex-1"
+            onClick={pauseTimer}
           >
-            <Pause size={16} />
+            <Pause size={18} className="mr-2" /> Pause
           </Button>
         )}
         <Button
-          variant="outline"
-          size="sm"
+          variant="ghost"
+          size="icon"
           onClick={stopTimer}
-          className="aspect-square !px-3 hover:text-red-500"
+          className="text-slate-400 hover:text-red-500"
         >
-          <RotateCcw size={16} />
+          <RotateCcw size={18} />
         </Button>
       </div>
 
-      <div className="grid grid-cols-4 gap-2">
+      <div className="grid grid-cols-4 gap-1.5">
         {durations.map((d) => (
           <button
             key={d}
             onClick={() => startTimer(d, 'rest')}
-            className={`py-2 text-[10px] font-black border-2 transition-all ${timer.duration === d
-                ? 'bg-brand-white text-brand-black border-brand-white'
-                : 'border-brand-white/10 text-brand-white/40 hover:border-brand-white/40'
+            className={`py-2 rounded-lg text-xs font-semibold transition-all border ${timer.duration === d
+                ? 'bg-primary text-primary-foreground border-primary'
+                : 'bg-slate-50 border-transparent text-slate-500 hover:border-slate-200 dark:bg-slate-800'
               }`}
           >
-            {d}S
+            {d}s
           </button>
         ))}
       </div>
