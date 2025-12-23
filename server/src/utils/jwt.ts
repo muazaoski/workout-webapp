@@ -1,4 +1,5 @@
 import jwt from 'jsonwebtoken';
+import type { SignOptions } from 'jsonwebtoken';
 
 export const generateToken = (userId: string, email: string): string => {
     const secret = process.env.JWT_SECRET;
@@ -8,7 +9,8 @@ export const generateToken = (userId: string, email: string): string => {
         throw new Error('JWT_SECRET is not configured');
     }
 
-    return jwt.sign({ userId, email }, secret, { expiresIn });
+    const options: SignOptions = { expiresIn: expiresIn as jwt.SignOptions['expiresIn'] };
+    return jwt.sign({ userId, email }, secret, options);
 };
 
 export const verifyToken = (token: string): { userId: string; email: string } => {
