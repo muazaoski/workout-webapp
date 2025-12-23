@@ -87,7 +87,7 @@ const ActiveWorkout: React.FC = () => {
           <div>
             <div className="flex items-center gap-2 mb-2">
               <span className="h-2 w-2 rounded-full bg-primary animate-pulse" />
-              <span className="text-[10px] font-black uppercase tracking-[0.3em] text-primary">Current Exercise</span>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-primary">Current Exercise</span>
             </div>
             <h2 className="text-5xl font-extrabold tracking-tighter">
               {currentExercise.exercise.name}
@@ -115,7 +115,7 @@ const ActiveWorkout: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
         {/* PERFORMANCE PANEL */}
         <div className="lg:col-span-2 space-y-10">
-          <Card className="!p-10 relative overflow-hidden group border-primary/20 glow-primary">
+          <Card className="!p-10 relative overflow-hidden group border-primary/20">
             <div className="absolute top-0 right-0 p-8 h-40 w-40 opacity-5 group-hover:opacity-10 transition-opacity">
               <Dumbbell size={160} className="-rotate-12" />
             </div>
@@ -181,12 +181,12 @@ const ActiveWorkout: React.FC = () => {
             <Card className="!p-8 text-center flex flex-col items-center justify-center">
               <Activity size={32} className="text-primary mb-4" />
               <p className="text-3xl font-bold font-mono tabular-nums">{stats.totalReps + (parseInt(reps) || 0)}</p>
-              <p className="text-xs text-muted-foreground uppercase font-black tracking-widest mt-2">Cumulative Reps</p>
+              <p className="text-xs text-muted-foreground uppercase font-bold tracking-wider mt-2">Cumulative Reps</p>
             </Card>
             <Card className="!p-8 text-center flex flex-col items-center justify-center">
               <Zap size={32} className="text-primary mb-4" />
               <p className="text-3xl font-bold font-mono tabular-nums">{(parseFloat(weight) || 0).toFixed(1)}</p>
-              <p className="text-xs text-muted-foreground uppercase font-black tracking-widest mt-2">Active Load (kg)</p>
+              <p className="text-xs text-muted-foreground uppercase font-bold tracking-wider mt-2">Active Load (kg)</p>
             </Card>
           </div>
         </div>
@@ -198,7 +198,7 @@ const ActiveWorkout: React.FC = () => {
               <ProgressRing progress={progress} size={180} strokeWidth={12} color="#facc15">
                 <div className="flex flex-col items-center">
                   <span className="text-5xl font-black italic tracking-tighter leading-none">{completedSets}</span>
-                  <span className="text-[10px] text-muted-foreground uppercase font-black tracking-widest mt-2">of {totalSets} sets</span>
+                  <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider mt-2">of {totalSets} sets</span>
                 </div>
               </ProgressRing>
             </div>
@@ -217,7 +217,7 @@ const ActiveWorkout: React.FC = () => {
           size="lg"
           fullWidth
           onClick={finishWorkout}
-          className="md:order-2 h-24 text-3xl font-black italic tracking-tighter rounded-[2.5rem] shadow-2xl shadow-primary/40 glow-primary"
+          className="md:order-2 h-24 text-3xl font-bold tracking-tighter rounded-[2.5rem] shadow-2xl shadow-primary/40"
         >
           Finalize Session
         </Button>

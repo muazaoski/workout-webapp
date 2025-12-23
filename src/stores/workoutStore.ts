@@ -101,7 +101,7 @@ const defaultUserLevel: UserLevel = {
   currentXP: 0,
   totalXP: 0,
   xpToNext: 100,
-  title: 'Beginner',
+  title: 'Novice',
 };
 
 const defaultAchievements: Achievement[] = [
@@ -598,7 +598,7 @@ export const useWorkoutStore = create<WorkoutStore>()(
           } else if (newLevel >= 10) {
             newTitle = 'Intermediate';
           } else {
-            newTitle = 'Beginner';
+            newTitle = 'Novice';
           }
 
           set({
@@ -634,7 +634,7 @@ export const useWorkoutStore = create<WorkoutStore>()(
           xpNeeded = Math.floor(100 * Math.pow(1.2, level - 1));
         }
 
-        let title = 'Beginner';
+        let title = 'Novice';
         if (level >= 50) {
           title = 'Legend';
         } else if (level >= 40) {

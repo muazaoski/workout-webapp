@@ -48,6 +48,13 @@ const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<'dashboard' | 'history' | 'achievements' | 'challenges' | 'settings'>('dashboard');
   const [showLibrary, setShowLibrary] = useState(false);
 
+  // Safety cleanup for old gritty titles
+  React.useEffect(() => {
+    if (userLevel.title.includes('PROTOCOL') || userLevel.title.includes('_')) {
+      useWorkoutStore.getState().calculateLevel();
+    }
+  }, [userLevel.title]);
+
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-6">
@@ -121,7 +128,7 @@ const App: React.FC = () => {
                     <Button
                       size="lg"
                       onClick={() => startNewWorkout('Workout ' + new Date().toLocaleDateString())}
-                      className="rounded-3xl px-8 glow-primary"
+                      className="rounded-3xl px-8"
                     >
                       <Plus size={20} className="mr-2" /> Start Session
                     </Button>
@@ -277,7 +284,7 @@ const DashboardStat = ({ icon, label, value, unit, subtitle }: { icon: React.Rea
       <span className="text-4xl font-extrabold tracking-tight">{value}</span>
       {unit && <span className="text-xl font-bold text-primary">{unit}</span>}
     </div>
-    <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest mt-2 opacity-30">{subtitle}</p>
+    <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider mt-2 opacity-30">{subtitle}</p>
   </div>
 );
 
@@ -327,11 +334,11 @@ const SettingsView = () => {
         </div>
 
         <div className="space-y-6">
-          <Card title="Subscription" description="No tiers, just training.">
+          <Card title="Subscription" description="Unlimited training.">
             <div className="p-4 rounded-2xl bg-primary/10 border border-primary/20 text-center">
               <Zap className="text-primary mx-auto mb-3" size={32} />
-              <p className="font-bold text-primary italic">LIFETIME_ATHLETE</p>
-              <p className="text-[10px] text-muted-foreground mt-2 font-bold uppercase tracking-widest leading-none">Global Access Granted</p>
+              <p className="font-bold text-primary">Pro Member</p>
+              <p className="text-[10px] text-muted-foreground mt-2 font-bold uppercase tracking-wider leading-none">Standard Access</p>
             </div>
           </Card>
 
