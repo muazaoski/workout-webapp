@@ -24,7 +24,7 @@ const Badge: React.FC<BadgeProps> = ({
   const isUnlocked = achievement.unlocked;
 
   return (
-    <div className="relative inline-block">
+    <div className="relative inline-block group">
       <motion.button
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
@@ -33,8 +33,8 @@ const Badge: React.FC<BadgeProps> = ({
           relative rounded-full border-2 transition-all duration-300
           ${sizeClasses[size]}
           ${isUnlocked
-            ? 'border-white bg-gradient-to-br from-white/20 to-white/10 shadow-lg shadow-white/20'
-            : 'border-gray-700 bg-dark-tertiary/50'
+            ? 'border-primary bg-primary/10 shadow-lg shadow-primary/20'
+            : 'border-white/10 bg-white/5'
           }
           ${onClick ? 'cursor-pointer' : 'cursor-default'}
         `}
@@ -44,45 +44,18 @@ const Badge: React.FC<BadgeProps> = ({
           <span
             className={`
               transition-all duration-300
-              ${isUnlocked ? 'opacity-100' : 'opacity-30 grayscale'}
+              ${isUnlocked ? 'opacity-100' : 'opacity-20 grayscale'}
             `}
           >
             {achievement.icon}
           </span>
         </div>
 
-        {/* Unlock Animation Overlay */}
-        {isUnlocked && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.5, ease: "easeOut" }}
-            className="absolute inset-0 rounded-full border-2 border-white"
-          >
-            <motion.div
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 0, scale: 1.5 }}
-              transition={{ duration: 1, ease: "easeOut" }}
-              className="absolute inset-0 rounded-full border-2 border-white"
-            />
-          </motion.div>
-        )}
-
-        {/* Glow effect for unlocked badges */}
-        {isUnlocked && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: [0, 1, 0] }}
-            transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
-            className="absolute inset-0 rounded-full bg-white/20 blur-md"
-          />
-        )}
-
         {/* Lock icon for locked badges */}
         {!isUnlocked && (
           <div className="absolute inset-0 flex items-center justify-center">
             <svg
-              className="w-4 h-4 text-gray-500"
+              className="w-4 h-4 text-muted-foreground"
               fill="none"
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -99,27 +72,19 @@ const Badge: React.FC<BadgeProps> = ({
 
       {/* Tooltip */}
       {showTooltip && (
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-dark-primary border border-white/20 rounded-lg text-white text-sm whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50"
-          style={{ display: 'none' }}
-        >
-          <div className="font-medium">{achievement.name}</div>
-          <div className="text-xs text-gray-400 mt-1">{achievement.description}</div>
+        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-4 px-4 py-3 bg-card border border-white/5 rounded-2xl text-white text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all pointer-events-none z-50 shadow-2xl backdrop-blur-xl">
+          <div className="font-bold text-sm text-primary">{achievement.name}</div>
+          <div className="text-muted-foreground mt-1">{achievement.description}</div>
           {achievement.unlockedAt && (
-            <div className="text-xs text-green-400 mt-1">
-              Unlocked {new Date(achievement.unlockedAt).toLocaleDateString()}
+            <div className="text-primary/60 mt-2 font-bold uppercase tracking-tighter text-[10px]">
+              Earned {new Date(achievement.unlockedAt).toLocaleDateString()}
             </div>
           )}
-          <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1">
-            <div className="border-4 border-transparent border-t-dark-primary"></div>
+          <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1">
+            <div className="border-[6px] border-transparent border-t-card"></div>
           </div>
-        </motion.div>
+        </div>
       )}
-
-      {/* Hover trigger for tooltip */}
-      <div className="absolute inset-0 group" />
     </div>
   );
 };

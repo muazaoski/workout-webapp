@@ -34,7 +34,7 @@ const LevelProgress: React.FC = () => {
           initial={{ width: 0 }}
           animate={{ width: `${progress}%` }}
           transition={{ duration: 1.5, ease: "easeOut" }}
-          className="h-full bg-primary relative shadow-[0_0_15px_rgba(250,204,21,0.3)]"
+          className="h-full bg-primary relative shadow-lg shadow-primary/20"
         >
           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent animate-pulse" />
         </motion.div>

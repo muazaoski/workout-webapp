@@ -106,7 +106,7 @@ const defaultUserLevel: UserLevel = {
 
 const defaultAchievements: Achievement[] = [
   {
-    id: 'first_workout',
+    id: 'first-workout',
     name: 'First Steps',
     description: 'Complete your first workout',
     icon: '🎯',
@@ -116,7 +116,7 @@ const defaultAchievements: Achievement[] = [
     requirement: { type: 'totalWorkouts', value: 1 },
   },
   {
-    id: 'workout_10',
+    id: 'workout-10',
     name: 'Getting Started',
     description: 'Complete 10 workouts',
     icon: '💪',
@@ -126,7 +126,7 @@ const defaultAchievements: Achievement[] = [
     requirement: { type: 'totalWorkouts', value: 10 },
   },
   {
-    id: 'workout_50',
+    id: 'workout-50',
     name: 'Fitness Enthusiast',
     description: 'Complete 50 workouts',
     icon: '🏆',
@@ -136,7 +136,7 @@ const defaultAchievements: Achievement[] = [
     requirement: { type: 'totalWorkouts', value: 50 },
   },
   {
-    id: 'workout_100',
+    id: 'workout-100',
     name: 'Workout Warrior',
     description: 'Complete 100 workouts',
     icon: '👑',
@@ -146,7 +146,7 @@ const defaultAchievements: Achievement[] = [
     requirement: { type: 'totalWorkouts', value: 100 },
   },
   {
-    id: 'streak_7',
+    id: 'streak-7',
     name: 'Week Warrior',
     description: 'Maintain a 7-day workout streak',
     icon: '🔥',
@@ -156,7 +156,7 @@ const defaultAchievements: Achievement[] = [
     requirement: { type: 'streak', value: 7 },
   },
   {
-    id: 'streak_30',
+    id: 'streak-30',
     name: 'Monthly Master',
     description: 'Maintain a 30-day workout streak',
     icon: '⚡',
@@ -166,7 +166,7 @@ const defaultAchievements: Achievement[] = [
     requirement: { type: 'streak', value: 30 },
   },
   {
-    id: 'reps_1000',
+    id: 'reps-1000',
     name: 'Rep Master',
     description: 'Complete 1000 total reps',
     icon: '💯',
@@ -176,7 +176,7 @@ const defaultAchievements: Achievement[] = [
     requirement: { type: 'totalReps', value: 1000 },
   },
   {
-    id: 'weight_10000',
+    id: 'weight-10000',
     name: 'Heavy Hitter',
     description: 'Lift 10,000 kg total weight',
     icon: '🏋️',
@@ -196,7 +196,6 @@ export const useWorkoutStore = create<WorkoutStore>()(
       timer: defaultTimer,
       workoutHistory: [],
       exercises: [
-        // Default exercises
         {
           id: '1',
           name: 'Push-ups',
@@ -235,7 +234,6 @@ export const useWorkoutStore = create<WorkoutStore>()(
       ],
       stats: defaultStats,
 
-      // Achievement System State
       achievements: defaultAchievements,
       userLevel: defaultUserLevel,
       challenges: [],
@@ -303,76 +301,61 @@ export const useWorkoutStore = create<WorkoutStore>()(
         const { currentWorkout } = get();
         if (!currentWorkout) return;
 
-        const updatedExercises = [...currentWorkout.exercises];
-        updatedExercises[exerciseIndex].sets[setIndex] = {
-          ...updatedExercises[exerciseIndex].sets[setIndex],
-          ...updates,
-        };
+        const updatedWorkout = { ...currentWorkout };
+        const workoutExercise = updatedWorkout.exercises[exerciseIndex];
 
-        set({
-          currentWorkout: {
-            ...currentWorkout,
-            exercises: updatedExercises,
-          },
-        });
+        if (workoutExercise) {
+          workoutExercise.sets[setIndex] = {
+            ...workoutExercise.sets[setIndex],
+            ...updates,
+          };
+          set({ currentWorkout: updatedWorkout });
+        }
       },
 
       nextExercise: () => {
-        const { activeExerciseIndex, currentWorkout } = get();
-        if (!currentWorkout) return;
-
-        const nextIndex = Math.min(activeExerciseIndex + 1, currentWorkout.exercises.length - 1);
-        set({
-          activeExerciseIndex: nextIndex,
-          activeSetIndex: 0,
-        });
+        const { currentWorkout, activeExerciseIndex } = get();
+        if (currentWorkout && activeExerciseIndex < currentWorkout.exercises.length - 1) {
+          set({
+            activeExerciseIndex: activeExerciseIndex + 1,
+            activeSetIndex: 0,
+          });
+        }
       },
 
       previousExercise: () => {
-        set((state) => ({
-          activeExerciseIndex: Math.max(state.activeExerciseIndex - 1, 0),
-          activeSetIndex: 0,
-        }));
+        const { activeExerciseIndex } = get();
+        if (activeExerciseIndex > 0) {
+          set({
+            activeExerciseIndex: activeExerciseIndex - 1,
+            activeSetIndex: 0,
+          });
+        }
       },
 
       finishWorkout: () => {
-        const { currentWorkout, workoutHistory } = get();
+        const { currentWorkout, workoutHistory, exercises } = get();
         if (!currentWorkout) return;
-
-        const endTime = new Date();
-        const duration = Math.floor((endTime.getTime() - currentWorkout.startTime.getTime()) / 60000);
 
         const completedWorkout = {
           ...currentWorkout,
-          endTime,
-          duration,
+          endTime: new Date(),
+          duration: Math.floor((new Date().getTime() - currentWorkout.startTime.getTime()) / 60000),
         };
 
-        const updatedHistory = [completedWorkout, ...workoutHistory];
-
-        // Calculate new stats
-        const stats = calculateStats(updatedHistory, get().exercises);
-
-        // Award XP for completing workout (base XP + bonus for exercises and duration)
-        let xpReward = 25; // Base XP for workout completion
-        xpReward += completedWorkout.exercises.length * 5; // 5 XP per exercise
-
-        // Bonus XP for longer workouts
-        if (duration > 30) xpReward += 10;
-        if (duration > 60) xpReward += 20;
-
-        // Award XP and check for achievements
-        get().addXP(xpReward);
-        get().checkAchievements();
+        const newHistory = [completedWorkout, ...workoutHistory];
+        const newStats = calculateStats(newHistory, exercises);
 
         set({
+          workoutHistory: newHistory,
           currentWorkout: null,
           activeExerciseIndex: 0,
           activeSetIndex: 0,
-          workoutHistory: updatedHistory,
-          timer: defaultTimer,
-          stats,
+          stats: newStats,
         });
+
+        get().checkAchievements();
+        get().addXP(100);
       },
 
       cancelWorkout: () => {
@@ -380,7 +363,6 @@ export const useWorkoutStore = create<WorkoutStore>()(
           currentWorkout: null,
           activeExerciseIndex: 0,
           activeSetIndex: 0,
-          timer: defaultTimer,
         });
       },
 
@@ -397,46 +379,29 @@ export const useWorkoutStore = create<WorkoutStore>()(
 
       pauseTimer: () => {
         set((state) => ({
-          timer: {
-            ...state.timer,
-            isRunning: false,
-          },
+          timer: { ...state.timer, isRunning: false },
         }));
       },
 
       resumeTimer: () => {
         set((state) => ({
-          timer: {
-            ...state.timer,
-            isRunning: true,
-          },
+          timer: { ...state.timer, isRunning: true },
         }));
       },
 
       stopTimer: () => {
-        set({
-          timer: defaultTimer,
-        });
+        set({ timer: defaultTimer });
       },
 
       updateTimer: () => {
-        set((state) => {
-          if (!state.timer.isRunning || state.timer.timeLeft <= 0) {
-            return {
-              timer: {
-                ...state.timer,
-                isRunning: false,
-              },
-            };
-          }
-
-          return {
-            timer: {
-              ...state.timer,
-              timeLeft: state.timer.timeLeft - 1,
-            },
-          };
-        });
+        const { timer } = get();
+        if (timer.isRunning && timer.timeLeft > 0) {
+          set({
+            timer: { ...timer, timeLeft: timer.timeLeft - 1 },
+          });
+        } else if (timer.timeLeft === 0) {
+          set({ timer: { ...timer, isRunning: false } });
+        }
       },
 
       addExercise: (exercise) => {
@@ -447,9 +412,7 @@ export const useWorkoutStore = create<WorkoutStore>()(
 
       updateExercise: (id, updates) => {
         set((state) => ({
-          exercises: state.exercises.map((ex) =>
-            ex.id === id ? { ...ex, ...updates } : ex
-          ),
+          exercises: state.exercises.map((ex) => (ex.id === id ? { ...ex, ...updates } : ex)),
         }));
       },
 
@@ -460,90 +423,61 @@ export const useWorkoutStore = create<WorkoutStore>()(
       },
 
       loadWorkouts: () => {
-        // Data is loaded automatically via persist middleware
+        // Persistent storage handles this
       },
 
       exportData: () => {
-        const state = get();
-        return JSON.stringify({
-          workoutHistory: state.workoutHistory,
-          exercises: state.exercises,
-          stats: state.stats,
-        });
+        return JSON.stringify(get());
       },
 
       importData: (data) => {
         try {
-          const parsedData = JSON.parse(data);
-          set({
-            workoutHistory: parsedData.workoutHistory || [],
-            exercises: parsedData.exercises || [],
-            stats: parsedData.stats || defaultStats,
-          });
+          const parsed = JSON.parse(data);
+          set(parsed);
         } catch (error) {
           console.error('Failed to import data:', error);
         }
       },
 
       deleteWorkout: (id) => {
-        const { workoutHistory } = get();
-        const updatedHistory = workoutHistory.filter((workout) => workout.id !== id);
-
-        // Recalculate stats with the updated history
-        const stats = calculateStats(updatedHistory, get().exercises);
-
-        set({
-          workoutHistory: updatedHistory,
-          stats,
+        set((state) => {
+          const newHistory = state.workoutHistory.filter((w) => w.id !== id);
+          return {
+            workoutHistory: newHistory,
+            stats: calculateStats(newHistory, state.exercises),
+          };
         });
       },
 
       updateWorkout: (id, updates) => {
-        const { workoutHistory } = get();
-        const updatedHistory = workoutHistory.map((workout) =>
-          workout.id === id ? { ...workout, ...updates } : workout
-        );
-
-        // Recalculate stats with the updated history
-        const stats = calculateStats(updatedHistory, get().exercises);
-
-        set({
-          workoutHistory: updatedHistory,
-          stats,
-        });
+        set((state) => ({
+          workoutHistory: state.workoutHistory.map((w) => (w.id === id ? { ...w, ...updates } : w)),
+        }));
       },
 
-      // Achievement System Actions
       unlockAchievement: (achievementId) => {
-        const { achievements, unlockedAchievements } = get();
+        set((state) => {
+          const alreadyUnlocked = state.unlockedAchievements.includes(achievementId);
+          if (alreadyUnlocked) return state;
 
-        if (unlockedAchievements.includes(achievementId)) return;
+          const achievement = state.achievements.find(a => a.id === achievementId);
+          if (!achievement) return state;
 
-        const achievement = achievements.find(a => a.id === achievementId);
-        if (!achievement || achievement.unlocked) return;
+          const updatedAchievements = state.achievements.map(a =>
+            a.id === achievementId ? { ...a, unlocked: true, unlockedAt: new Date() } : a
+          );
 
-        const updatedAchievements = achievements.map(a =>
-          a.id === achievementId
-            ? { ...a, unlocked: true, unlockedAt: new Date() }
-            : a
-        );
-
-        // Award XP for achievement
-        const xpReward = 50; // Base XP for achievements
-        get().addXP(xpReward);
-
-        set({
-          achievements: updatedAchievements,
-          unlockedAchievements: [...unlockedAchievements, achievementId],
-          showAchievementModal: true,
-          recentAchievement: updatedAchievements.find(a => a.id === achievementId),
+          return {
+            achievements: updatedAchievements,
+            unlockedAchievements: [...state.unlockedAchievements, achievementId],
+            showAchievementModal: true,
+            recentAchievement: achievement,
+          };
         });
       },
 
       checkAchievements: () => {
-        const { stats } = get();
-        const { achievements } = get();
-
+        const { stats, achievements } = get();
         achievements.forEach(achievement => {
           if (achievement.unlocked) return;
 
@@ -578,15 +512,11 @@ export const useWorkoutStore = create<WorkoutStore>()(
         let newXpToNext = userLevel.xpToNext;
         let newTitle = userLevel.title;
 
-        // Check for level up
         if (newCurrentXP >= newXpToNext) {
           newLevel++;
           const remainingXP = newCurrentXP - newXpToNext;
-
-          // Calculate XP needed for next level (exponential growth)
           newXpToNext = Math.floor(100 * Math.pow(1.2, newLevel - 1));
 
-          // Determine new title based on level
           if (newLevel >= 50) {
             newTitle = 'Legend';
           } else if (newLevel >= 40) {
@@ -622,7 +552,6 @@ export const useWorkoutStore = create<WorkoutStore>()(
       },
 
       calculateLevel: () => {
-        // This method recalculates level based on total XP
         const { totalXP } = get().userLevel;
         let level = 1;
         let xpNeeded = 100;
@@ -658,13 +587,13 @@ export const useWorkoutStore = create<WorkoutStore>()(
         });
       },
 
-      addChallenge: (challenge: Challenge) => {
+      addChallenge: (challenge) => {
         set((state) => ({
           challenges: [...state.challenges, challenge],
         }));
       },
 
-      toggleChallenge: (challengeId: string) => {
+      toggleChallenge: (challengeId) => {
         set((state) => ({
           challenges: state.challenges.map(c =>
             c.id === challengeId ? { ...c, completed: !c.completed } : c
@@ -672,14 +601,13 @@ export const useWorkoutStore = create<WorkoutStore>()(
         }));
       },
 
-      deleteChallenge: (challengeId: string) => {
+      deleteChallenge: (challengeId) => {
         set((state) => ({
           challenges: state.challenges.filter(challenge => challenge.id !== challengeId),
         }));
       },
 
-      checkInChallenge: (challengeId: string) => {
-        // Simple completion for the new punk version
+      checkInChallenge: (challengeId) => {
         set((state) => ({
           challenges: state.challenges.map(c =>
             c.id === challengeId ? { ...c, completed: true } : c
@@ -695,7 +623,7 @@ export const useWorkoutStore = create<WorkoutStore>()(
       },
     }),
     {
-      name: 'workout-storage',
+      name: 'workout-v2',
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
         workoutHistory: state.workoutHistory,
@@ -710,7 +638,6 @@ export const useWorkoutStore = create<WorkoutStore>()(
   )
 );
 
-// Helper function to calculate stats
 function calculateStats(workouts: Workout[], exercises: Exercise[]): WorkoutStats {
   const stats: WorkoutStats = {
     totalWorkouts: workouts.length,
@@ -725,7 +652,6 @@ function calculateStats(workouts: Workout[], exercises: Exercise[]): WorkoutStat
     weakMuscleGroups: [],
   };
 
-  // Calculate totals
   workouts.forEach((workout) => {
     workout.exercises.forEach((we) => {
       stats.totalExercises++;
@@ -741,10 +667,9 @@ function calculateStats(workouts: Workout[], exercises: Exercise[]): WorkoutStat
     });
   });
 
-  // Calculate streak (consecutive days with workouts)
   if (workouts.length > 0) {
     const sortedDates = workouts
-      .filter((w) => w.endTime) // Only include workouts with endTime
+      .filter((w) => w.endTime)
       .map((w) => {
         const endTime = new Date(w.endTime!);
         return endTime.toDateString();
@@ -766,7 +691,6 @@ function calculateStats(workouts: Workout[], exercises: Exercise[]): WorkoutStat
     stats.streak = streak;
   }
 
-  // Find favorite exercises (most frequently used)
   const exerciseCounts: Record<string, number> = {};
   workouts.forEach((workout) => {
     workout.exercises.forEach((we) => {

@@ -48,9 +48,10 @@ const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<'dashboard' | 'history' | 'achievements' | 'challenges' | 'settings'>('dashboard');
   const [showLibrary, setShowLibrary] = useState(false);
 
-  // Safety cleanup for old gritty titles
+  // Safety cleanup for old gritty labels
   React.useEffect(() => {
-    if (userLevel.title.includes('PROTOCOL') || userLevel.title.includes('_')) {
+    const title = userLevel.title.toLowerCase();
+    if (title.includes('protocol') || title.includes('matrix')) {
       useWorkoutStore.getState().calculateLevel();
     }
   }, [userLevel.title]);
@@ -138,7 +139,7 @@ const App: React.FC = () => {
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <DashboardStat icon={<Zap className="text-primary" />} label="Workouts" value={stats.totalWorkouts} subtitle="sessions completed" />
                     <DashboardStat icon={<Flame className="text-primary" />} label="Volume" value={(stats.totalVolume / 1000).toFixed(1)} unit="T" subtitle="tons moved" />
-                    <DashboardStat icon={<Activity className="text-primary" />} label="Total Reps" value={stats.totalReps} subtitle="completed power reps" />
+                    <DashboardStat icon={<Activity className="text-primary" />} label="Total Reps" value={stats.totalReps} subtitle="completed reps" />
                   </div>
 
                   {/* LEVEL SECTION */}
@@ -312,7 +313,7 @@ const SettingsView = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-6">
-          <Card title="Profile Information" description="How you appear across the platform.">
+          <Card title="Profile Information" description="Personal details.">
             <div className="space-y-6 mt-4">
               <Input label="Display Name" defaultValue={user?.name || ''} icon={<UserIcon size={18} />} />
               <Input label="Email Address" type="email" defaultValue={user?.email || ''} icon={<Mail size={18} />} disabled />
