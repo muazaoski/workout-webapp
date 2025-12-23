@@ -30,8 +30,11 @@ import {
   Activity,
   User,
   Mail,
-  Trash2
+  Trash2,
+  Maximize2
 } from 'lucide-react';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
+import type { WorkoutStats, BodyWeightLog, PerformanceLog } from './types/workout';
 
 const App: React.FC = () => {
   const {
@@ -43,12 +46,27 @@ const App: React.FC = () => {
     showAchievementModal,
     recentAchievement,
     hideAchievementModal,
-    deleteWorkout
+    deleteWorkout,
+    isMinimized,
+    toggleMinimize,
+    logManualWorkout
   } = useWorkoutStore();
 
   const { isAuthenticated, logout, user } = useAuthStore();
   const [currentView, setCurrentView] = useState<'dashboard' | 'history' | 'achievements' | 'challenges' | 'settings'>('dashboard');
   const [showLibrary, setShowLibrary] = useState(false);
+  const [showManualLog, setShowManualLog] = useState(false);
+
+  const handleNavClick = (view: typeof currentView) => {
+    if (currentWorkout && !isMinimized && view !== currentView) {
+      if (confirm('You have an active workout session. Would you like to minimize it and go to ' + view + '?')) {
+        toggleMinimize(true);
+        setCurrentView(view);
+      }
+    } else {
+      setCurrentView(view);
+    }
+  };
 
   // Safety cleanup for old gritty labels
   React.useEffect(() => {
@@ -83,11 +101,11 @@ const App: React.FC = () => {
             </div>
 
             <div className="flex sm:flex-col gap-2 w-full">
-              <NavItem icon={<LayoutDashboard size={22} />} label="Overview" active={currentView === 'dashboard'} onClick={() => setCurrentView('dashboard')} />
-              <NavItem icon={<History size={22} />} label="History" active={currentView === 'history'} onClick={() => setCurrentView('history')} />
-              <NavItem icon={<Trophy size={22} />} label="Badges" active={currentView === 'achievements'} onClick={() => setCurrentView('achievements')} />
-              <NavItem icon={<Target size={22} />} label="Challenges" active={currentView === 'challenges'} onClick={() => setCurrentView('challenges')} />
-              <NavItem icon={<Settings size={22} />} label="Settings" active={currentView === 'settings'} onClick={() => setCurrentView('settings')} />
+              <NavItem icon={<LayoutDashboard size={22} />} label="Overview" active={currentView === 'dashboard'} onClick={() => handleNavClick('dashboard')} />
+              <NavItem icon={<History size={22} />} label="History" active={currentView === 'history'} onClick={() => handleNavClick('history')} />
+              <NavItem icon={<Trophy size={22} />} label="Badges" active={currentView === 'achievements'} onClick={() => handleNavClick('achievements')} />
+              <NavItem icon={<Target size={22} />} label="Challenges" active={currentView === 'challenges'} onClick={() => handleNavClick('challenges')} />
+              <NavItem icon={<Settings size={22} />} label="Settings" active={currentView === 'settings'} onClick={() => handleNavClick('settings')} />
             </div>
           </div>
 
@@ -110,7 +128,7 @@ const App: React.FC = () => {
 
       <main className="max-w-6xl mx-auto px-6 pt-10 pb-32 sm:pl-[21rem] sm:pt-16 sm:pb-16">
         <AnimatePresence mode="wait">
-          {currentWorkout ? (
+          {currentWorkout && !isMinimized ? (
             <motion.div
               key="active"
               initial={{ opacity: 0, y: 20 }}
@@ -144,6 +162,85 @@ const App: React.FC = () => {
                     <DashboardStat icon={<Activity className="text-primary" />} label="Total Reps" value={stats.totalReps} subtitle="completed reps" />
                   </div>
 
+                  {/* PERFORMANCE & WEIGHT SECTION */}
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div className="lg:col-span-2">
+                      <Card title="Performance Trends" description="Total volume and repetitions over time.">
+                        <div className="h-[300px] w-full mt-6">
+                          <ResponsiveContainer width="100%" height="100%">
+                            <AreaChart data={stats.performanceLogs}>
+                              <defs>
+                                <linearGradient id="colorVolume" x1="0" y1="0" x2="0" y2="1">
+                                  <stop offset="5%" stopColor="#facc15" stopOpacity={0.3} />
+                                  <stop offset="95%" stopColor="#facc15" stopOpacity={0} />
+                                </linearGradient>
+                              </defs>
+                              <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" vertical={false} />
+                              <XAxis
+                                dataKey="date"
+                                stroke="#ffffff40"
+                                fontSize={10}
+                                tickFormatter={(str) => {
+                                  const date = new Date(str);
+                                  return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+                                }}
+                              />
+                              <YAxis stroke="#ffffff40" fontSize={10} />
+                              <Tooltip
+                                contentStyle={{ backgroundColor: '#18181b', border: '1px solid #ffffff10', borderRadius: '12px' }}
+                                itemStyle={{ color: '#facc15' }}
+                              />
+                              <Area type="monotone" dataKey="volume" stroke="#facc15" fillOpacity={1} fill="url(#colorVolume)" strokeWidth={3} />
+                            </AreaChart>
+                          </ResponsiveContainer>
+                        </div>
+                      </Card>
+                    </div>
+
+                    <div>
+                      <Card title="Body Weight" description="Track your physique progress.">
+                        <div className="h-[180px] w-full mt-4">
+                          <ResponsiveContainer width="100%" height="100%">
+                            <LineChart data={stats.bodyWeightLogs || []}>
+                              <CartesianGrid strokeDasharray="3 3" stroke="#ffffff05" vertical={false} />
+                              <XAxis dataKey="date" hide />
+                              <YAxis stroke="#ffffff40" fontSize={10} domain={['dataMin - 5', 'dataMax + 5']} />
+                              <Tooltip
+                                contentStyle={{ backgroundColor: '#18181b', border: '1px solid #ffffff10', borderRadius: '12px' }}
+                                itemStyle={{ color: '#facc15' }}
+                              />
+                              <Line type="monotone" dataKey="weight" stroke="#facc15" strokeWidth={2} dot={{ r: 4, fill: '#facc15' }} />
+                            </LineChart>
+                          </ResponsiveContainer>
+                        </div>
+                        <div className="mt-6 pt-6 border-t border-white/5">
+                          <div className="flex gap-2">
+                            <Input
+                              placeholder="0.0"
+                              type="number"
+                              id="weight-input"
+                              className="h-10 text-sm"
+                            />
+                            <Button
+                              size="sm"
+                              className="px-4"
+                              onClick={() => {
+                                const input = document.getElementById('weight-input') as HTMLInputElement;
+                                const val = parseFloat(input.value);
+                                if (val) {
+                                  useWorkoutStore.getState().addBodyWeightLog(val);
+                                  input.value = '';
+                                }
+                              }}
+                            >
+                              Log
+                            </Button>
+                          </div>
+                        </div>
+                      </Card>
+                    </div>
+                  </div>
+
                   {/* LEVEL SECTION */}
                   <Card title="Your Level" description="Gain experience by completing workouts and winning challenges.">
                     <LevelProgress />
@@ -163,7 +260,7 @@ const App: React.FC = () => {
                         icon={<Plus className="text-primary" />}
                         label="Log Manually"
                         description="Add a past workout to your history."
-                        onClick={() => { }}
+                        onClick={() => setShowManualLog(true)}
                       />
                       <ActionCard
                         icon={<Settings className="text-muted-foreground" />}
@@ -268,6 +365,85 @@ const App: React.FC = () => {
         isVisible={showAchievementModal}
         onClose={hideAchievementModal}
       />
+
+      {/* MINIMIZED WORKOUT BAR */}
+      <AnimatePresence>
+        {currentWorkout && isMinimized && (
+          <motion.div
+            initial={{ y: 100, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 100, opacity: 0 }}
+            className="fixed bottom-24 left-6 right-6 sm:left-[20rem] sm:right-10 z-50"
+          >
+            <div className="bg-primary text-black p-4 rounded-3xl shadow-2xl flex items-center justify-between group cursor-pointer" onClick={() => toggleMinimize(false)}>
+              <div className="flex items-center gap-4">
+                <div className="h-10 w-10 rounded-xl bg-black/10 flex items-center justify-center animate-pulse">
+                  <Activity size={20} />
+                </div>
+                <div>
+                  <p className="font-bold text-sm leading-none">Workout in Progress</p>
+                  <p className="text-[10px] uppercase font-black tracking-widest mt-1 opacity-60">
+                    {currentWorkout.exercises.length} Exercises Added
+                  </p>
+                </div>
+              </div>
+              <Button variant="ghost" size="icon" className="bg-black/5 hover:bg-black/10 rounded-full h-10 w-10">
+                <Maximize2 size={18} />
+              </Button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* MANUAL LOG MODAL */}
+      <AnimatePresence>
+        {showManualLog && (
+          <div className="fixed inset-0 z-[70] flex items-center justify-center p-6">
+            <motion.div
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-background/80 backdrop-blur-md"
+              onClick={() => setShowManualLog(false)}
+            />
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
+              className="relative w-full max-w-lg bg-card border border-white/5 rounded-[2.5rem] p-10 shadow-2xl space-y-8"
+            >
+              <div>
+                <h2 className="text-3xl font-extrabold tracking-tight">Manual Log</h2>
+                <p className="text-muted-foreground mt-2">Log a workout from earlier.</p>
+              </div>
+
+              <div className="space-y-6">
+                <Input label="Workout Name" placeholder="Afternoon Session" id="manual-name" />
+                <Input label="Date" type="date" defaultValue={new Date().toISOString().split('T')[0]} id="manual-date" />
+                <div className="grid grid-cols-2 gap-4">
+                  <Input label="Duration (mins)" type="number" placeholder="45" id="manual-duration" />
+                  <Input label="Exercises" type="number" placeholder="5" id="manual-exercises" />
+                </div>
+              </div>
+
+              <div className="flex gap-4">
+                <Button fullWidth onClick={() => {
+                  const name = (document.getElementById('manual-name') as HTMLInputElement).value;
+                  const duration = parseInt((document.getElementById('manual-duration') as HTMLInputElement).value);
+                  const date = (document.getElementById('manual-date') as HTMLInputElement).value;
+
+                  logManualWorkout({
+                    id: Date.now().toString(),
+                    name: name || 'Manual Workout',
+                    startTime: new Date(date),
+                    endTime: new Date(date),
+                    duration: duration || 0,
+                    exercises: [] // Simplified for manual log
+                  });
+                  setShowManualLog(false);
+                }}>Save Workout</Button>
+                <Button variant="ghost" onClick={() => setShowManualLog(false)}>Cancel</Button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
@@ -316,6 +492,8 @@ const ActionCard = ({ icon, label, description, onClick }: { icon: React.ReactNo
 
 const SettingsView = () => {
   const { user } = useAuthStore();
+  const { settings, updateSettings } = useWorkoutStore();
+
   return (
     <div className="space-y-8 animate-in fade-in">
       <header>
@@ -333,14 +511,55 @@ const SettingsView = () => {
             </div>
           </Card>
 
+          <Card title="Workout Units" description="Choose your preferred measurement system.">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+              <div className="p-4 rounded-2xl bg-white/5 border border-white/5 space-y-3">
+                <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Weight Unit</p>
+                <div className="flex gap-2">
+                  {(['kg', 'lbs'] as const).map(u => (
+                    <button
+                      key={u}
+                      onClick={() => updateSettings({ weightUnit: u })}
+                      className={`flex-1 py-2 rounded-xl text-xs font-bold border transition-all ${settings.weightUnit === u ? 'bg-primary border-primary text-black' : 'bg-white/5 border-transparent text-muted-foreground'}`}
+                    >
+                      {u.toUpperCase()}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="p-4 rounded-2xl bg-white/5 border border-white/5 space-y-3">
+                <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Distance Unit</p>
+                <div className="flex gap-2">
+                  {(['km', 'miles'] as const).map(u => (
+                    <button
+                      key={u}
+                      onClick={() => updateSettings({ distanceUnit: u })}
+                      className={`flex-1 py-2 rounded-xl text-xs font-bold border transition-all ${settings.distanceUnit === u ? 'bg-primary border-primary text-black' : 'bg-white/5 border-transparent text-muted-foreground'}`}
+                    >
+                      {u.toUpperCase()}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </Card>
+
           <Card title="Appearance" description="Personalize your workout interface.">
             <div className="flex items-center justify-between p-4 rounded-2xl bg-white/5 border border-white/5">
               <div className="space-y-1">
-                <p className="font-semibold">Dark Mode</p>
-                <p className="text-xs text-muted-foreground">Force high-contrast dark theme.</p>
+                <p className="font-semibold">Theme Mode</p>
+                <p className="text-xs text-muted-foreground">Adjust the visual style of the app.</p>
               </div>
-              <div className="h-6 w-12 bg-primary rounded-full relative p-1 flex justify-end">
-                <div className="h-4 w-4 bg-black rounded-full shadow-sm" />
+              <div className="flex gap-2">
+                {(['dark', 'light', 'system'] as const).map(t => (
+                  <button
+                    key={t}
+                    onClick={() => updateSettings({ theme: t })}
+                    className={`px-4 py-2 rounded-xl text-[10px] font-bold border transition-all ${settings.theme === t ? 'bg-primary border-primary text-black' : 'bg-white/5 border-transparent text-muted-foreground'}`}
+                  >
+                    {t.toUpperCase()}
+                  </button>
+                ))}
               </div>
             </div>
           </Card>

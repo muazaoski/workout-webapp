@@ -33,6 +33,23 @@ export interface Workout {
   notes?: string;
 }
 
+export interface BodyWeightLog {
+  date: string;
+  weight: number;
+}
+
+export interface PerformanceLog {
+  date: string;
+  volume: number;
+  reps: number;
+}
+
+export interface UserSettings {
+  weightUnit: 'kg' | 'lbs';
+  distanceUnit: 'km' | 'miles';
+  theme: 'dark' | 'light' | 'system';
+}
+
 export interface WorkoutStats {
   totalWorkouts: number;
   totalExercises: number;
@@ -44,6 +61,8 @@ export interface WorkoutStats {
   lastWorkoutDate?: Date;
   favoriteExercises: Exercise[];
   weakMuscleGroups: MuscleGroup[];
+  bodyWeightLogs: BodyWeightLog[];
+  performanceLogs: PerformanceLog[];
 }
 
 export type ExerciseCategory =
@@ -99,6 +118,9 @@ export interface Challenge {
   currentValue: number;
   completed: boolean;
   xpReward: number;
+  creator?: string;
+  participantsCount?: number;
+  isCommunity?: boolean;
 }
 
 export interface TimerState {

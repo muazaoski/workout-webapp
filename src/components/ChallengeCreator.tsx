@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useWorkoutStore } from '../stores/workoutStore';
-import { Target, Plus, CheckCircle2, Zap, Trash2, Trophy, Clock, Flame } from 'lucide-react';
+import { Target, Plus, CheckCircle2, Zap, Trash2, Trophy, Clock, Flame, User, Activity } from 'lucide-react';
 import Button from './ui/Button';
 import Input from './ui/Input';
 import Card from './ui/Card';
@@ -67,8 +67,8 @@ const ChallengeCreator: React.FC = () => {
                       type="button"
                       onClick={() => setType(t)}
                       className={`py-3 rounded-xl text-xs font-bold border transition-all ${type === t
-                          ? 'bg-primary border-primary text-black'
-                          : 'bg-white/5 border-transparent text-muted-foreground hover:bg-white/10'
+                        ? 'bg-primary border-primary text-black'
+                        : 'bg-white/5 border-transparent text-muted-foreground hover:bg-white/10'
                         }`}
                     >
                       {t.charAt(0).toUpperCase() + t.slice(1)}
@@ -93,8 +93,8 @@ const ChallengeCreator: React.FC = () => {
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-8">
               <div className="flex items-center gap-6 flex-1">
                 <div className={`h-16 w-16 rounded-2xl flex items-center justify-center transition-all ${challenge.completed
-                    ? 'bg-primary text-black shadow-lg shadow-primary/20'
-                    : 'bg-white/5 text-muted-foreground'
+                  ? 'bg-primary text-black shadow-lg shadow-primary/20'
+                  : 'bg-white/5 text-muted-foreground'
                   }`}>
                   {challenge.completed ? <CheckCircle2 size={24} /> : <Target size={24} />}
                 </div>
@@ -103,10 +103,28 @@ const ChallengeCreator: React.FC = () => {
                     <h4 className={`font-bold text-xl ${challenge.completed ? 'text-primary' : 'text-white'}`}>
                       {challenge.title}
                     </h4>
+                    {challenge.isCommunity && (
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-primary/10 text-primary border border-primary/20">
+                        COMMUNITY
+                      </span>
+                    )}
                     <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${challenge.completed ? 'bg-primary/20 text-primary' : 'bg-white/5 text-muted-foreground'
                       }`}>
                       {challenge.completed ? 'COMPLETED' : 'IN PROGRESS'}
                     </span>
+                  </div>
+
+                  <div className="flex items-center gap-4 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+                    {challenge.creator && (
+                      <span className="flex items-center gap-1">
+                        <User size={12} className="text-primary/60" /> {challenge.creator}
+                      </span>
+                    )}
+                    {challenge.participantsCount !== undefined && (
+                      <span className="flex items-center gap-1">
+                        <Activity size={12} className="text-primary/60" /> {challenge.participantsCount.toLocaleString()} Athletes
+                      </span>
+                    )}
                   </div>
 
                   <div className="space-y-2">

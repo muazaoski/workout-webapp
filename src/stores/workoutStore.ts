@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import type { Workout, Exercise, WorkoutStats, TimerState, Achievement, Challenge } from '../types/workout';
+import type { Workout, Exercise, WorkoutStats, TimerState, Achievement, Challenge, UserSettings, BodyWeightLog, PerformanceLog } from '../types/workout';
 
 export interface UserLevel {
   level: number;
@@ -15,6 +15,7 @@ interface WorkoutStore {
   currentWorkout: Workout | null;
   activeExerciseIndex: number;
   activeSetIndex: number;
+  isMinimized: boolean;
 
   // Timer state
   timer: TimerState;
@@ -24,6 +25,9 @@ interface WorkoutStore {
 
   // Exercises library
   exercises: Exercise[];
+
+  // User Settings
+  settings: UserSettings;
 
   // Stats
   stats: WorkoutStats;
@@ -45,6 +49,8 @@ interface WorkoutStore {
   previousExercise: () => void;
   finishWorkout: () => void;
   cancelWorkout: () => void;
+  toggleMinimize: (val?: boolean) => void;
+  logManualWorkout: (workout: Workout) => void;
 
   // Timer actions
   startTimer: (duration: number, type: TimerState['type']) => void;
@@ -52,6 +58,10 @@ interface WorkoutStore {
   resumeTimer: () => void;
   stopTimer: () => void;
   updateTimer: () => void;
+
+  // Settings actions
+  updateSettings: (updates: Partial<UserSettings>) => void;
+  addBodyWeightLog: (weight: number) => void;
 
   // Exercise library actions
   addExercise: (exercise: Exercise) => void;
@@ -94,6 +104,14 @@ const defaultStats: WorkoutStats = {
   streak: 0,
   favoriteExercises: [],
   weakMuscleGroups: [],
+  bodyWeightLogs: [],
+  performanceLogs: [],
+};
+
+const defaultSettings: UserSettings = {
+  weightUnit: 'kg',
+  distanceUnit: 'km',
+  theme: 'dark',
 };
 
 const defaultUserLevel: UserLevel = {
@@ -187,14 +205,45 @@ const defaultAchievements: Achievement[] = [
   },
 ];
 
+const mockChallenges: Challenge[] = [
+  {
+    id: 'comm-1',
+    title: 'Winter Warrior',
+    description: 'Log 20 workouts this season.',
+    type: 'workouts',
+    targetValue: 20,
+    currentValue: 0,
+    completed: false,
+    xpReward: 500,
+    creator: 'System',
+    participantsCount: 1542,
+    isCommunity: true
+  },
+  {
+    id: 'comm-2',
+    title: 'Volume King',
+    description: 'Move 50,000kg in a month.',
+    type: 'volume',
+    targetValue: 50000,
+    currentValue: 0,
+    completed: false,
+    xpReward: 1000,
+    creator: 'Alex Fitness',
+    participantsCount: 843,
+    isCommunity: true
+  }
+];
+
 export const useWorkoutStore = create<WorkoutStore>()(
   persist(
     (set, get) => ({
       currentWorkout: null,
       activeExerciseIndex: 0,
       activeSetIndex: 0,
+      isMinimized: false,
       timer: defaultTimer,
       workoutHistory: [],
+      settings: defaultSettings,
       exercises: [
         {
           id: '1',
@@ -236,7 +285,7 @@ export const useWorkoutStore = create<WorkoutStore>()(
 
       achievements: defaultAchievements,
       userLevel: defaultUserLevel,
-      challenges: [],
+      challenges: mockChallenges,
       unlockedAchievements: [],
       showAchievementModal: false,
       recentAchievement: null,
@@ -253,6 +302,7 @@ export const useWorkoutStore = create<WorkoutStore>()(
           activeExerciseIndex: 0,
           activeSetIndex: 0,
           timer: defaultTimer,
+          isMinimized: false,
         });
       },
 
@@ -344,19 +394,19 @@ export const useWorkoutStore = create<WorkoutStore>()(
         };
 
         const newHistory = [completedWorkout, ...workoutHistory];
-        const newStats = calculateStats(newHistory, exercises);
+        const newStats = calculateStats(newHistory, exercises, get().stats);
 
         set({
           workoutHistory: newHistory,
           currentWorkout: null,
           activeExerciseIndex: 0,
           activeSetIndex: 0,
+          isMinimized: false,
           stats: newStats,
         });
 
         get().checkAchievements();
 
-        // Only add XP if some work was actually done (total reps > previous total reps)
         const totalCompletedSets = completedWorkout.exercises.reduce(
           (acc, ex) => acc + ex.sets.filter(s => s.completed).length,
           0
@@ -372,7 +422,26 @@ export const useWorkoutStore = create<WorkoutStore>()(
           currentWorkout: null,
           activeExerciseIndex: 0,
           activeSetIndex: 0,
+          isMinimized: false,
         });
+      },
+
+      toggleMinimize: (val) => {
+        set((state) => ({ isMinimized: val !== undefined ? val : !state.isMinimized }));
+      },
+
+      logManualWorkout: (workout) => {
+        const { workoutHistory, exercises, stats } = get();
+        const newHistory = [workout, ...workoutHistory];
+        const newStats = calculateStats(newHistory, exercises, stats);
+
+        set({
+          workoutHistory: newHistory,
+          stats: newStats
+        });
+
+        get().checkAchievements();
+        get().addXP(50); // Less XP for manual logs
       },
 
       startTimer: (duration, type) => {
@@ -411,6 +480,27 @@ export const useWorkoutStore = create<WorkoutStore>()(
         } else if (timer.timeLeft === 0) {
           set({ timer: { ...timer, isRunning: false } });
         }
+      },
+
+      updateSettings: (updates) => {
+        set((state) => ({
+          settings: { ...state.settings, ...updates }
+        }));
+      },
+
+      addBodyWeightLog: (weight) => {
+        const { stats } = get();
+        const newLog: BodyWeightLog = {
+          date: new Date().toISOString().split('T')[0],
+          weight
+        };
+
+        set({
+          stats: {
+            ...stats,
+            bodyWeightLogs: [...(stats.bodyWeightLogs || []), newLog]
+          }
+        });
       },
 
       addExercise: (exercise) => {
@@ -453,7 +543,7 @@ export const useWorkoutStore = create<WorkoutStore>()(
           const newHistory = state.workoutHistory.filter((w) => w.id !== id);
           return {
             workoutHistory: newHistory,
-            stats: calculateStats(newHistory, state.exercises),
+            stats: calculateStats(newHistory, state.exercises, state.stats),
           };
         });
       },
@@ -632,11 +722,12 @@ export const useWorkoutStore = create<WorkoutStore>()(
       },
     }),
     {
-      name: 'workout-v2',
+      name: 'workout-v3', // New version for significantly updated schemas
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
         workoutHistory: state.workoutHistory,
         exercises: state.exercises,
+        settings: state.settings,
         stats: state.stats,
         achievements: state.achievements,
         userLevel: state.userLevel,
@@ -647,7 +738,7 @@ export const useWorkoutStore = create<WorkoutStore>()(
   )
 );
 
-function calculateStats(workouts: Workout[], exercises: Exercise[]): WorkoutStats {
+function calculateStats(workouts: Workout[], exercises: Exercise[], prevStats: WorkoutStats): WorkoutStats {
   const stats: WorkoutStats = {
     totalWorkouts: workouts.length,
     totalExercises: 0,
@@ -656,12 +747,21 @@ function calculateStats(workouts: Workout[], exercises: Exercise[]): WorkoutStat
     totalVolume: 0,
     totalWeight: 0,
     streak: 0,
-    lastWorkoutDate: workouts[0]?.endTime ? new Date(workouts[0].endTime) : undefined,
+    lastWorkoutDate: workouts[0]?.startTime ? new Date(workouts[0].startTime) : undefined,
     favoriteExercises: [],
     weakMuscleGroups: [],
+    bodyWeightLogs: prevStats.bodyWeightLogs || [],
+    performanceLogs: [],
   };
 
+  const performanceLogsMap: Record<string, PerformanceLog> = {};
+
   workouts.forEach((workout) => {
+    const dateKey = new Date(workout.startTime).toISOString().split('T')[0];
+    if (!performanceLogsMap[dateKey]) {
+      performanceLogsMap[dateKey] = { date: dateKey, volume: 0, reps: 0 };
+    }
+
     workout.exercises.forEach((we) => {
       stats.totalExercises++;
       we.sets.forEach((set) => {
@@ -669,32 +769,40 @@ function calculateStats(workouts: Workout[], exercises: Exercise[]): WorkoutStat
           stats.totalSets++;
           stats.totalReps += set.reps;
           const weight = set.weight || 0;
+          const setVolume = weight * set.reps;
           stats.totalWeight += weight * set.reps;
-          stats.totalVolume += weight * set.reps;
+          stats.totalVolume += setVolume;
+
+          performanceLogsMap[dateKey].volume += setVolume;
+          performanceLogsMap[dateKey].reps += set.reps;
         }
       });
     });
   });
 
+  stats.performanceLogs = Object.values(performanceLogsMap).sort((a, b) =>
+    new Date(a.date).getTime() - new Date(b.date).getTime()
+  );
+
   if (workouts.length > 0) {
-    const sortedDates = workouts
+    const sortedDates = [...new Set(workouts
       .filter((w) => w.endTime)
-      .map((w) => {
-        const endTime = new Date(w.endTime!);
-        return endTime.toDateString();
-      })
+      .map((w) => new Date(w.endTime!).toDateString()))]
       .sort((a, b) => new Date(b).getTime() - new Date(a).getTime());
 
-    let streak = 1;
-    for (let i = 1; i < sortedDates.length; i++) {
-      const current = new Date(sortedDates[i - 1]);
-      const previous = new Date(sortedDates[i]);
-      const daysDiff = Math.floor((current.getTime() - previous.getTime()) / (1000 * 60 * 60 * 24));
+    let streak = 0;
+    if (sortedDates.length > 0) {
+      streak = 1;
+      for (let i = 1; i < sortedDates.length; i++) {
+        const current = new Date(sortedDates[i - 1]);
+        const previous = new Date(sortedDates[i]);
+        const daysDiff = Math.floor((current.getTime() - previous.getTime()) / (1000 * 60 * 60 * 24));
 
-      if (daysDiff === 1) {
-        streak++;
-      } else if (daysDiff > 1) {
-        break;
+        if (daysDiff === 1) {
+          streak++;
+        } else if (daysDiff > 1) {
+          break;
+        }
       }
     }
     stats.streak = streak;

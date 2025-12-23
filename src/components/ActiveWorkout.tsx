@@ -108,17 +108,27 @@ const ActiveWorkout: React.FC<ActiveWorkoutProps> = ({ onOpenLibrary }) => {
           </div>
         </div>
 
-        <div className="flex items-center gap-4 bg-white/5 p-2 rounded-3xl border border-white/5">
-          <Button variant="ghost" size="icon" onClick={previousExercise} disabled={activeExerciseIndex === 0} className="rounded-2xl h-12 w-12">
-            <ChevronLeft size={24} />
+        <div className="flex items-center gap-4">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => useWorkoutStore.getState().toggleMinimize(true)}
+            className="rounded-full h-10 w-10 text-muted-foreground hover:text-white"
+          >
+            <X size={20} />
           </Button>
-          <div className="px-6 py-2 flex flex-col items-center min-w-[120px]">
-            <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Exercise</span>
-            <span className="text-xl font-bold font-mono">{activeExerciseIndex + 1} / {currentWorkout.exercises.length}</span>
+          <div className="flex items-center gap-4 bg-white/5 p-2 rounded-3xl border border-white/5">
+            <Button variant="ghost" size="icon" onClick={previousExercise} disabled={activeExerciseIndex === 0} className="rounded-2xl h-12 w-12">
+              <ChevronLeft size={24} />
+            </Button>
+            <div className="px-6 py-2 flex flex-col items-center min-w-[120px]">
+              <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Exercise</span>
+              <span className="text-xl font-bold font-mono">{activeExerciseIndex + 1} / {currentWorkout.exercises.length}</span>
+            </div>
+            <Button variant="ghost" size="icon" onClick={nextExercise} disabled={activeExerciseIndex === currentWorkout.exercises.length - 1} className="rounded-2xl h-12 w-12">
+              <ChevronRight size={24} />
+            </Button>
           </div>
-          <Button variant="ghost" size="icon" onClick={nextExercise} disabled={activeExerciseIndex === currentWorkout.exercises.length - 1} className="rounded-2xl h-12 w-12">
-            <ChevronRight size={24} />
-          </Button>
         </div>
       </div>
 
