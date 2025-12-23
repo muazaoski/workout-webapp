@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Trophy, X, Star } from 'lucide-react';
+import { Trophy, X, Star, Zap, Sparkles } from 'lucide-react';
 import Button from './ui/Button';
 import type { Achievement } from '../types/workout';
 
@@ -21,40 +21,51 @@ const AchievementModal: React.FC<AchievementModalProps> = ({ achievement, isVisi
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="absolute inset-0 bg-slate-900/40 backdrop-blur-md dark:bg-black/60"
+            className="absolute inset-0 bg-background/80 backdrop-blur-xl"
             onClick={onClose}
           />
 
           <motion.div
-            initial={{ scale: 0.95, opacity: 0, y: 10 }}
+            initial={{ scale: 0.9, opacity: 0, y: 30 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
-            exit={{ scale: 1.05, opacity: 0, y: -10 }}
-            className="relative w-full max-w-sm bg-white rounded-3xl p-8 text-center shadow-2xl dark:bg-slate-900 overflow-hidden"
+            exit={{ scale: 1.1, opacity: 0, y: -30 }}
+            className="relative w-full max-w-sm glass-card !p-12 text-center overflow-hidden border-indigo-500/30 glow-indigo"
           >
-            {/* Sparkle background effects */}
-            <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500" />
+            {/* Ambient Background Rays */}
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full bg-gradient-to-b from-indigo-500/10 to-transparent pointer-events-none" />
 
-            <div className="relative mb-6">
-              <div className="w-20 h-20 bg-amber-100 rounded-2xl mx-auto flex items-center justify-center dark:bg-amber-900/20">
-                <Trophy size={40} className="text-amber-500" />
+            <div className="relative mb-8 pt-4">
+              <div className="w-24 h-24 bg-indigo-500 rounded-[2.5rem] mx-auto flex items-center justify-center shadow-2xl shadow-indigo-500/50 relative z-10">
+                <Trophy size={48} className="text-white" />
               </div>
+
+              {/* Outer Ring Animation */}
               <motion.div
-                animate={{ rotate: 360 }} transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
-                className="absolute inset-0 flex items-center justify-center opacity-20 pointer-events-none"
+                animate={{ rotate: 360 }}
+                transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
+                className="absolute top-0 left-1/2 -translate-x-1/2 h-40 w-40 border border-indigo-500/10 rounded-full flex items-center justify-center opacity-40"
               >
-                <Star size={100} className="text-amber-500" />
+                <div className="absolute top-0 h-2 w-2 bg-indigo-500 rounded-full" />
               </motion.div>
             </div>
 
-            <div className="space-y-2 mb-8">
-              <h3 className="text-xs font-bold text-amber-500 uppercase tracking-widest">New Achievement</h3>
-              <h2 className="text-2xl font-bold tracking-tight">{achievement.name}</h2>
-              <p className="text-slate-500 text-sm">{achievement.description}</p>
+            <div className="space-y-3 mb-10 relative z-10">
+              <div className="flex items-center justify-center gap-2 text-indigo-400">
+                <Sparkles size={14} />
+                <span className="text-[10px] font-black uppercase tracking-[0.4em]">Achievement_Unlocked</span>
+              </div>
+              <h2 className="text-4xl font-black italic tracking-tighter leading-none">{achievement.name}</h2>
+              <p className="text-muted-foreground font-medium text-sm leading-relaxed px-4">
+                "{achievement.description}"
+              </p>
             </div>
 
-            <div className="mb-8 p-4 bg-slate-50 rounded-2xl dark:bg-slate-800">
-              <p className="text-2xl font-bold text-slate-900 dark:text-white">+{achievement.xpReward} XP</p>
-              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Experience Rewarded</p>
+            <div className="mb-10 p-6 bg-white/5 rounded-3xl border border-white/5 relative z-10">
+              <div className="flex items-center justify-center gap-2">
+                <Zap size={20} className="text-indigo-400" />
+                <p className="text-4xl font-black italic text-white">+{achievement.xpReward} XP</p>
+              </div>
+              <p className="text-[9px] text-muted-foreground font-black uppercase tracking-[0.3em] mt-3 opacity-30">Experience_Reward_Issued</p>
             </div>
 
             <Button
@@ -62,7 +73,7 @@ const AchievementModal: React.FC<AchievementModalProps> = ({ achievement, isVisi
               variant="primary"
               size="lg"
               onClick={onClose}
-              className="rounded-2xl"
+              className="rounded-[2rem] h-20 text-xl font-black italic tracking-tighter shadow-2xl shadow-indigo-500/30 glow-indigo relative z-10"
             >
               Continue Journey
             </Button>

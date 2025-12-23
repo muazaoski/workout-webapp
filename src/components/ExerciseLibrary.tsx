@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useWorkoutStore } from '../stores/workoutStore';
-import { Search, Plus, Trash2, Dumbbell, ChevronRight } from 'lucide-react';
+import { Search, Plus, Trash2, Dumbbell, ChevronRight, Filter, LayoutGrid, List as ListIcon } from 'lucide-react';
 import Button from './ui/Button';
 import Input from './ui/Input';
 import Card from './ui/Card';
@@ -41,24 +41,27 @@ const ExerciseLibrary: React.FC = () => {
   };
 
   return (
-    <div className="space-y-8 pb-10">
-      {/* SEARCH AND FILTERS */}
-      <div className="space-y-4">
-        <Input
-          placeholder="Search exercises..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          icon={<Search size={18} />}
-        />
+    <div className="space-y-10 pb-20">
+      {/* TOOLBAR */}
+      <div className="space-y-6">
+        <div className="relative group">
+          <Input
+            placeholder="Search system database..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            icon={<Search size={22} className="text-primary/50 group-hover:text-primary transition-colors" />}
+            className="!h-16 !rounded-3xl !px-12 bg-white/5 border-white/5 focus:bg-white/10 text-lg font-medium"
+          />
+        </div>
 
-        <div className="flex gap-1.5 overflow-x-auto pb-1 no-scrollbar">
+        <div className="flex gap-2 overflow-x-auto pb-4 no-scrollbar">
           {['all', 'strength', 'cardio', 'core', 'flexibility'].map(cat => (
             <button
               key={cat}
               onClick={() => setSelectedCategory(cat as any)}
-              className={`px-4 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all capitalize border ${selectedCategory === cat
-                  ? 'bg-slate-900 border-slate-900 text-white dark:bg-white dark:text-black dark:border-white'
-                  : 'bg-slate-50 border-slate-200 text-slate-500 hover:bg-slate-100 dark:bg-slate-800 dark:border-slate-700'
+              className={`px-6 py-2 rounded-2xl text-xs font-black uppercase tracking-widest transition-all border-2 ${selectedCategory === cat
+                  ? 'bg-indigo-500 border-indigo-500 text-white shadow-lg shadow-indigo-500/30'
+                  : 'bg-white/5 border-transparent text-muted-foreground hover:bg-white/10 hover:text-white'
                 }`}
             >
               {cat}
@@ -67,61 +70,66 @@ const ExerciseLibrary: React.FC = () => {
         </div>
       </div>
 
-      {/* ADD FORM */}
-      <div className="rounded-2xl border border-dashed border-slate-200 p-4 dark:border-slate-800">
+      {/* ADD MODULE */}
+      <div className="relative">
         {!showAdd ? (
-          <Button variant="ghost" fullWidth onClick={() => setShowAdd(true)} className="text-slate-500 font-medium">
-            + Custom Exercise
-          </Button>
-        ) : (
-          <form onSubmit={handleAdd} className="space-y-4">
-            <Input label="Exercise Name" value={name} onChange={e => setName(e.target.value)} placeholder="Bench Press" required />
-            <Input label="Muscle Groups" value={muscleGroups} onChange={e => setMuscleGroups(e.target.value)} placeholder="Chest, Triceps" required />
-            <div className="flex gap-2 pt-2">
-              <Button type="submit" variant="primary" className="flex-1">Add Exercise</Button>
-              <Button variant="ghost" onClick={() => setShowAdd(false)}>Cancel</Button>
+          <button
+            onClick={() => setShowAdd(true)}
+            className="w-full py-8 border-2 border-dashed border-white/10 rounded-[2.5rem] flex flex-col items-center justify-center gap-3 text-muted-foreground hover:text-primary hover:border-primary/30 transition-all hover:bg-primary/5 group"
+          >
+            <div className="h-12 w-12 rounded-2xl bg-white/5 flex items-center justify-center transition-transform group-hover:scale-110">
+              <Plus size={24} />
             </div>
-          </form>
+            <span className="font-bold uppercase tracking-[0.2em] text-xs">Register Custom Exercise</span>
+          </button>
+        ) : (
+          <Card title="Add Exercise" description="Define a new movement in your personal library." className="border-indigo-500/20">
+            <form onSubmit={handleAdd} className="space-y-6">
+              <Input label="Exercise Name" value={name} onChange={e => setName(e.target.value)} placeholder="E.g. Incline Bench Press" required />
+              <Input label="Muscle Groups (Comma separated)" value={muscleGroups} onChange={e => setMuscleGroups(e.target.value)} placeholder="E.g. Chest, Shoulders" required />
+              <div className="flex gap-3 pt-4">
+                <Button type="submit" variant="primary" fullWidth size="lg">Save Exercise</Button>
+                <Button variant="ghost" size="lg" onClick={() => setShowAdd(false)}>Cancel</Button>
+              </div>
+            </form>
+          </Card>
         )}
       </div>
 
-      {/* LIST */}
-      <div className="space-y-2">
+      {/* CATALOGUE */}
+      <div className="grid grid-cols-1 gap-3">
         {filtered.map(ex => (
           <div
             key={ex.id}
-            className="flex items-center justify-between p-3 rounded-xl hover:bg-slate-50 border border-transparent transition-all dark:hover:bg-slate-800"
+            className="group flex items-center justify-between p-5 bg-white/5 rounded-[2rem] border border-white/5 hover:border-indigo-500/20 hover:scale-[1.01] transition-all cursor-pointer"
+            onClick={() => currentWorkout && addExerciseToWorkout(ex)}
           >
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 bg-slate-100 rounded-lg flex items-center justify-center text-xl dark:bg-slate-800">
+            <div className="flex items-center gap-5">
+              <div className="h-16 w-16 rounded-2xl bg-white/5 flex items-center justify-center text-4xl transition-transform group-hover:scale-110 group-hover:bg-indigo-500/10 grayscale group-hover:grayscale-0">
                 {ex.icon}
               </div>
-              <div>
-                <h4 className="font-semibold text-sm capitalize">{ex.name}</h4>
-                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
-                  {ex.category} • {ex.muscleGroups.join(', ')}
-                </p>
+              <div className="space-y-1">
+                <h4 className="font-extrabold text-lg uppercase tracking-tight group-hover:text-indigo-400 transition-colors">{ex.name}</h4>
+                <div className="flex items-center gap-2 overflow-hidden">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground bg-white/5 px-2 py-0.5 rounded-md border border-white/5">{ex.category}</span>
+                  <p className="text-[10px] font-bold text-muted-foreground/40 uppercase tracking-wider truncate">
+                    {ex.muscleGroups.join(' // ')}
+                  </p>
+                </div>
               </div>
             </div>
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-all">
               {currentWorkout && (
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => addExerciseToWorkout(ex)}
-                  className="h-8 shadow-none"
-                >
-                  Add
-                </Button>
+                <div className="h-10 w-10 bg-indigo-500 rounded-xl flex items-center justify-center text-white shadow-lg shadow-indigo-500/30">
+                  <Plus size={20} />
+                </div>
               )}
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => deleteExercise(ex.id)}
-                className="h-8 w-8 text-slate-300 hover:text-red-500"
+              <button
+                onClick={(e) => { e.stopPropagation(); deleteExercise(ex.id); }}
+                className="h-10 w-10 bg-red-500/10 rounded-xl flex items-center justify-center text-red-500 hover:bg-red-500 hover:text-white transition-all"
               >
-                <Trash2 size={16} />
-              </Button>
+                <Trash2 size={18} />
+              </button>
             </div>
           </div>
         ))}

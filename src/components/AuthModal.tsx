@@ -2,8 +2,7 @@ import React, { useState } from 'react';
 import { useAuthStore } from '../stores/authStore';
 import Button from './ui/Button';
 import Input from './ui/Input';
-import Card from './ui/Card';
-import { Mail, Lock, User, Github } from 'lucide-react';
+import { Mail, Lock, User, Sparkles } from 'lucide-react';
 
 interface AuthModalProps {
     isOpen: boolean;
@@ -28,20 +27,20 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen }) => {
     if (!isOpen) return null;
 
     return (
-        <div className="w-full max-w-md mx-auto space-y-8 animate-in fade-in zoom-in-95 duration-500">
-            <div className="flex flex-col items-center gap-2 mb-4">
-                <div className="h-12 w-12 bg-slate-900 text-white rounded-2xl flex items-center justify-center dark:bg-white dark:text-black">
-                    <span className="font-black text-xl italic">WC</span>
+        <div className="w-full max-w-md mx-auto p-4 animate-in fade-in zoom-in-95 duration-700">
+            <div className="text-center mb-10 space-y-3">
+                <div className="inline-flex h-16 w-16 items-center justify-center rounded-3xl bg-primary shadow-xl shadow-primary/30">
+                    <Sparkles size={32} className="text-white" />
                 </div>
-                <h1 className="text-2xl font-bold tracking-tight">Welcome Back</h1>
-                <p className="text-slate-500 text-sm">Sign in to sync your fitness journey.</p>
+                <h1 className="text-3xl font-extrabold tracking-tight">Workout Counter</h1>
+                <p className="text-muted-foreground">Level up your fitness journey.</p>
             </div>
 
-            <Card className="shadow-2xl shadow-black/5">
-                <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="glass-card">
+                <form onSubmit={handleSubmit} className="space-y-5">
                     {!isLogin && (
                         <Input
-                            label="What should we call you?"
+                            label="Full Name"
                             placeholder="Alex Smith"
                             value={name}
                             onChange={(e) => setName(e.target.value)}
@@ -52,7 +51,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen }) => {
                     <Input
                         label="Email Address"
                         type="email"
-                        placeholder="name@example.com"
+                        placeholder="you@example.com"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         icon={<Mail size={18} />}
@@ -61,7 +60,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen }) => {
                     <Input
                         label="Password"
                         type="password"
-                        placeholder="Min. 8 characters"
+                        placeholder="••••••••"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         icon={<Lock size={18} />}
@@ -69,8 +68,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen }) => {
                     />
 
                     {error && (
-                        <div className="bg-red-50 p-4 rounded-xl border border-red-100 flex items-center gap-3 text-red-600 text-sm font-medium">
-                            <span className="flex-shrink-0">✕</span>
+                        <div className="p-4 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-500 text-sm font-medium animate-in slide-in-from-top-2">
                             {error}
                         </div>
                     )}
@@ -81,37 +79,26 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen }) => {
                         size="lg"
                         type="submit"
                         loading={isLoading}
-                        className="rounded-xl"
                     >
-                        {isLogin ? 'Sign In' : 'Create Account'}
+                        {isLogin ? 'Sign In' : 'Join Now'}
                     </Button>
                 </form>
 
-                <div className="relative my-8 text-center">
-                    <div className="absolute inset-0 flex items-center"><div className="w-full border-t"></div></div>
-                    <span className="relative bg-white px-2 text-xs text-slate-400 dark:bg-slate-900 lowercase italic">or continue with</span>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                    <Button variant="outline" icon={<Github size={18} />}>GitHub</Button>
-                    <Button variant="outline" icon={<span>G</span>}>Google</Button>
-                </div>
-
-                <div className="mt-8 text-center">
+                <div className="mt-8 text-center pt-6 border-t border-white/5">
                     <button
                         onClick={() => {
                             setIsLogin(!isLogin);
                             clearError();
                         }}
-                        className="text-sm font-medium text-slate-500 hover:text-primary transition-colors"
+                        className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
                     >
                         {isLogin ? "Don't have an account? Sign up" : "Already have an account? Sign in"}
                     </button>
                 </div>
-            </Card>
+            </div>
 
-            <p className="text-center text-xs text-slate-400">
-                By continuing, you agree to our Terms of Service.
+            <p className="mt-8 text-center text-xs text-muted-foreground">
+                Secure login powered by encrypted protocols.
             </p>
         </div>
     );

@@ -5,34 +5,36 @@ interface CardProps {
   title?: string;
   description?: string;
   className?: string;
-  footer?: React.ReactNode;
+  headerAction?: React.ReactNode;
 }
 
-const Card: React.FC<CardProps> = ({ children, title, description, className = '', footer }) => {
+const Card: React.FC<CardProps> = ({ children, title, description, className = '', headerAction }) => {
   return (
-    <div className={`rounded-xl border bg-card text-card-foreground shadow-sm ${className}`}>
-      {(title || description) && (
-        <div className="flex flex-col space-y-1.5 p-6 pb-4">
-          {title && (
-            <h3 className="text-2xl font-semibold leading-none tracking-tight">
-              {title}
-            </h3>
-          )}
-          {description && (
-            <p className="text-sm text-muted-foreground">
-              {description}
-            </p>
+    <div className={`glass-card ${className}`}>
+      {(title || description || headerAction) && (
+        <div className="flex items-start justify-between mb-6">
+          <div className="space-y-1">
+            {title && (
+              <h3 className="text-xl font-bold tracking-tight text-white">
+                {title}
+              </h3>
+            )}
+            {description && (
+              <p className="text-sm text-muted-foreground">
+                {description}
+              </p>
+            )}
+          </div>
+          {headerAction && (
+            <div className="flex-shrink-0">
+              {headerAction}
+            </div>
           )}
         </div>
       )}
-      <div className="p-6 pt-0">
+      <div>
         {children}
       </div>
-      {footer && (
-        <div className="flex items-center p-6 pt-0">
-          {footer}
-        </div>
-      )}
     </div>
   );
 };

@@ -12,6 +12,7 @@ import ChallengeCreator from './components/ChallengeCreator';
 import AuthModal from './components/AuthModal';
 import Button from './components/ui/Button';
 import Card from './components/ui/Card';
+import Input from './components/ui/Input';
 import {
   LayoutDashboard,
   Trophy,
@@ -23,7 +24,12 @@ import {
   Search,
   Settings,
   User as UserIcon,
-  ChevronRight
+  ChevronRight,
+  Zap,
+  Flame,
+  Activity,
+  User,
+  Mail
 } from 'lucide-react';
 
 const App: React.FC = () => {
@@ -39,142 +45,162 @@ const App: React.FC = () => {
   } = useWorkoutStore();
 
   const { isAuthenticated, logout, user } = useAuthStore();
-  const [currentView, setCurrentView] = useState<'dashboard' | 'history' | 'achievements' | 'challenges'>('dashboard');
+  const [currentView, setCurrentView] = useState<'dashboard' | 'history' | 'achievements' | 'challenges' | 'settings'>('dashboard');
   const [showLibrary, setShowLibrary] = useState(false);
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6 dark:bg-slate-950">
+      <div className="min-h-screen bg-background flex items-center justify-center p-6">
         <AuthModal isOpen={true} />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans dark:bg-slate-950 dark:text-slate-50">
-      {/* NAVIGATION - MODERN SIDEBAR */}
-      <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-slate-200 py-3 px-6 sm:bottom-auto sm:top-0 sm:left-0 sm:w-64 sm:h-full sm:border-r sm:border-t-0 sm:py-8 sm:px-4 dark:bg-slate-900 dark:border-slate-800">
-        <div className="max-w-6xl mx-auto flex sm:flex-col justify-between h-full">
-          <div className="flex sm:flex-col gap-6 w-full items-center sm:items-stretch">
-            <div className="hidden sm:flex items-center gap-3 px-4 mb-8">
-              <div className="h-8 w-8 bg-black text-white rounded-lg flex items-center justify-center dark:bg-white dark:text-black">
-                <Dumbbell size={18} />
+    <div className="min-h-screen bg-background">
+      {/* SIDE NAVIGATION */}
+      <nav className="fixed bottom-0 left-0 right-0 z-40 bg-background/80 backdrop-blur-xl border-t border-white/5 py-4 px-6 sm:bottom-auto sm:top-0 sm:left-0 sm:w-72 sm:h-full sm:border-r sm:border-t-0 sm:py-10 sm:px-8">
+        <div className="flex sm:flex-col justify-between h-full max-w-6xl mx-auto">
+          <div className="flex sm:flex-col gap-8 w-full items-center sm:items-stretch">
+            <div className="hidden sm:flex items-center gap-4 px-2 mb-10">
+              <div className="h-12 w-12 bg-primary rounded-2xl flex items-center justify-center shadow-lg shadow-primary/30">
+                <Dumbbell size={24} className="text-white" />
               </div>
-              <span className="font-bold text-xl tracking-tight">Workout Counter</span>
+              <div className="flex flex-col">
+                <span className="font-bold text-xl tracking-tight leading-none">Workout</span>
+                <span className="text-primary text-xs font-bold uppercase tracking-widest mt-1">Counter</span>
+              </div>
             </div>
 
-            <NavItem icon={<LayoutDashboard size={20} />} label="Dashboard" active={currentView === 'dashboard'} onClick={() => setCurrentView('dashboard')} />
-            <NavItem icon={<History size={20} />} label="History" active={currentView === 'history'} onClick={() => setCurrentView('history')} />
-            <NavItem icon={<Trophy size={20} />} label="Awards" active={currentView === 'achievements'} onClick={() => setCurrentView('achievements')} />
-            <NavItem icon={<Target size={20} />} label="Challenges" active={currentView === 'challenges'} onClick={() => setCurrentView('challenges')} />
+            <div className="flex sm:flex-col gap-2 w-full">
+              <NavItem icon={<LayoutDashboard size={22} />} label="Overview" active={currentView === 'dashboard'} onClick={() => setCurrentView('dashboard')} />
+              <NavItem icon={<History size={22} />} label="History" active={currentView === 'history'} onClick={() => setCurrentView('history')} />
+              <NavItem icon={<Trophy size={22} />} label="Badges" active={currentView === 'achievements'} onClick={() => setCurrentView('achievements')} />
+              <NavItem icon={<Target size={22} />} label="Challenges" active={currentView === 'challenges'} onClick={() => setCurrentView('challenges')} />
+              <NavItem icon={<Settings size={22} />} label="Settings" active={currentView === 'settings'} onClick={() => setCurrentView('settings')} />
+            </div>
           </div>
 
-          <div className="hidden sm:flex flex-col gap-4 px-2">
-            <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-800">
-              <div className="h-9 w-9 rounded-full bg-slate-200 flex items-center justify-center dark:bg-slate-700">
-                <UserIcon size={18} className="text-slate-500" />
+          <div className="hidden sm:flex flex-col gap-6 mt-auto">
+            <div className="flex items-center gap-4 p-4 rounded-3xl bg-white/5 border border-white/5">
+              <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center border border-primary/20">
+                <User size={20} className="text-primary" />
               </div>
-              <div className="overflow-hidden">
-                <p className="text-sm font-semibold truncate leading-none">{user?.name || 'User'}</p>
-                <p className="text-xs text-slate-500 mt-1">Free Tier</p>
+              <div className="flex flex-col overflow-hidden">
+                <span className="font-semibold text-sm truncate">{user?.name || 'Athlete'}</span>
+                <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Level {userLevel.level}</span>
               </div>
             </div>
-            <Button variant="ghost" fullWidth onClick={logout} className="justify-start text-slate-500 hover:text-red-500">
-              <LogOut size={18} className="mr-2" /> Sign Out
+            <Button variant="ghost" fullWidth onClick={logout} className="justify-start text-muted-foreground hover:text-red-400">
+              <LogOut size={20} className="mr-3" /> Sign Out
             </Button>
           </div>
         </div>
       </nav>
 
-      <main className="max-w-6xl mx-auto px-6 pt-8 pb-32 sm:pl-72 sm:pt-12 sm:pb-12">
+      <main className="max-w-6xl mx-auto px-6 pt-10 pb-32 sm:pl-[21rem] sm:pt-16 sm:pb-16">
         <AnimatePresence mode="wait">
           {currentWorkout ? (
             <motion.div
               key="active"
-              initial={{ opacity: 0, scale: 0.98 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0 }}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95 }}
             >
               <ActiveWorkout />
             </motion.div>
           ) : (
-            <div className="space-y-8">
-              {/* TOP HEADER FOR MOBILE/MD */}
-              <div className="flex items-center justify-between sm:hidden mb-6">
-                <span className="font-bold text-xl">Dashboard</span>
-                <div className="h-8 w-8 bg-black text-white rounded-lg flex items-center justify-center">
-                  <Dumbbell size={18} />
-                </div>
-              </div>
-
+            <div className="space-y-10">
               {currentView === 'dashboard' && (
-                <div className="space-y-8 fade-in">
-                  <header className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+                <div className="space-y-10 fade-in">
+                  <header className="flex flex-col md:flex-row md:items-end justify-between gap-6">
                     <div>
-                      <h2 className="text-3xl font-bold tracking-tight">Progress Overview</h2>
-                      <p className="text-slate-500">Tracking your evolution every single day.</p>
+                      <h2 className="text-4xl font-extrabold tracking-tight">Daily Progress</h2>
+                      <p className="text-muted-foreground text-lg mt-2 font-medium">Welcome back, {user?.name?.split(' ')[0] || 'Athlete'}.</p>
                     </div>
-                    <Button onClick={() => startNewWorkout('Workout ' + new Date().toLocaleDateString())} className="rounded-full shadow-lg shadow-black/10">
-                      <Plus size={18} className="mr-2" /> Start New Session
+                    <Button
+                      size="lg"
+                      onClick={() => startNewWorkout('Workout ' + new Date().toLocaleDateString())}
+                      className="rounded-3xl px-8 glow-indigo"
+                    >
+                      <Plus size={20} className="mr-2" /> Start Session
                     </Button>
                   </header>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <StatCard label="Total Workouts" value={stats.totalWorkouts} />
-                    <StatCard label="Total Volume" value={`${(stats.totalVolume / 1000).toFixed(1)}k`} unit="kg" />
-                    <StatCard label="Total Reps" value={stats.totalReps} />
-                    <StatCard label="Current Level" value={userLevel.level} />
+                  {/* STATS GRID */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <DashboardStat icon={<Zap className="text-amber-400" />} label="Workouts" value={stats.totalWorkouts} subtitle="sessions completed" />
+                    <DashboardStat icon={<Flame className="text-orange-500" />} label="Volume" value={(stats.totalVolume / 1000).toFixed(1)} unit="T" subtitle="tons moved" />
+                    <DashboardStat icon={<Activity className="text-indigo-400" />} label="Total Reps" value={stats.totalReps} subtitle="completed power reps" />
                   </div>
 
-                  <Card title="Current Level" description="Gain XP to level up your rank.">
+                  {/* LEVEL SECTION */}
+                  <Card title="Your Level" description="Gain experience by completing workouts and winning challenges.">
                     <LevelProgress />
                   </Card>
 
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <Card title="Quick Actions" className="md:col-span-2">
-                      <div className="grid grid-cols-2 gap-4">
-                        <ActionTile icon={<Search size={20} />} label="Browse Library" onClick={() => setShowLibrary(true)} />
-                        <ActionTile icon={<Settings size={20} />} label="Account Settings" onClick={() => { }} />
-                      </div>
-                    </Card>
-                    <Card title="Sync Status" description="Cloud backup active.">
-                      <div className="flex items-center gap-2 text-green-500 font-medium text-sm">
-                        <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
-                        Connected
-                      </div>
-                    </Card>
+                  {/* QUICK ACTIONS REDESIGNED */}
+                  <div className="space-y-4">
+                    <h3 className="text-xl font-bold px-1">Quick Actions</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                      <ActionCard
+                        icon={<Search className="text-accent" />}
+                        label="Exercise Library"
+                        description="Browse 100+ exercises with instructions."
+                        onClick={() => setShowLibrary(true)}
+                      />
+                      <ActionCard
+                        icon={<Plus className="text-primary" />}
+                        label="Log Manually"
+                        description="Add a past workout to your history."
+                        onClick={() => { }}
+                      />
+                      <ActionCard
+                        icon={<Settings className="text-muted-foreground" />}
+                        label="Settings"
+                        description="Manage account and preferences."
+                        onClick={() => setCurrentView('settings')}
+                      />
+                    </div>
                   </div>
                 </div>
               )}
 
               {currentView === 'history' && (
-                <div className="space-y-6 fade-in">
+                <div className="space-y-8 fade-in">
                   <header>
-                    <h2 className="text-3xl font-bold tracking-tight">Workout History</h2>
-                    <p className="text-slate-500">{workoutHistory.length} sessions recorded</p>
+                    <h2 className="text-3xl font-bold tracking-tight">Workout Logs</h2>
+                    <p className="text-muted-foreground mt-1">Review your past performance and consistency.</p>
                   </header>
-                  <div className="grid grid-cols-1 gap-3">
+                  <div className="grid grid-cols-1 gap-4">
                     {workoutHistory.map(w => (
-                      <div key={w.id} className="flex items-center justify-between p-4 bg-white border border-slate-200 rounded-xl hover:shadow-md transition-shadow dark:bg-slate-900 dark:border-slate-800">
-                        <div className="flex items-center gap-4">
-                          <div className="h-12 w-12 rounded-full bg-slate-100 flex items-center justify-center dark:bg-slate-800 text-slate-500">
-                            <History size={20} />
+                      <Card key={w.id} className="group hover:bg-white/5 transition-all">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-5">
+                            <div className="h-14 w-14 rounded-2xl bg-muted flex items-center justify-center text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary transition-colors">
+                              <History size={24} />
+                            </div>
+                            <div className="space-y-1">
+                              <p className="font-bold text-lg">{w.name}</p>
+                              <div className="flex items-center gap-3 text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                                <span>{new Date(w.startTime).toLocaleDateString()}</span>
+                                <span className="h-1 w-1 rounded-full bg-muted-foreground/30" />
+                                <span>{w.duration || 0} mins</span>
+                                <span className="h-1 w-1 rounded-full bg-muted-foreground/30" />
+                                <span>{w.exercises.length} Exercises</span>
+                              </div>
+                            </div>
                           </div>
-                          <div>
-                            <p className="font-semibold">{w.name}</p>
-                            <p className="text-xs text-slate-500">
-                              {new Date(w.startTime).toLocaleDateString()} • {w.duration || 0} mins • {w.exercises.length} Exercises
-                            </p>
-                          </div>
+                          <Button variant="ghost" size="icon" className="group/btn">
+                            <ChevronRight size={24} className="text-muted-foreground group-hover/btn:text-white transition-colors" />
+                          </Button>
                         </div>
-                        <Button variant="ghost" size="icon" className="group">
-                          <ChevronRight size={18} className="text-slate-400 group-hover:text-primary transition-colors" />
-                        </Button>
-                      </div>
+                      </Card>
                     ))}
                     {workoutHistory.length === 0 && (
-                      <div className="text-center py-20 bg-slate-100 rounded-2xl dark:bg-slate-900">
-                        <p className="text-slate-500 italic">No workouts saved yet. Time to start training!</p>
+                      <div className="text-center py-24 bg-white/5 border border-dashed border-white/10 rounded-[2.5rem]">
+                        <History size={48} className="mx-auto text-muted-foreground/20 mb-4" />
+                        <p className="text-muted-foreground font-medium italic">Empty logbook. Time to put in the work.</p>
                       </div>
                     )}
                   </div>
@@ -183,6 +209,7 @@ const App: React.FC = () => {
 
               {currentView === 'achievements' && <Achievements />}
               {currentView === 'challenges' && <ChallengeCreator />}
+              {currentView === 'settings' && <SettingsView />}
             </div>
           )}
         </AnimatePresence>
@@ -194,19 +221,21 @@ const App: React.FC = () => {
           <>
             <motion.div
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              className="fixed inset-0 z-50 bg-black/20 backdrop-blur-sm dark:bg-black/60"
+              className="fixed inset-0 z-50 bg-background/60 backdrop-blur-md"
               onClick={() => setShowLibrary(false)}
             />
             <motion.div
               initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }}
-              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-              className="fixed right-0 top-0 bottom-0 w-full sm:w-[450px] z-[60] bg-white border-l shadow-2xl p-8 dark:bg-slate-950 dark:border-slate-800"
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              className="fixed right-0 top-0 bottom-0 w-full sm:w-[500px] z-[60] bg-background border-l border-white/5 shadow-2xl p-10 flex flex-col"
             >
-              <div className="flex items-center justify-between mb-8">
-                <h2 className="text-2xl font-bold">Exercise Database</h2>
-                <Button variant="ghost" size="icon" onClick={() => setShowLibrary(false)}>✕</Button>
+              <div className="flex items-center justify-between mb-10">
+                <h2 className="text-3xl font-extrabold tracking-tight">Database</h2>
+                <Button variant="ghost" size="icon" onClick={() => setShowLibrary(false)} className="rounded-full">
+                  ✕
+                </Button>
               </div>
-              <div className="overflow-y-auto h-[calc(100vh-160px)] no-scrollbar">
+              <div className="flex-grow overflow-y-auto no-scrollbar pr-2">
                 <ExerciseLibrary />
               </div>
             </motion.div>
@@ -226,9 +255,9 @@ const App: React.FC = () => {
 const NavItem = ({ icon, label, active, onClick }: { icon: React.ReactNode, label: string, active: boolean, onClick: () => void }) => (
   <button
     onClick={onClick}
-    className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${active
-        ? 'bg-slate-900 text-white dark:bg-white dark:text-black'
-        : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800'
+    className={`flex items-center gap-4 px-6 py-4 rounded-3xl text-sm font-bold transition-all ${active
+      ? 'bg-primary text-white shadow-lg shadow-primary/20'
+      : 'text-muted-foreground hover:bg-white/5 hover:text-white'
       }`}
   >
     {icon}
@@ -236,24 +265,85 @@ const NavItem = ({ icon, label, active, onClick }: { icon: React.ReactNode, labe
   </button>
 );
 
-const StatCard = ({ label, value, unit }: { label: string, value: any, unit?: string }) => (
-  <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm dark:bg-slate-900 dark:border-slate-800">
-    <p className="text-sm text-slate-500 font-medium mb-1">{label}</p>
-    <div className="flex items-baseline gap-1">
-      <span className="text-2xl font-bold tracking-tight">{value}</span>
-      {unit && <span className="text-xs text-slate-400 font-bold">{unit}</span>}
+const DashboardStat = ({ icon, label, value, unit, subtitle }: { icon: React.ReactNode, label: string, value: any, unit?: string, subtitle: string }) => (
+  <div className="glass-card p-8">
+    <div className="flex items-center gap-3 mb-4">
+      <div className="h-10 w-10 rounded-2xl bg-white/5 flex items-center justify-center border border-white/5">
+        {icon}
+      </div>
+      <span className="text-sm font-bold text-muted-foreground uppercase tracking-widest">{label}</span>
     </div>
+    <div className="flex items-baseline gap-2">
+      <span className="text-4xl font-extrabold tracking-tight">{value}</span>
+      {unit && <span className="text-xl font-bold text-primary">{unit}</span>}
+    </div>
+    <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest mt-2 opacity-30">{subtitle}</p>
   </div>
 );
 
-const ActionTile = ({ icon, label, onClick }: { icon: React.ReactNode, label: string, onClick: () => void }) => (
+const ActionCard = ({ icon, label, description, onClick }: { icon: React.ReactNode, label: string, description: string, onClick: () => void }) => (
   <button
     onClick={onClick}
-    className="flex flex-col items-center justify-center gap-3 p-6 rounded-2xl bg-slate-50 border border-slate-200 hover:border-slate-400 transition-all dark:bg-slate-800 dark:border-slate-700"
+    className="glass-card p-8 text-left group hover:scale-[1.02] active:scale-95 transition-all outline-none focus:ring-2 focus:ring-primary"
   >
-    <div className="h-10 w-10 bg-white rounded-xl shadow-sm flex items-center justify-center dark:bg-slate-700">{icon}</div>
-    <span className="text-sm font-medium">{label}</span>
+    <div className="h-14 w-14 bg-white/5 rounded-2xl flex items-center justify-center border border-white/5 mb-6 group-hover:bg-primary/10 group-hover:border-primary/20 transition-colors">
+      {React.isValidElement(icon) && React.cloneElement(icon as React.ReactElement<any>, { size: 28 })}
+    </div>
+    <h4 className="font-bold text-lg mb-2 group-hover:text-primary transition-colors">{label}</h4>
+    <p className="text-sm text-muted-foreground">{description}</p>
   </button>
 );
+
+const SettingsView = () => {
+  const { user } = useAuthStore();
+  return (
+    <div className="space-y-8 animate-in fade-in">
+      <header>
+        <h2 className="text-3xl font-bold tracking-tight">Account Settings</h2>
+        <p className="text-muted-foreground mt-1">Manage your profile and workout preferences.</p>
+      </header>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-2 space-y-6">
+          <Card title="Profile Information" description="How you appear across the platform.">
+            <div className="space-y-6 mt-4">
+              <Input label="Display Name" defaultValue={user?.name || ''} icon={<User size={18} />} />
+              <Input label="Email Address" type="email" defaultValue={user?.email || ''} icon={<Mail size={18} />} disabled />
+              <Button className="w-fit">Save Changes</Button>
+            </div>
+          </Card>
+
+          <Card title="Appearance" description="Personalize your workout interface.">
+            <div className="flex items-center justify-between p-4 rounded-2xl bg-white/5 border border-white/5">
+              <div className="space-y-1">
+                <p className="font-semibold">Dark Mode</p>
+                <p className="text-xs text-muted-foreground">Force high-contrast dark theme.</p>
+              </div>
+              <div className="h-6 w-12 bg-primary rounded-full relative p-1 flex justify-end">
+                <div className="h-4 w-4 bg-white rounded-full shadow-sm" />
+              </div>
+            </div>
+          </Card>
+        </div>
+
+        <div className="space-y-6">
+          <Card title="Subscription" description="No tiers, just training.">
+            <div className="p-4 rounded-2xl bg-primary/10 border border-primary/20 text-center">
+              <Zap className="text-primary mx-auto mb-3" size={32} />
+              <p className="font-bold text-primary italic">LIFETIME_ATHLETE</p>
+              <p className="text-[10px] text-muted-foreground mt-2 font-bold uppercase tracking-widest leading-none">Global Access Granted</p>
+            </div>
+          </Card>
+
+          <Card title="Danger Zone">
+            <Button variant="danger" fullWidth className="bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white border-none h-auto py-4 rounded-2xl">
+              Delete Environment
+            </Button>
+          </Card>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default App;
