@@ -1,63 +1,91 @@
 # Workout Counter - VPS Deployment Guide
-# Works alongside your existing froggame setup
 
-## Quick Deploy
+## VPS Details
+- **IP:** 51.79.161.63
+- **User:** debian
+- **Domain:** workout.muazaoski.online
+- **App Directory:** /opt/apps/workout-webapp
 
-### On Your VPS:
+---
+
+## Quick Connect
 
 ```bash
-# SSH into VPS
 ssh debian@51.79.161.63
 sudo -i
+cd /opt/apps/workout-webapp
+```
 
-# Clone workout app
+---
+
+## ⚠️ IMPORTANT: Use `docker compose` (with SPACE)
+
+```bash
+# ✅ Correct
+docker compose up -d
+
+# ❌ Wrong
+docker-compose up -d
+```
+
+---
+
+## 🚀 First Time Deployment
+
+### 1. Clone Repository
+
+```bash
+sudo -i
 cd /opt/apps
 git clone https://github.com/muazaoski/workout-webapp.git
 cd workout-webapp
+```
 
-# Create .env with secure secrets
+### 2. Create Environment File
+
+```bash
 cat > .env << EOF
 DB_PASSWORD=$(openssl rand -base64 32 | tr -d '=+/')
 JWT_SECRET=$(openssl rand -base64 64 | tr -d '=+/')
 EOF
+```
 
-# Start the containers
+### 3. Build and Start
+
+```bash
 docker compose up -d --build
+```
 
-# Run database setup
-docker compose exec api npx prisma migrate deploy
+### 4. Setup Database
+
+```bash
+docker compose exec api npx prisma db push
 docker compose exec api npx tsx prisma/seed.ts
 ```
 
-### Add to Froggame's Caddyfile:
+### 5. Add to Froggame's Caddyfile
 
 ```bash
-# Edit froggame's Caddyfile
 nano /opt/apps/froggame/Caddyfile
 ```
 
-Add this block:
+Add this block at the end:
 ```
 workout.muazaoski.online {
-    handle /api/* {
-        reverse_proxy workout-api:3001
-    }
-    
-    handle {
-        reverse_proxy workout-frontend:80
-    }
+    reverse_proxy 172.17.0.1:3080
 }
 ```
 
-Then restart Caddy:
+Save (`Ctrl+O`, Enter, `Ctrl+X`)
+
+### 6. Restart Froggame's Caddy
+
 ```bash
 cd /opt/apps/froggame
 docker compose restart caddy
 ```
 
----
-
-## DNS Configuration (Cloudflare)
+### 7. Add DNS in Cloudflare
 
 | Type | Name | Content | Proxy Status |
 |------|------|---------|--------------|
@@ -65,9 +93,10 @@ docker compose restart caddy
 
 ---
 
-## Updating After Code Changes
+## 🔄 Updating After Code Changes
 
 ### On Local Machine (Windows):
+
 ```powershell
 npm run build
 git add .
@@ -76,6 +105,7 @@ git push
 ```
 
 ### On VPS:
+
 ```bash
 sudo -i
 cd /opt/apps/workout-webapp
@@ -93,35 +123,83 @@ docker compose logs -f
 
 ---
 
+## 📊 Viewing Logs
+
+```bash
+# All services
+docker compose logs -f
+
+# Specific service
+docker compose logs -f api
+docker compose logs -f frontend
+docker compose logs -f db
+
+# Last 100 lines
+docker compose logs --tail=100
+```
+
+---
+
 ## Common Commands
 
 ```bash
-# View logs
-docker compose logs -f
-docker compose logs -f api
-docker compose logs -f frontend
+# View running containers
+docker compose ps
 
-# Restart
+# Stop everything
+docker compose down
+
+# Restart (quick, no rebuild)
 docker compose restart
 
-# Full rebuild
+# Rebuild after code changes
 docker compose down
 docker compose build --no-cache
 docker compose up -d
 
 # Database shell
 docker compose exec db psql -U workout -d workout_db
+
+# Run migrations
+docker compose exec api npx prisma db push
+
+# Re-seed database
+docker compose exec api npx tsx prisma/seed.ts
 ```
 
 ---
 
-## File Locations
+## Troubleshooting
 
-| Path | Purpose |
-|------|---------|
-| `/opt/apps/workout-webapp/` | Main app directory |
-| `/opt/apps/workout-webapp/.env` | Environment variables |
-| `/opt/apps/froggame/Caddyfile` | Reverse proxy config (shared) |
+### 502 Bad Gateway?
+Check if containers are running:
+```bash
+docker compose ps
+curl http://localhost:3080
+```
+
+### Database issues?
+```bash
+# Reset database (WARNING: deletes all data!)
+docker compose down -v
+docker compose up -d
+docker compose exec api npx prisma db push
+docker compose exec api npx tsx prisma/seed.ts
+```
+
+### Caddy syntax errors?
+```bash
+cd /opt/apps/froggame
+docker compose logs caddy --tail=20
+```
+
+### Changes not appearing?
+```bash
+git fetch origin
+git reset --hard origin/master
+docker compose build --no-cache
+docker compose up -d
+```
 
 ---
 
@@ -129,38 +207,19 @@ docker compose exec db psql -U workout -d workout_db
 
 ```
 Traffic Flow:
-User → Caddy (from froggame, port 443) 
-     → workout-frontend:80 (static files)
-     → workout-api:3001 (/api/* requests)
-     → workout-db:5432 (PostgreSQL)
-```
+User → Froggame's Caddy (port 443) 
+     → workout-caddy (port 3080) 
+     → workout-frontend:80 / workout-api:3001
+     → workout-db:5432
 
-Both apps share the same Caddy instance for HTTPS.
-
----
-
-## Troubleshooting
-
-### Containers not connecting?
-```bash
-# Check network
-docker network ls
-docker network inspect froggame_default
-
-# Make sure workout containers are on the network
-docker compose down
-docker compose up -d
-```
-
-### Database issues?
-```bash
-# Reset database
-docker compose down -v  # WARNING: Deletes all data!
-docker compose up -d
-docker compose exec api npx prisma migrate deploy
-docker compose exec api npx tsx prisma/seed.ts
+File Locations:
+/opt/apps/workout-webapp/     - App directory
+/opt/apps/workout-webapp/.env - Environment variables
+/opt/apps/froggame/Caddyfile  - Reverse proxy config (shared)
 ```
 
 ---
 
-🎉 **Done!** App at: https://workout.muazaoski.online
+## 🎉 Done!
+
+App accessible at: **https://workout.muazaoski.online**
