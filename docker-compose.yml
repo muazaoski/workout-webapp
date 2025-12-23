@@ -1,24 +1,18 @@
 services:
   frontend:
+    container_name: workout-frontend
     build:
       context: .
       dockerfile: Dockerfile
-    ports:
-      # Bind to localhost only - use Cloudflare Tunnel or reverse proxy for external access
-      - "127.0.0.1:3000:80"
-    depends_on:
-      - api
     restart: unless-stopped
     networks:
-      - workout-network
+      - shared-caddy
 
   api:
+    container_name: workout-api
     build:
       context: ./server
       dockerfile: Dockerfile
-    ports:
-      # Bind to localhost only
-      - "127.0.0.1:3001:3001"
     environment:
       - DATABASE_URL=postgresql://workout:${DB_PASSWORD:-workout_password}@db:5432/workout_db?schema=public
       - JWT_SECRET=${JWT_SECRET:-super-secret-jwt-key-change-in-production}
@@ -30,11 +24,12 @@ services:
         condition: service_healthy
     restart: unless-stopped
     networks:
-      - workout-network
+      - shared-caddy
+      - workout-internal
 
   db:
+    container_name: workout-db
     image: postgres:16-alpine
-    # No ports exposed - only accessible within Docker network
     environment:
       - POSTGRES_DB=workout_db
       - POSTGRES_USER=workout
@@ -48,12 +43,17 @@ services:
       retries: 5
     restart: unless-stopped
     networks:
-      - workout-network
+      - workout-internal
 
 volumes:
   postgres_data:
 
 
 networks:
-  workout-network:
+  # Connect to froggame's Caddy network
+  shared-caddy:
+    external: true
+    name: froggame_default
+  # Internal network for DB
+  workout-internal:
     driver: bridge
