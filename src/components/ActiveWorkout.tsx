@@ -6,9 +6,13 @@ import Button from './ui/Button';
 import Input from './ui/Input';
 import Card from './ui/Card';
 import ProgressRing from './ui/ProgressRing';
-import { ChevronLeft, ChevronRight, Check, Zap, Play, Pause, Activity, Dumbbell, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Check, Zap, Play, Pause, Activity, Dumbbell, X, Plus } from 'lucide-react';
 
-const ActiveWorkout: React.FC = () => {
+interface ActiveWorkoutProps {
+  onOpenLibrary?: () => void;
+}
+
+const ActiveWorkout: React.FC<ActiveWorkoutProps> = ({ onOpenLibrary }) => {
   const {
     currentWorkout,
     activeExerciseIndex,
@@ -17,6 +21,7 @@ const ActiveWorkout: React.FC = () => {
     nextExercise,
     previousExercise,
     finishWorkout,
+    cancelWorkout,
     removeExerciseFromWorkout,
     stats,
     startNewWorkout
@@ -35,14 +40,14 @@ const ActiveWorkout: React.FC = () => {
         <Dumbbell size={64} className="mx-auto text-muted-foreground/20 mb-6" />
         <h2 className="text-3xl font-bold tracking-tight">No Exercises Added</h2>
         <p className="text-muted-foreground max-w-sm mx-auto mt-2">
-          Your workout session is active but empty. Open the library to add exercises.
+          Your workout session is active but empty. Add movements from the database to begin.
         </p>
-        <div className="flex justify-center gap-4 mt-10">
-          <Button size="lg" onClick={() => startNewWorkout('Workout ' + new Date().toLocaleDateString())} className="rounded-3xl">
-            Reset Session
+        <div className="flex flex-col items-center gap-4 mt-10">
+          <Button size="lg" onClick={onOpenLibrary} className="rounded-3xl px-10">
+            <Plus size={20} className="mr-2" /> Add Exercises
           </Button>
-          <Button variant="danger" size="lg" onClick={finishWorkout} className="rounded-3xl">
-            End Empty Session
+          <Button variant="ghost" onClick={cancelWorkout} className="text-red-500 hover:bg-red-500/5">
+            Discard Session
           </Button>
         </div>
       </div>
@@ -87,14 +92,19 @@ const ActiveWorkout: React.FC = () => {
           <div>
             <div className="flex items-center gap-2 mb-2">
               <span className="h-2 w-2 rounded-full bg-primary animate-pulse" />
-              <span className="text-[10px] font-bold uppercase tracking-wider text-primary">Current Exercise</span>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-primary">Live Session</span>
             </div>
             <h2 className="text-5xl font-extrabold tracking-tighter">
               {currentExercise.exercise.name}
             </h2>
-            <p className="text-muted-foreground mt-2 text-lg font-medium opacity-60">
-              Targeting {currentExercise.exercise.muscleGroups.join(' & ')}
-            </p>
+            <div className="flex items-center gap-4 mt-2">
+              <p className="text-muted-foreground text-lg font-medium opacity-60">
+                Targeting {currentExercise.exercise.muscleGroups.join(' & ')}
+              </p>
+              <Button variant="ghost" size="sm" onClick={onOpenLibrary} className="h-8 py-0 px-3 rounded-full text-[10px] uppercase tracking-widest bg-white/5">
+                <Plus size={12} className="mr-1" /> Add More
+              </Button>
+            </div>
           </div>
         </div>
 
@@ -102,7 +112,7 @@ const ActiveWorkout: React.FC = () => {
           <Button variant="ghost" size="icon" onClick={previousExercise} disabled={activeExerciseIndex === 0} className="rounded-2xl h-12 w-12">
             <ChevronLeft size={24} />
           </Button>
-          <div className="px-6 py-2 flex flex-col items-center">
+          <div className="px-6 py-2 flex flex-col items-center min-w-[120px]">
             <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Exercise</span>
             <span className="text-xl font-bold font-mono">{activeExerciseIndex + 1} / {currentWorkout.exercises.length}</span>
           </div>
@@ -224,10 +234,10 @@ const ActiveWorkout: React.FC = () => {
         <Button
           variant="danger"
           size="lg"
-          onClick={() => { }}
+          onClick={cancelWorkout}
           className="md:order-1 h-24 text-lg font-bold rounded-[2.5rem] border-none bg-red-500/5 hover:bg-red-500/10 text-red-500 px-10"
         >
-          Terminate Session
+          Discard Session
         </Button>
       </div>
     </div>

@@ -355,7 +355,16 @@ export const useWorkoutStore = create<WorkoutStore>()(
         });
 
         get().checkAchievements();
-        get().addXP(100);
+
+        // Only add XP if some work was actually done (total reps > previous total reps)
+        const totalCompletedSets = completedWorkout.exercises.reduce(
+          (acc, ex) => acc + ex.sets.filter(s => s.completed).length,
+          0
+        );
+
+        if (totalCompletedSets > 0) {
+          get().addXP(100);
+        }
       },
 
       cancelWorkout: () => {

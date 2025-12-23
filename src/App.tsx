@@ -29,7 +29,8 @@ import {
   Flame,
   Activity,
   User,
-  Mail
+  Mail,
+  Trash2
 } from 'lucide-react';
 
 const App: React.FC = () => {
@@ -41,7 +42,8 @@ const App: React.FC = () => {
     userLevel,
     showAchievementModal,
     recentAchievement,
-    hideAchievementModal
+    hideAchievementModal,
+    deleteWorkout
   } = useWorkoutStore();
 
   const { isAuthenticated, logout, user } = useAuthStore();
@@ -115,7 +117,7 @@ const App: React.FC = () => {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95 }}
             >
-              <ActiveWorkout />
+              <ActiveWorkout onOpenLibrary={() => setShowLibrary(true)} />
             </motion.div>
           ) : (
             <div className="space-y-10">
@@ -199,9 +201,19 @@ const App: React.FC = () => {
                               </div>
                             </div>
                           </div>
-                          <Button variant="ghost" size="icon" className="group/btn">
-                            <ChevronRight size={24} className="text-muted-foreground group-hover/btn:text-white transition-colors" />
-                          </Button>
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => deleteWorkout(w.id)}
+                              className="h-10 w-10 text-muted-foreground hover:text-red-500 hover:bg-red-500/10 rounded-xl"
+                            >
+                              <Trash2 size={18} />
+                            </Button>
+                            <Button variant="ghost" size="icon" className="h-10 w-10 rounded-xl">
+                              <ChevronRight size={20} />
+                            </Button>
+                          </div>
                         </div>
                       </Card>
                     ))}
