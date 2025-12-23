@@ -39,6 +39,7 @@ interface WorkoutStore {
   unlockedAchievements: string[];
   showAchievementModal: boolean;
   recentAchievement: Achievement | null;
+  joinedChallengeIds: string[];
 
   // Actions
   startNewWorkout: (name: string) => void;
@@ -84,6 +85,8 @@ interface WorkoutStore {
   toggleChallenge: (challengeId: string) => void;
   deleteChallenge: (challengeId: string) => void;
   checkInChallenge: (challengeId: string) => void;
+  joinChallenge: (id: string) => void;
+  leaveChallenge: (id: string) => void;
   hideAchievementModal: () => void;
 }
 
@@ -289,6 +292,7 @@ export const useWorkoutStore = create<WorkoutStore>()(
       unlockedAchievements: [],
       showAchievementModal: false,
       recentAchievement: null,
+      joinedChallengeIds: [],
 
       startNewWorkout: (name) => {
         const workout: Workout = {
@@ -549,9 +553,13 @@ export const useWorkoutStore = create<WorkoutStore>()(
       },
 
       updateWorkout: (id, updates) => {
-        set((state) => ({
-          workoutHistory: state.workoutHistory.map((w) => (w.id === id ? { ...w, ...updates } : w)),
-        }));
+        set((state) => {
+          const newHistory = state.workoutHistory.map((w) => (w.id === id ? { ...w, ...updates } : w));
+          return {
+            workoutHistory: newHistory,
+            stats: calculateStats(newHistory, state.exercises, state.stats),
+          };
+        });
       },
 
       unlockAchievement: (achievementId) => {
@@ -714,6 +722,18 @@ export const useWorkoutStore = create<WorkoutStore>()(
         }));
       },
 
+      joinChallenge: (id: string) => {
+        set((state) => ({
+          joinedChallengeIds: [...state.joinedChallengeIds, id]
+        }));
+      },
+
+      leaveChallenge: (id: string) => {
+        set((state) => ({
+          joinedChallengeIds: state.joinedChallengeIds.filter(cid => cid !== id)
+        }));
+      },
+
       hideAchievementModal: () => {
         set({
           showAchievementModal: false,
@@ -733,6 +753,7 @@ export const useWorkoutStore = create<WorkoutStore>()(
         userLevel: state.userLevel,
         challenges: state.challenges,
         unlockedAchievements: state.unlockedAchievements,
+        joinedChallengeIds: state.joinedChallengeIds,
       }),
     }
   )

@@ -49,13 +49,17 @@ const App: React.FC = () => {
     deleteWorkout,
     isMinimized,
     toggleMinimize,
-    logManualWorkout
+    logManualWorkout,
+    settings
   } = useWorkoutStore();
 
   const { isAuthenticated, logout, user } = useAuthStore();
   const [currentView, setCurrentView] = useState<'dashboard' | 'history' | 'achievements' | 'challenges' | 'settings'>('dashboard');
   const [showLibrary, setShowLibrary] = useState(false);
   const [showManualLog, setShowManualLog] = useState(false);
+  const [editingWorkout, setEditingWorkout] = useState<Workout | null>(null);
+
+  const { updateWorkout } = useWorkoutStore();
 
   const handleNavClick = (view: typeof currentView) => {
     if (currentWorkout && !isMinimized && view !== currentView) {
@@ -158,7 +162,13 @@ const App: React.FC = () => {
                   {/* STATS GRID */}
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <DashboardStat icon={<Zap className="text-primary" />} label="Workouts" value={stats.totalWorkouts} subtitle="sessions completed" />
-                    <DashboardStat icon={<Flame className="text-primary" />} label="Volume" value={(stats.totalVolume / 1000).toFixed(1)} unit="T" subtitle="tons moved" />
+                    <DashboardStat
+                      icon={<Flame className="text-primary" />}
+                      label="Volume"
+                      value={settings.weightUnit === 'kg' ? (stats.totalVolume > 1000 ? (stats.totalVolume / 1000).toFixed(1) : stats.totalVolume) : (stats.totalVolume / 1000).toFixed(1)}
+                      unit={settings.weightUnit === 'kg' ? (stats.totalVolume > 1000 ? 'T' : 'kg') : 'T'}
+                      subtitle={settings.weightUnit === 'kg' ? (stats.totalVolume > 1000 ? 'tons moved' : 'kg moved') : 'tons moved'}
+                    />
                     <DashboardStat icon={<Activity className="text-primary" />} label="Total Reps" value={stats.totalReps} subtitle="completed reps" />
                   </div>
 
@@ -307,7 +317,7 @@ const App: React.FC = () => {
                             >
                               <Trash2 size={18} />
                             </Button>
-                            <Button variant="ghost" size="icon" className="h-10 w-10 rounded-xl">
+                            <Button variant="ghost" size="icon" onClick={() => setEditingWorkout(w)} className="h-10 w-10 rounded-xl">
                               <ChevronRight size={20} />
                             </Button>
                           </div>
@@ -439,6 +449,51 @@ const App: React.FC = () => {
                   setShowManualLog(false);
                 }}>Save Workout</Button>
                 <Button variant="ghost" onClick={() => setShowManualLog(false)}>Cancel</Button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* EDIT WORKOUT MODAL */}
+      <AnimatePresence>
+        {editingWorkout && (
+          <div className="fixed inset-0 z-[70] flex items-center justify-center p-6">
+            <motion.div
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-background/80 backdrop-blur-md"
+              onClick={() => setEditingWorkout(null)}
+            />
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
+              className="relative w-full max-w-lg bg-card border border-white/5 rounded-[2.5rem] p-10 shadow-2xl space-y-8"
+            >
+              <div>
+                <h2 className="text-3xl font-extrabold tracking-tight">Edit Session</h2>
+                <p className="text-muted-foreground mt-2">Adjust workout details.</p>
+              </div>
+
+              <div className="space-y-6">
+                <Input label="Workout Name" defaultValue={editingWorkout.name} id="edit-name" />
+                <Input label="Date" type="date" defaultValue={new Date(editingWorkout.startTime).toISOString().split('T')[0]} id="edit-date" />
+                <Input label="Duration (mins)" type="number" defaultValue={editingWorkout.duration} id="edit-duration" />
+              </div>
+
+              <div className="flex gap-4">
+                <Button fullWidth onClick={() => {
+                  const name = (document.getElementById('edit-name') as HTMLInputElement).value;
+                  const duration = parseInt((document.getElementById('edit-duration') as HTMLInputElement).value);
+                  const date = (document.getElementById('edit-date') as HTMLInputElement).value;
+
+                  updateWorkout(editingWorkout.id, {
+                    name: name || editingWorkout.name,
+                    startTime: new Date(date),
+                    endTime: new Date(date),
+                    duration: duration || 0
+                  });
+                  setEditingWorkout(null);
+                }}>Save Changes</Button>
+                <Button variant="ghost" onClick={() => setEditingWorkout(null)}>Cancel</Button>
               </div>
             </motion.div>
           </div>

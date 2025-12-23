@@ -8,7 +8,7 @@ import { motion } from 'framer-motion';
 import type { Challenge } from '../types/workout';
 
 const ChallengeCreator: React.FC = () => {
-  const { challenges, addChallenge, deleteChallenge, toggleChallenge } = useWorkoutStore();
+  const { challenges, addChallenge, deleteChallenge, toggleChallenge, joinedChallengeIds, joinChallenge, leaveChallenge } = useWorkoutStore();
   const [title, setTitle] = useState('');
   const [type, setType] = useState<Challenge['type']>('workouts');
   const [targetValue, setTargetValue] = useState('');
@@ -152,6 +152,16 @@ const ChallengeCreator: React.FC = () => {
                     <span className="font-bold text-lg">{challenge.xpReward} XP</span>
                   </div>
                 </div>
+                {challenge.isCommunity && (
+                  <Button
+                    variant={joinedChallengeIds.includes(challenge.id) ? "ghost" : "primary"}
+                    size="sm"
+                    onClick={() => joinedChallengeIds.includes(challenge.id) ? leaveChallenge(challenge.id) : joinChallenge(challenge.id)}
+                    className="h-10 px-6 rounded-xl font-bold"
+                  >
+                    {joinedChallengeIds.includes(challenge.id) ? 'Leave' : 'Join'}
+                  </Button>
+                )}
                 <button
                   onClick={() => deleteChallenge(challenge.id)}
                   className="h-10 w-10 rounded-xl bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-all flex items-center justify-center"
