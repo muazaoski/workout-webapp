@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { useAuthStore } from '../stores/authStore';
 import Button from './ui/Button';
 import Input from './ui/Input';
-import { Mail, Lock, User, Dumbbell, Zap } from 'lucide-react';
+import { Zap, ShieldCheck, Mail, Lock, User } from 'lucide-react';
 
 interface AuthModalProps {
     isOpen: boolean;
@@ -14,116 +13,97 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen }) => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [name, setName] = useState('');
-    const { login, register, isLoading, error } = useAuthStore();
+    const { login, register, isLoading, error, clearError } = useAuthStore();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (isLogin) {
             await login(email, password);
         } else {
-            await register(name, email, password);
+            await register(email, password, name);
         }
     };
 
     if (!isOpen) return null;
 
     return (
-        <motion.div
-            initial={{ opacity: 0, scale: 0.9, rotate: -1 }}
-            animate={{ opacity: 1, scale: 1, rotate: 0 }}
-            className="w-full max-w-md punk-card border-4 border-punk-white bg-punk-dark shadow-yellow relative"
-        >
-            {/* DECORATIVE ELEMENTS */}
-            <div className="absolute -top-6 -left-6 bg-punk-yellow text-punk-black p-2 -rotate-12 font-black italic text-xs border-2 border-punk-black z-10">
-                PROTOCOL_V2.0
-            </div>
-            <div className="absolute top-0 right-0 w-24 h-24 bg-punk-yellow/5 -rotate-45 translate-x-12 -translate-y-12" />
-
-            <div className="text-center mb-10 mt-4">
-                <div className="inline-block bg-punk-yellow p-3 mb-4 -skew-x-12 border-2 border-punk-black shadow-white">
-                    <Dumbbell className="text-punk-black w-10 h-10" />
+        <div className="w-full max-w-md space-y-12">
+            <div className="text-center space-y-4">
+                <div className="w-16 h-16 bg-brand-yellow mx-auto flex items-center justify-center">
+                    <Zap size={32} className="text-brand-black" />
                 </div>
-                <h2 className="text-4xl font-black italic tracking-tighter uppercase leading-none">
-                    SYSTEM_<span className="text-punk-yellow">{isLogin ? 'ACCESS' : 'ENROLL'}</span>
-                </h2>
-                <p className="text-[10px] font-mono text-punk-white/40 mt-2 tracking-[4px]">IDENTITY_VERIFICATION_REQUIRED</p>
+                <div>
+                    <h1 className="text-4xl font-black tracking-tighter uppercase italic">IRON_GRIT</h1>
+                    <p className="text-[10px] font-bold text-brand-white/40 uppercase tracking-[0.4em]">AUTHENTICATION_REQUIRED</p>
+                </div>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-6 relative z-10">
-                <AnimatePresence mode="wait">
+            <div className="bg-brand-dark border-2 border-brand-white/5 p-10">
+                <form onSubmit={handleSubmit} className="space-y-8">
                     {!isLogin && (
-                        <motion.div
-                            initial={{ opacity: 0, x: -20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            exit={{ opacity: 0, x: 20 }}
-                        >
-                            <Input
-                                label="OPERATOR_NAME"
-                                type="text"
-                                placeholder="JACK_REACHER"
-                                value={name}
-                                onChange={(e) => setName(e.target.value)}
-                                icon={<User size={18} />}
-                                required
-                            />
-                        </motion.div>
+                        <Input
+                            label="DISPLAY_NAME"
+                            placeholder="OPERATOR_NAME"
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
+                            icon={<User size={16} />}
+                            required
+                        />
                     )}
-                </AnimatePresence>
+                    <Input
+                        label="EMAIL_ADDRESS"
+                        type="email"
+                        placeholder="ID@MISSION.CONTROL"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        icon={<Mail size={16} />}
+                        required
+                    />
+                    <Input
+                        label="ACCESS_CODE"
+                        type="password"
+                        placeholder="••••••••"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        icon={<Lock size={16} />}
+                        required
+                    />
 
-                <Input
-                    label="ACCESS_EMAIL"
-                    type="email"
-                    placeholder="OPERATOR@IRONGRIT.IO"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    icon={<Mail size={18} />}
-                    required
-                />
+                    {error && (
+                        <div className="bg-red-500/10 border-l-4 border-red-500 p-4 text-red-500 text-[10px] font-bold tracking-widest uppercase">
+                            ERROR: {error}
+                        </div>
+                    )}
 
-                <Input
-                    label="ENCRYPTION_KEY"
-                    type="password"
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    icon={<Lock size={18} />}
-                    required
-                />
+                    <Button
+                        variant="primary"
+                        fullWidth
+                        size="lg"
+                        type="submit"
+                        loading={isLoading}
+                    >
+                        {isLogin ? 'AUTHORIZE_SESSION' : 'INITIALIZE_COMMAND'}
+                    </Button>
+                </form>
 
-                {error && (
-                    <div className="bg-red-500/10 border-l-4 border-red-500 p-3 flex items-start gap-3">
-                        <div className="bg-red-500 text-white p-1 text-[10px] font-black italic">ERROR</div>
-                        <p className="text-[10px] font-mono text-red-500 font-bold uppercase">{error}</p>
-                    </div>
-                )}
-
-                <Button
-                    fullWidth
-                    variant="yellow"
-                    size="lg"
-                    type="submit"
-                    loading={isLoading}
-                    icon={<Zap size={20} />}
-                >
-                    {isLogin ? 'AUTHENTICATE' : 'INITIALIZE_ACCOUNT'}
-                </Button>
-            </form>
-
-            <div className="mt-8 text-center border-t-2 border-punk-white/5 pt-6">
-                <button
-                    onClick={() => setIsLogin(!isLogin)}
-                    className="text-[10px] font-black uppercase tracking-widest text-punk-white/40 hover:text-punk-yellow transition-colors italic underline underline-offset-4 decoration-2"
-                >
-                    {isLogin ? 'NO_IDENTITY?_CREATE_NEW_PROFILE' : 'ALREADY_ENROLLED?_BACK_TO_LOGIN'}
-                </button>
+                <div className="mt-8 text-center">
+                    <button
+                        onClick={() => {
+                            setIsLogin(!isLogin);
+                            clearError();
+                        }}
+                        className="text-[10px] font-black uppercase tracking-widest text-brand-white/40 hover:text-brand-yellow transition-colors underline underline-offset-4 decoration-2"
+                    >
+                        {isLogin ? 'REQUEST_NEW_IDENTIFIER' : 'RETURN_TO_LOGIN'}
+                    </button>
+                </div>
             </div>
 
-            <div className="mt-6 flex justify-between items-center opacity-10">
-                <div className="h-[1px] flex-grow bg-punk-white" />
-                <span className="text-[8px] font-black mx-2">SECURE_CHANNEL_ESTABLISHED</span>
-                <div className="h-[1px] flex-grow bg-punk-white" />
+            <div className="flex items-center justify-center gap-2 opacity-20">
+                <ShieldCheck size={14} />
+                <span className="text-[8px] font-bold tracking-[0.3em] uppercase">ENCRYPTED_DATA_TRANSMISSION</span>
             </div>
-        </motion.div>
+        </div>
     );
 };
 
