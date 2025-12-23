@@ -4,7 +4,8 @@ services:
       context: .
       dockerfile: Dockerfile
     ports:
-      - "3000:80"
+      # Bind to localhost only - use Cloudflare Tunnel or reverse proxy for external access
+      - "127.0.0.1:3000:80"
     depends_on:
       - api
     restart: unless-stopped
@@ -16,7 +17,8 @@ services:
       context: ./server
       dockerfile: Dockerfile
     ports:
-      - "3001:3001"
+      # Bind to localhost only
+      - "127.0.0.1:3001:3001"
     environment:
       - DATABASE_URL=postgresql://workout:${DB_PASSWORD:-workout_password}@db:5432/workout_db?schema=public
       - JWT_SECRET=${JWT_SECRET:-super-secret-jwt-key-change-in-production}
@@ -32,6 +34,7 @@ services:
 
   db:
     image: postgres:16-alpine
+    # No ports exposed - only accessible within Docker network
     environment:
       - POSTGRES_DB=workout_db
       - POSTGRES_USER=workout
