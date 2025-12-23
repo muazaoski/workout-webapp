@@ -1,0 +1,112 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String            @id @default(uuid())
+  email        String            @unique
+  passwordHash String
+  name         String
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+  workouts     Workout[]
+  stats        UserStats?
+  achievements UserAchievement[]
+  challenges   Challenge[]
+}
+
+model Workout {
+  id        String            @id @default(uuid())
+  userId    String
+  user      User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  exercises WorkoutExercise[]
+  startTime DateTime
+  endTime   DateTime?
+  duration  Int?
+  mood      String?
+  energy    Int?
+  notes     String?
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+
+  @@index([userId])
+}
+
+model Exercise {
+  id           String            @id @default(uuid())
+  name         String
+  category     String
+  muscleGroups String[]
+  instructions String?
+  icon         String?
+  isDefault    Boolean           @default(false)
+  createdAt    DateTime          @default(now())
+  workouts     WorkoutExercise[]
+}
+
+model WorkoutExercise {
+  id         String   @id @default(uuid())
+  workoutId  String
+  workout    Workout  @relation(fields: [workoutId], references: [id], onDelete: Cascade)
+  exerciseId String
+  exercise   Exercise @relation(fields: [exerciseId], references: [id])
+  sets       Json // Array of {reps, weight, duration, restTime, completed}
+  notes      String?
+  order      Int      @default(0)
+
+  @@index([workoutId])
+}
+
+model UserStats {
+  id              String    @id @default(uuid())
+  userId          String    @unique
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  totalWorkouts   Int       @default(0)
+  totalExercises  Int       @default(0)
+  totalSets       Int       @default(0)
+  totalReps       Int       @default(0)
+  totalWeight     Int       @default(0)
+  streak          Int       @default(0)
+  lastWorkoutDate DateTime?
+  level           Int       @default(1)
+  currentXP       Int       @default(0)
+  totalXP         Int       @default(0)
+}
+
+model UserAchievement {
+  id            String   @id @default(uuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievementId String
+  unlockedAt    DateTime @default(now())
+
+  @@unique([userId, achievementId])
+  @@index([userId])
+}
+
+model Challenge {
+  id          String    @id @default(uuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name        String
+  description String?
+  startDate   DateTime
+  endDate     DateTime?
+  isActive    Boolean   @default(true)
+  isCompleted Boolean   @default(false)
+  icon        String?
+  color       String?
+  checkIns    DateTime[]
+  createdAt   DateTime  @default(now())
+
+  @@index([userId])
+}

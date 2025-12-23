@@ -1,0 +1,56 @@
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:80"
+    depends_on:
+      - api
+    restart: unless-stopped
+    networks:
+      - workout-network
+
+  api:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    ports:
+      - "3001:3001"
+    environment:
+      - DATABASE_URL=postgresql://workout:${DB_PASSWORD:-workout_password}@db:5432/workout_db?schema=public
+      - JWT_SECRET=${JWT_SECRET:-super-secret-jwt-key-change-in-production}
+      - JWT_EXPIRES_IN=7d
+      - NODE_ENV=production
+      - PORT=3001
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - workout-network
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      - POSTGRES_DB=workout_db
+      - POSTGRES_USER=workout
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-workout_password}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U workout -d workout_db" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - workout-network
+
+volumes:
+  postgres_data:
+
+
+networks:
+  workout-network:
+    driver: bridge

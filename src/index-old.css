@@ -1,0 +1,70 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@100..800&display=swap');
+
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    @apply bg-dark-primary text-white font-display antialiased;
+    font-feature-settings: "cv11", "ss01";
+    font-variation-settings: "opsz" 32;
+    margin: 0;
+    min-height: 100vh;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+@layer components {
+  .glass-card {
+    @apply bg-dark-secondary/80 backdrop-blur-md border border-gray-800/50 rounded-xl;
+  }
+
+  .neon-border {
+    @apply border border-neon-blue/30 shadow-lg shadow-neon-blue/10;
+  }
+
+  .neon-text {
+    @apply text-transparent bg-clip-text bg-gradient-to-r from-neon-blue to-neon-purple;
+  }
+
+  .workout-button {
+    @apply px-6 py-3 rounded-xl bg-gradient-to-r from-neon-blue to-neon-purple text-white font-medium transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-neon-blue/30 active:scale-95;
+  }
+
+  .minimal-input {
+    @apply bg-dark-tertiary/50 border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-neon-blue focus:ring-1 focus:ring-neon-blue/50 transition-all duration-200;
+  }
+
+  .workout-card {
+    @apply glass-card p-6 hover:border-neon-blue/50 transition-all duration-300 hover:shadow-neon-blue/20;
+  }
+
+  .progress-ring {
+    @apply w-32 h-32 rounded-full border-4 border-dark-tertiary relative;
+  }
+
+  .progress-ring-fill {
+    @apply absolute inset-0 rounded-full border-4 border-neon-blue border-t-transparent border-r-transparent border-b-transparent animate-spin;
+  }
+}
+
+:root {
+  --glow-intensity: 0.5;
+}
+
+.glow-effect {
+  box-shadow: 0 0 calc(20px * var(--glow-intensity)) rgba(0, 212, 255, calc(0.3 * var(--glow-intensity)));
+}
+
+.neon-glow:hover {
+  --glow-intensity: 1;
+}
