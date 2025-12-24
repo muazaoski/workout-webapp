@@ -504,7 +504,7 @@ export const useWorkoutStore = create<WorkoutStore>()(
         }).then(res => {
           if (res.ok) {
             set(state => ({
-              workoutHistory: state.workoutHistory.map(w => 
+              workoutHistory: state.workoutHistory.map(w =>
                 w.id === workout.id ? { ...w, synced: true } : w
               )
             }));
@@ -670,6 +670,19 @@ export const useWorkoutStore = create<WorkoutStore>()(
             a.id === achievementId ? { ...a, unlocked: true, unlockedAt: new Date() } : a
           );
 
+          // Push achievement to server
+          const { token } = useAuthStore.getState();
+          if (token) {
+            fetch(`${API_URL}/user/achievements`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`
+              },
+              body: JSON.stringify({ achievementId })
+            }).catch(() => { });
+          }
+
           return {
             achievements: updatedAchievements,
             unlockedAchievements: [...state.unlockedAchievements, achievementId],
@@ -714,10 +727,11 @@ export const useWorkoutStore = create<WorkoutStore>()(
         let newLevel = userLevel.level;
         let newXpToNext = userLevel.xpToNext;
         let newTitle = userLevel.title;
+        let finalCurrentXP = newCurrentXP;
 
         if (newCurrentXP >= newXpToNext) {
           newLevel++;
-          const remainingXP = newCurrentXP - newXpToNext;
+          finalCurrentXP = newCurrentXP - newXpToNext;
           newXpToNext = Math.floor(100 * Math.pow(1.2, newLevel - 1));
 
           if (newLevel >= 50) {
@@ -733,24 +747,34 @@ export const useWorkoutStore = create<WorkoutStore>()(
           } else {
             newTitle = 'Novice';
           }
+        }
 
-          set({
-            userLevel: {
+        set({
+          userLevel: {
+            level: newLevel,
+            currentXP: finalCurrentXP,
+            totalXP: newTotalXP,
+            xpToNext: newXpToNext,
+            title: newTitle,
+          },
+        });
+
+        // Push stats to server
+        const { token } = useAuthStore.getState();
+        if (token) {
+          // Update user stats on server (fire and forget)
+          fetch(`${API_URL}/user/stats`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`
+            },
+            body: JSON.stringify({
               level: newLevel,
-              currentXP: remainingXP,
-              totalXP: newTotalXP,
-              xpToNext: newXpToNext,
-              title: newTitle,
-            },
-          });
-        } else {
-          set({
-            userLevel: {
-              ...userLevel,
-              currentXP: newCurrentXP,
-              totalXP: newTotalXP,
-            },
-          });
+              currentXP: finalCurrentXP,
+              totalXP: newTotalXP
+            })
+          }).catch(() => { });
         }
       },
 
@@ -794,6 +818,25 @@ export const useWorkoutStore = create<WorkoutStore>()(
         set((state) => ({
           challenges: [...state.challenges, challenge],
         }));
+
+        // Push challenge to server (if not a community challenge)
+        if (!challenge.isCommunity) {
+          const { token } = useAuthStore.getState();
+          if (token) {
+            fetch(`${API_URL}/user/challenges`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`
+              },
+              body: JSON.stringify({
+                name: challenge.title,
+                description: challenge.description,
+                startDate: new Date().toISOString()
+              })
+            }).catch(() => { });
+          }
+        }
       },
 
       toggleChallenge: (challengeId) => {
@@ -808,6 +851,15 @@ export const useWorkoutStore = create<WorkoutStore>()(
         set((state) => ({
           challenges: state.challenges.filter(challenge => challenge.id !== challengeId),
         }));
+
+        // Delete from server
+        const { token } = useAuthStore.getState();
+        if (token) {
+          fetch(`${API_URL}/user/challenges/${challengeId}`, {
+            method: 'DELETE',
+            headers: { Authorization: `Bearer ${token}` }
+          }).catch(() => { });
+        }
       },
 
       checkInChallenge: (challengeId) => {
@@ -816,6 +868,15 @@ export const useWorkoutStore = create<WorkoutStore>()(
             c.id === challengeId ? { ...c, completed: true } : c
           ),
         }));
+
+        // Check in on server
+        const { token } = useAuthStore.getState();
+        if (token) {
+          fetch(`${API_URL}/user/challenges/${challengeId}/checkin`, {
+            method: 'PUT',
+            headers: { Authorization: `Bearer ${token}` }
+          }).catch(() => { });
+        }
       },
 
       joinChallenge: (id: string) => {
@@ -855,10 +916,58 @@ export const useWorkoutStore = create<WorkoutStore>()(
 
           if (response.ok) {
             const data = await response.json();
-            const remoteWorkouts = data.data.workouts;
-            const { workoutHistory } = get();
+            const remoteWorkoutsRaw = data.data.workouts || [];
 
-            const remoteIds = new Set(remoteWorkouts.map((w: Workout) => w.id));
+            // Transform remote workouts to match local structure
+            interface RemoteWorkout {
+              id: string;
+              name: string;
+              startTime: string;
+              endTime?: string;
+              duration?: number;
+              mood?: string;
+              energy?: number;
+              notes?: string;
+              exercises: Array<{
+                exercise: {
+                  id: string;
+                  name: string;
+                  category: string;
+                  muscleGroups: string[];
+                  instructions?: string;
+                  icon?: string;
+                };
+                sets: unknown;
+                notes?: string;
+              }>;
+            }
+
+            const remoteWorkouts: Workout[] = remoteWorkoutsRaw.map((rw: RemoteWorkout) => ({
+              id: rw.id,
+              name: rw.name,
+              startTime: new Date(rw.startTime),
+              endTime: rw.endTime ? new Date(rw.endTime) : undefined,
+              duration: rw.duration,
+              mood: rw.mood,
+              energy: rw.energy,
+              notes: rw.notes,
+              synced: true,
+              exercises: (rw.exercises || []).map(we => ({
+                exercise: {
+                  id: we.exercise.id,
+                  name: we.exercise.name,
+                  category: we.exercise.category as Exercise['category'],
+                  muscleGroups: we.exercise.muscleGroups as Exercise['muscleGroups'],
+                  instructions: we.exercise.instructions ? [we.exercise.instructions] : [],
+                  icon: we.exercise.icon || '🏋️'
+                },
+                sets: Array.isArray(we.sets) ? we.sets : [],
+                notes: we.notes
+              }))
+            }));
+
+            const { workoutHistory } = get();
+            const remoteIds = new Set(remoteWorkouts.map(w => w.id));
             const localHistory = [...workoutHistory];
             let historyChanged = false;
 
@@ -881,7 +990,6 @@ export const useWorkoutStore = create<WorkoutStore>()(
                         Authorization: `Bearer ${token}`
                       },
                       body: JSON.stringify({
-                        id: w.id, // Try to keep same ID if server allows
                         name: w.name,
                         startTime: w.startTime,
                         endTime: w.endTime,
@@ -897,7 +1005,7 @@ export const useWorkoutStore = create<WorkoutStore>()(
                       return;
                     }
                     if (upRes.ok) {
-                      w.synced = true;
+                      localHistory[i] = { ...w, synced: true };
                       historyChanged = true;
                     }
                   } catch (e) {
@@ -907,7 +1015,7 @@ export const useWorkoutStore = create<WorkoutStore>()(
               } else {
                 // On server and local, make sure it's marked as synced
                 if (!w.synced) {
-                  w.synced = true;
+                  localHistory[i] = { ...w, synced: true };
                   historyChanged = true;
                 }
               }
@@ -917,12 +1025,17 @@ export const useWorkoutStore = create<WorkoutStore>()(
             const localIds = new Set(localHistory.map(w => w.id));
             for (const rw of remoteWorkouts) {
               if (!localIds.has(rw.id)) {
-                localHistory.push({ ...rw, synced: true });
+                localHistory.push(rw);
                 historyChanged = true;
               }
             }
 
-            if (historyChanged) {
+            // Always update if we have remote workouts and no local ones
+            if (remoteWorkouts.length > 0 && workoutHistory.length === 0) {
+              historyChanged = true;
+            }
+
+            if (historyChanged || remoteWorkouts.length !== workoutHistory.length) {
               const sortedHistory = localHistory.sort((a, b) =>
                 new Date(b.startTime).getTime() - new Date(a.startTime).getTime()
               );
@@ -945,13 +1058,13 @@ export const useWorkoutStore = create<WorkoutStore>()(
 
           if (settingsResponse.ok) {
             const settingsData = await settingsResponse.json();
-            if (settingsData.data.settings) {
-              // Merge local settings with remote (remote wins for units, but keep local theme if preferred?)
-              // For now, remote wins
+            if (settingsData.data?.settings) {
               set((state) => ({
                 settings: {
                   ...state.settings,
-                  ...settingsData.data.settings
+                  weightUnit: settingsData.data.settings.weightUnit || state.settings.weightUnit,
+                  distanceUnit: settingsData.data.settings.distanceUnit || state.settings.distanceUnit,
+                  theme: settingsData.data.settings.theme || state.settings.theme
                 }
               }));
             } else {
@@ -967,6 +1080,157 @@ export const useWorkoutStore = create<WorkoutStore>()(
               });
             }
           }
+
+          // 3. Sync User Stats (Level, XP)
+          try {
+            const statsResponse = await fetch(`${API_URL}/user/stats`, {
+              headers: { Authorization: `Bearer ${token}` }
+            });
+
+            if (statsResponse.ok) {
+              const statsData = await statsResponse.json();
+              if (statsData.data?.stats) {
+                const remoteStats = statsData.data.stats;
+                const localLevel = get().userLevel;
+
+                // Use whichever has higher XP (to avoid losing progress)
+                if (remoteStats.totalXP > localLevel.totalXP) {
+                  set({
+                    userLevel: {
+                      level: remoteStats.level || 1,
+                      currentXP: remoteStats.currentXP || 0,
+                      totalXP: remoteStats.totalXP || 0,
+                      xpToNext: Math.floor(100 * Math.pow(1.2, (remoteStats.level || 1) - 1)),
+                      title: remoteStats.level >= 50 ? 'Legend' :
+                        remoteStats.level >= 40 ? 'Master' :
+                          remoteStats.level >= 30 ? 'Expert' :
+                            remoteStats.level >= 20 ? 'Advanced' :
+                              remoteStats.level >= 10 ? 'Intermediate' : 'Novice'
+                    }
+                  });
+                }
+              }
+            }
+          } catch (e) {
+            console.error('Failed to sync stats:', e);
+          }
+
+          // 4. Sync Achievements
+          try {
+            const achievementsResponse = await fetch(`${API_URL}/user/achievements`, {
+              headers: { Authorization: `Bearer ${token}` }
+            });
+
+            if (achievementsResponse.ok) {
+              const achievementsData = await achievementsResponse.json();
+              if (achievementsData.data?.achievements) {
+                const remoteAchievementIds = achievementsData.data.achievements.map(
+                  (a: { achievementId: string }) => a.achievementId
+                );
+
+                const { achievements, unlockedAchievements } = get();
+                const mergedUnlocked = [...new Set([...unlockedAchievements, ...remoteAchievementIds])];
+
+                // Update local achievements with remote unlocked status
+                const updatedAchievements = achievements.map(a => ({
+                  ...a,
+                  unlocked: mergedUnlocked.includes(a.id)
+                }));
+
+                set({
+                  achievements: updatedAchievements,
+                  unlockedAchievements: mergedUnlocked
+                });
+
+                // Upload any local achievements not on server
+                for (const localId of unlockedAchievements) {
+                  if (!remoteAchievementIds.includes(localId)) {
+                    await fetch(`${API_URL}/user/achievements`, {
+                      method: 'POST',
+                      headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: `Bearer ${token}`
+                      },
+                      body: JSON.stringify({ achievementId: localId })
+                    }).catch(() => { });
+                  }
+                }
+              }
+            }
+          } catch (e) {
+            console.error('Failed to sync achievements:', e);
+          }
+
+          // 5. Sync Challenges
+          try {
+            const challengesResponse = await fetch(`${API_URL}/user/challenges`, {
+              headers: { Authorization: `Bearer ${token}` }
+            });
+
+            if (challengesResponse.ok) {
+              const challengesData = await challengesResponse.json();
+              if (challengesData.data?.challenges) {
+                interface RemoteChallenge {
+                  id: string;
+                  name: string;
+                  description?: string;
+                  startDate: string;
+                  endDate?: string;
+                  isActive: boolean;
+                  isCompleted: boolean;
+                  icon?: string;
+                  color?: string;
+                  checkIns: string[];
+                }
+
+                const remoteChallenges: Challenge[] = challengesData.data.challenges.map((rc: RemoteChallenge) => ({
+                  id: rc.id,
+                  title: rc.name,
+                  description: rc.description || '',
+                  type: 'workouts' as const,
+                  targetValue: 10,
+                  currentValue: rc.checkIns?.length || 0,
+                  completed: rc.isCompleted,
+                  xpReward: 100,
+                  synced: true
+                }));
+
+                const { challenges } = get();
+                const remoteIds = new Set(remoteChallenges.map(c => c.id));
+                const localChallenges = [...challenges];
+
+                // Download new remote challenges
+                for (const rc of remoteChallenges) {
+                  if (!localChallenges.find(lc => lc.id === rc.id)) {
+                    localChallenges.push(rc);
+                  }
+                }
+
+                // Upload local challenges not on server
+                for (const lc of localChallenges) {
+                  if (!remoteIds.has(lc.id) && !lc.isCommunity) {
+                    await fetch(`${API_URL}/user/challenges`, {
+                      method: 'POST',
+                      headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: `Bearer ${token}`
+                      },
+                      body: JSON.stringify({
+                        name: lc.title,
+                        description: lc.description,
+                        startDate: new Date().toISOString()
+                      })
+                    }).catch(() => { });
+                  }
+                }
+
+                set({ challenges: localChallenges });
+              }
+            }
+          } catch (e) {
+            console.error('Failed to sync challenges:', e);
+          }
+
         } catch (error) {
           console.error('Sync failed:', error);
         } finally {

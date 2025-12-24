@@ -27,6 +27,33 @@ router.get('/stats', asyncHandler(async (req: AuthRequest, res: Response) => {
     });
 }));
 
+// PUT /api/user/stats - Update user stats (level, XP)
+router.put('/stats', asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { level, currentXP, totalXP, streak } = req.body;
+
+    const stats = await prisma.userStats.upsert({
+        where: { userId: req.user!.id },
+        update: {
+            ...(level !== undefined && { level }),
+            ...(currentXP !== undefined && { currentXP }),
+            ...(totalXP !== undefined && { totalXP }),
+            ...(streak !== undefined && { streak }),
+        },
+        create: {
+            userId: req.user!.id,
+            level: level || 1,
+            currentXP: currentXP || 0,
+            totalXP: totalXP || 0,
+            streak: streak || 0,
+        },
+    });
+
+    res.json({
+        success: true,
+        data: { stats },
+    });
+}));
+
 // PUT /api/user/profile - Update user profile
 router.put('/profile', [
     body('name').optional().trim().isLength({ min: 1 }).withMessage('Name cannot be empty'),
