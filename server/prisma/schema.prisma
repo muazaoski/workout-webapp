@@ -15,6 +15,7 @@ model User {
   email                 String                 @unique
   passwordHash          String
   name                  String
+  profilePicture        String?                @db.Text
   createdAt             DateTime               @default(now())
   updatedAt             DateTime               @updatedAt
   workouts              Workout[]

@@ -66,15 +66,19 @@ router.put('/profile', [
         });
     }
 
-    const { name } = req.body;
+    const { name, profilePicture } = req.body;
 
     const user = await prisma.user.update({
         where: { id: req.user!.id },
-        data: { name },
+        data: {
+            ...(name && { name }),
+            ...(profilePicture !== undefined && { profilePicture }),
+        },
         select: {
             id: true,
             email: true,
             name: true,
+            profilePicture: true,
             createdAt: true,
         },
     });
@@ -82,6 +86,40 @@ router.put('/profile', [
     res.json({
         success: true,
         data: { user },
+    });
+}));
+
+// PUT /api/user/profile-picture - Update profile picture (base64)
+router.put('/profile-picture', asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { profilePicture } = req.body;
+
+    if (!profilePicture && profilePicture !== null) {
+        return res.status(400).json({
+            success: false,
+            error: 'profilePicture is required (base64 string or null to remove)',
+        });
+    }
+
+    // Validate it's a reasonable base64 data URL (limit to ~500KB after base64)
+    if (profilePicture && profilePicture.length > 700000) {
+        return res.status(400).json({
+            success: false,
+            error: 'Image too large. Max 500KB.',
+        });
+    }
+
+    const user = await prisma.user.update({
+        where: { id: req.user!.id },
+        data: { profilePicture },
+        select: {
+            id: true,
+            profilePicture: true,
+        },
+    });
+
+    res.json({
+        success: true,
+        data: { profilePicture: user.profilePicture },
     });
 }));
 

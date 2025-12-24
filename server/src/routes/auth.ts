@@ -142,6 +142,7 @@ router.get('/me', authenticate, asyncHandler(async (req: AuthRequest, res: Respo
             id: true,
             email: true,
             name: true,
+            profilePicture: true,
             createdAt: true,
             stats: true,
         },

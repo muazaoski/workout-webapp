@@ -83,6 +83,16 @@ const App: React.FC = () => {
     }
   }, [isAuthenticated, sync]);
 
+  // Sync profile picture from server
+  React.useEffect(() => {
+    if (user && (user as { profilePicture?: string }).profilePicture) {
+      const serverPic = (user as { profilePicture?: string }).profilePicture;
+      if (serverPic) {
+        localStorage.setItem('profilePic', serverPic);
+      }
+    }
+  }, [user]);
+
   // Apply theme to document root
   React.useEffect(() => {
     if (settings.theme === 'light') {
@@ -303,32 +313,82 @@ const App: React.FC = () => {
                     </div>
 
                     <div>
-                      <Card title="Body Weight" description="Track your physique progress.">
-                        <div className="h-[180px] w-full mt-4">
+                      <Card className="!p-0 overflow-hidden">
+                        {/* Header with current weight */}
+                        <div className="p-5 pb-0">
+                          <div className="flex items-center justify-between mb-4">
+                            <div>
+                              <h3 className="font-bold text-lg">Body Weight</h3>
+                              <p className="text-xs text-muted-foreground">Track your progress</p>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-2xl font-bold text-primary">
+                                {stats.bodyWeightLogs?.[stats.bodyWeightLogs.length - 1]?.weight || '--'}
+                                <span className="text-sm text-muted-foreground ml-1">{settings.weightUnit}</span>
+                              </p>
+                              {stats.bodyWeightLogs && stats.bodyWeightLogs.length >= 2 && (
+                                <p className={`text-xs font-bold ${stats.bodyWeightLogs[stats.bodyWeightLogs.length - 1]?.weight < stats.bodyWeightLogs[stats.bodyWeightLogs.length - 2]?.weight
+                                  ? 'text-green-400'
+                                  : stats.bodyWeightLogs[stats.bodyWeightLogs.length - 1]?.weight > stats.bodyWeightLogs[stats.bodyWeightLogs.length - 2]?.weight
+                                    ? 'text-red-400'
+                                    : 'text-muted-foreground'
+                                  }`}>
+                                  {stats.bodyWeightLogs[stats.bodyWeightLogs.length - 1]?.weight < stats.bodyWeightLogs[stats.bodyWeightLogs.length - 2]?.weight && '↓ '}
+                                  {stats.bodyWeightLogs[stats.bodyWeightLogs.length - 1]?.weight > stats.bodyWeightLogs[stats.bodyWeightLogs.length - 2]?.weight && '↑ '}
+                                  {Math.abs(
+                                    stats.bodyWeightLogs[stats.bodyWeightLogs.length - 1]?.weight - stats.bodyWeightLogs[stats.bodyWeightLogs.length - 2]?.weight
+                                  ).toFixed(1)} {settings.weightUnit}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Chart */}
+                        <div className="h-[140px] w-full">
                           <ResponsiveContainer width="100%" height="100%">
-                            <LineChart data={stats.bodyWeightLogs || []}>
-                              <CartesianGrid strokeDasharray="3 3" stroke="#ffffff05" vertical={false} />
+                            <LineChart data={stats.bodyWeightLogs || []} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
+                              <defs>
+                                <linearGradient id="weightGradient" x1="0" y1="0" x2="0" y2="1">
+                                  <stop offset="5%" stopColor="#facc15" stopOpacity={0.3} />
+                                  <stop offset="95%" stopColor="#facc15" stopOpacity={0} />
+                                </linearGradient>
+                              </defs>
                               <XAxis dataKey="date" hide />
-                              <YAxis stroke="#ffffff40" fontSize={10} domain={['dataMin - 5', 'dataMax + 5']} />
+                              <YAxis stroke="#ffffff20" fontSize={10} domain={['dataMin - 2', 'dataMax + 2']} width={35} />
                               <Tooltip
-                                contentStyle={{ backgroundColor: '#18181b', border: '1px solid #ffffff10', borderRadius: '12px' }}
+                                contentStyle={{ backgroundColor: '#18181b', border: '1px solid #ffffff10', borderRadius: '12px', fontSize: '12px' }}
                                 itemStyle={{ color: '#facc15' }}
+                                labelFormatter={(value) => new Date(value).toLocaleDateString()}
                               />
-                              <Line type="monotone" dataKey="weight" stroke="#facc15" strokeWidth={2} dot={{ r: 4, fill: '#facc15' }} />
+                              <Line
+                                type="monotone"
+                                dataKey="weight"
+                                stroke="#facc15"
+                                strokeWidth={2}
+                                dot={{ r: 3, fill: '#facc15' }}
+                                activeDot={{ r: 5, fill: '#facc15' }}
+                              />
                             </LineChart>
                           </ResponsiveContainer>
                         </div>
-                        <div className="mt-6 pt-6 border-t border-white/5">
+
+                        {/* Input Section */}
+                        <div className="p-4 bg-white/5 border-t border-white/5">
                           <div className="flex gap-2">
-                            <Input
-                              placeholder="0.0"
-                              type="number"
-                              id="weight-input"
-                              className="h-10 text-sm"
-                            />
+                            <div className="flex-1 relative">
+                              <input
+                                type="number"
+                                step="0.1"
+                                id="weight-input"
+                                placeholder="Enter weight"
+                                className="w-full h-11 px-4 bg-background border border-white/10 rounded-xl text-sm focus:outline-none focus:border-primary/50 pr-12"
+                              />
+                              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-muted-foreground font-bold">
+                                {settings.weightUnit}
+                              </span>
+                            </div>
                             <Button
-                              size="sm"
-                              className="px-4"
                               onClick={() => {
                                 const input = document.getElementById('weight-input') as HTMLInputElement;
                                 const val = parseFloat(input.value);
@@ -337,6 +397,7 @@ const App: React.FC = () => {
                                   input.value = '';
                                 }
                               }}
+                              className="h-11 px-6 rounded-xl"
                             >
                               Log
                             </Button>
@@ -706,6 +767,20 @@ const SettingsView = () => {
       const compressed = await compressImage(file);
       setProfilePic(compressed);
       localStorage.setItem('profilePic', compressed);
+
+      // Sync to server for cross-device support
+      try {
+        await fetch(`${API_URL}/user/profile-picture`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`
+          },
+          body: JSON.stringify({ profilePicture: compressed })
+        });
+      } catch (err) {
+        console.error('Failed to sync profile picture:', err);
+      }
     }
   };
 
