@@ -187,6 +187,15 @@ docker compose exec api npx prisma db push
 docker compose exec api npx tsx prisma/seed.ts
 ```
 
+### Add UserSettings table (if missing)
+```bash
+# Connect to database and run the migration manually
+docker compose exec db psql -U postgres -d workout_db -f /opt/migrations/manual_add_user_settings.sql
+
+# Or run via Prisma push
+docker compose exec api npx prisma db push
+```
+
 ### Caddy syntax errors?
 ```bash
 cd /opt/apps/froggame

@@ -4,15 +4,16 @@ export default {
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
+  darkMode: 'class',
   theme: {
     extend: {
       colors: {
-        background: "#030303",
-        foreground: "#ffffff",
+        background: "var(--background)",
+        foreground: "var(--foreground)",
         card: {
-          DEFAULT: "rgba(18, 18, 18, 0.7)",
-          foreground: "#ffffff",
-          border: "rgba(255, 255, 255, 0.1)",
+          DEFAULT: "var(--card)",
+          foreground: "var(--card-foreground)",
+          border: "var(--card-border)",
         },
         primary: {
           DEFAULT: "#facc15", // Yellow-400
@@ -24,8 +25,8 @@ export default {
           foreground: "#000000",
         },
         muted: {
-          DEFAULT: "#1f1f1f",
-          foreground: "#a1a1aa",
+          DEFAULT: "var(--muted)",
+          foreground: "var(--muted-foreground)",
         },
       },
       borderRadius: {

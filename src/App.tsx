@@ -83,6 +83,17 @@ const App: React.FC = () => {
     }
   }, [isAuthenticated, sync]);
 
+  // Apply theme to document root
+  React.useEffect(() => {
+    if (settings.theme === 'light') {
+      document.documentElement.classList.add('light');
+      document.documentElement.classList.remove('dark');
+    } else {
+      document.documentElement.classList.add('dark');
+      document.documentElement.classList.remove('light');
+    }
+  }, [settings.theme]);
+
   // Prevent flash of login screen during hydration
   if (!authHydrated || !workoutHydrated) {
     return (
@@ -128,6 +139,7 @@ const App: React.FC = () => {
             </div>
           </div>
 
+          {/* User Info and Logout - Desktop */}
           <div className="hidden sm:flex flex-col gap-6 mt-auto">
             <div className="flex items-center gap-4 p-4 rounded-3xl bg-white/5 border border-white/5">
               <div className="h-10 w-10 rounded-full bg-primary flex items-center justify-center">
@@ -141,6 +153,16 @@ const App: React.FC = () => {
             <Button variant="ghost" fullWidth onClick={logout} className="justify-start text-muted-foreground hover:text-red-400">
               <LogOut size={20} className="mr-3" /> Sign Out
             </Button>
+          </div>
+
+          {/* Mobile Logout Button */}
+          <div className="flex sm:hidden items-center">
+            <button
+              onClick={logout}
+              className="h-12 w-12 rounded-2xl bg-red-500/10 flex items-center justify-center text-red-400 hover:bg-red-500/20 transition-all"
+            >
+              <LogOut size={20} />
+            </button>
           </div>
         </div>
       </nav>

@@ -99,28 +99,30 @@ const ExerciseLibrary: React.FC = () => {
         {filtered.map(ex => (
           <div
             key={ex.id}
-            className="group flex items-center justify-between p-5 bg-white/5 rounded-2xl border border-white/5 hover:border-primary/30 hover:bg-white/10 transition-all cursor-pointer"
-            onClick={() => currentWorkout && addExerciseToWorkout(ex)}
+            className="group flex items-center justify-between p-5 bg-white/5 rounded-2xl border border-white/5 hover:border-primary/30 hover:bg-white/10 transition-all active:scale-[0.98]"
           >
-            <div className="flex items-center gap-5">
-              <div className="h-14 w-14 rounded-2xl bg-white/5 flex items-center justify-center text-3xl group-hover:bg-primary/10 transition-colors">
+            <div className="flex items-center gap-5 flex-1 min-w-0">
+              <div className="h-14 w-14 rounded-2xl bg-white/5 flex-shrink-0 flex items-center justify-center text-3xl group-hover:bg-primary/10 transition-colors">
                 {ex.icon}
               </div>
-              <div className="space-y-1">
-                <h4 className="font-bold text-lg group-hover:text-primary transition-colors">{ex.name}</h4>
+              <div className="space-y-1 min-w-0">
+                <h4 className="font-bold text-lg group-hover:text-primary transition-colors truncate">{ex.name}</h4>
                 <div className="flex items-center gap-3">
                   <span className="text-[10px] font-bold uppercase tracking-wider text-primary">{ex.category}</span>
-                  <span className="text-[10px] text-muted-foreground uppercase tracking-wider">
+                  <span className="text-[10px] text-muted-foreground uppercase tracking-wider truncate">
                     {ex.muscleGroups.join(', ')}
                   </span>
                 </div>
               </div>
             </div>
-            <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-all">
+            <div className="flex items-center gap-2 flex-shrink-0 ml-3">
               {currentWorkout && (
-                <div className="h-10 w-10 bg-primary rounded-xl flex items-center justify-center text-black shadow-lg shadow-primary/20">
-                  <Plus size={20} />
-                </div>
+                <button
+                  onClick={() => addExerciseToWorkout(ex)}
+                  className="h-12 w-12 bg-primary rounded-xl flex items-center justify-center text-black shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all"
+                >
+                  <Plus size={22} />
+                </button>
               )}
               <button
                 onClick={(e) => { e.stopPropagation(); deleteExercise(ex.id); }}
