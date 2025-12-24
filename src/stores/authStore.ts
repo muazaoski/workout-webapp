@@ -9,6 +9,7 @@ interface User {
     id: string;
     email: string;
     name: string;
+    profilePicture?: string | null;
     createdAt: string;
 }
 
@@ -39,6 +40,7 @@ interface AuthStore {
     register: (email: string, password: string, name: string) => Promise<boolean>;
     logout: () => void;
     fetchUserStats: () => Promise<void>;
+    refreshUser: () => Promise<void>;
     clearError: () => void;
     getAuthHeaders: () => { Authorization: string } | Record<string, never>;
 }
@@ -155,6 +157,29 @@ export const useAuthStore = create<AuthStore>()(
                     return { Authorization: `Bearer ${token}` };
                 }
                 return {} as Record<string, never>;
+            },
+
+            refreshUser: async () => {
+                const { token } = get();
+                if (!token) return;
+
+                try {
+                    const response = await fetch(`${API_URL}/auth/me`, {
+                        headers: { Authorization: `Bearer ${token}` },
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        set({ user: data.data.user });
+
+                        // Sync profile picture to localStorage
+                        if (data.data.user?.profilePicture) {
+                            localStorage.setItem('profilePic', data.data.user.profilePicture);
+                        }
+                    }
+                } catch (error) {
+                    console.error('Failed to refresh user:', error);
+                }
             },
         }),
         {

@@ -80,16 +80,15 @@ const App: React.FC = () => {
   React.useEffect(() => {
     if (isAuthenticated) {
       sync();
+      // Refresh user data to get profile picture from server
+      useAuthStore.getState().refreshUser();
     }
   }, [isAuthenticated, sync]);
 
-  // Sync profile picture from server
+  // Sync profile picture from server to localStorage
   React.useEffect(() => {
-    if (user && (user as { profilePicture?: string }).profilePicture) {
-      const serverPic = (user as { profilePicture?: string }).profilePicture;
-      if (serverPic) {
-        localStorage.setItem('profilePic', serverPic);
-      }
+    if (user?.profilePicture) {
+      localStorage.setItem('profilePic', user.profilePicture);
     }
   }, [user]);
 
