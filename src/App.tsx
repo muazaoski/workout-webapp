@@ -116,54 +116,85 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* SIDE NAVIGATION */}
-      <nav className="fixed bottom-0 left-0 right-0 z-40 bg-background/80 backdrop-blur-xl border-t border-white/5 py-4 px-6 sm:bottom-auto sm:top-0 sm:left-0 sm:w-72 sm:h-full sm:border-r sm:border-t-0 sm:py-10 sm:px-8">
-        <div className="flex sm:flex-col justify-between h-full max-w-6xl mx-auto">
-          <div className="flex sm:flex-col gap-8 w-full items-center sm:items-stretch">
-            <div className="hidden sm:flex items-center gap-4 px-2 mb-10">
-              <div className="h-12 w-12 bg-primary rounded-2xl flex items-center justify-center shadow-lg shadow-primary/30">
-                <Dumbbell size={24} className="text-black" />
-              </div>
-              <div className="flex flex-col">
-                <span className="font-bold text-xl tracking-tight leading-none">Workout</span>
-                <span className="text-primary text-xs font-bold uppercase tracking-widest mt-1">Counter</span>
-              </div>
-            </div>
-
-            <div className="flex sm:flex-col gap-2 w-full">
-              <NavItem icon={<LayoutDashboard size={22} />} label="Overview" active={currentView === 'dashboard'} onClick={() => handleNavClick('dashboard')} />
-              <NavItem icon={<History size={22} />} label="History" active={currentView === 'history'} onClick={() => handleNavClick('history')} />
-              <NavItem icon={<Trophy size={22} />} label="Badges" active={currentView === 'achievements'} onClick={() => handleNavClick('achievements')} />
-              <NavItem icon={<Target size={22} />} label="Challenges" active={currentView === 'challenges'} onClick={() => handleNavClick('challenges')} />
-              <NavItem icon={<Settings size={22} />} label="Settings" active={currentView === 'settings'} onClick={() => handleNavClick('settings')} />
-            </div>
-          </div>
-
-          {/* User Info and Logout - Desktop */}
-          <div className="hidden sm:flex flex-col gap-6 mt-auto">
-            <div className="flex items-center gap-4 p-4 rounded-3xl bg-white/5 border border-white/5">
-              <div className="h-10 w-10 rounded-full bg-primary flex items-center justify-center">
-                <User size={20} className="text-black" />
-              </div>
-              <div className="flex flex-col overflow-hidden">
-                <span className="font-semibold text-sm truncate">{user?.name || 'Athlete'}</span>
-                <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Level {userLevel.level}</span>
-              </div>
-            </div>
-            <Button variant="ghost" fullWidth onClick={logout} className="justify-start text-muted-foreground hover:text-red-400">
-              <LogOut size={20} className="mr-3" /> Sign Out
-            </Button>
-          </div>
-
-          {/* Mobile Logout Button */}
-          <div className="flex sm:hidden items-center">
+      {/* MOBILE BOTTOM NAVIGATION */}
+      <nav className="fixed bottom-0 left-0 right-0 z-40 sm:hidden">
+        <div className="bg-background/95 backdrop-blur-xl border-t border-white/10 px-2 py-2 safe-area-pb">
+          <div className="flex items-center justify-around max-w-md mx-auto">
+            <MobileNavItem
+              icon={<LayoutDashboard size={20} />}
+              label="Home"
+              active={currentView === 'dashboard'}
+              onClick={() => handleNavClick('dashboard')}
+            />
+            <MobileNavItem
+              icon={<History size={20} />}
+              label="History"
+              active={currentView === 'history'}
+              onClick={() => handleNavClick('history')}
+            />
+            <MobileNavItem
+              icon={<Trophy size={20} />}
+              label="Badges"
+              active={currentView === 'achievements'}
+              onClick={() => handleNavClick('achievements')}
+            />
+            <MobileNavItem
+              icon={<Target size={20} />}
+              label="Goals"
+              active={currentView === 'challenges'}
+              onClick={() => handleNavClick('challenges')}
+            />
+            <MobileNavItem
+              icon={<Settings size={20} />}
+              label="Settings"
+              active={currentView === 'settings'}
+              onClick={() => handleNavClick('settings')}
+            />
             <button
               onClick={logout}
-              className="h-12 w-12 rounded-2xl bg-red-500/10 flex items-center justify-center text-red-400 hover:bg-red-500/20 transition-all"
+              className="flex flex-col items-center justify-center gap-1 p-2 rounded-xl text-red-400 hover:bg-red-500/10 active:scale-95 transition-all min-w-[48px]"
             >
               <LogOut size={20} />
+              <span className="text-[10px] font-medium">Logout</span>
             </button>
           </div>
+        </div>
+      </nav>
+
+      {/* DESKTOP SIDE NAVIGATION */}
+      <nav className="hidden sm:flex fixed top-0 left-0 w-72 h-full z-40 flex-col bg-background/80 backdrop-blur-xl border-r border-white/5 py-10 px-8">
+        <div className="flex items-center gap-4 px-2 mb-10">
+          <div className="h-12 w-12 bg-primary rounded-2xl flex items-center justify-center shadow-lg shadow-primary/30">
+            <Dumbbell size={24} className="text-black" />
+          </div>
+          <div className="flex flex-col">
+            <span className="font-bold text-xl tracking-tight leading-none">Workout</span>
+            <span className="text-primary text-xs font-bold uppercase tracking-widest mt-1">Counter</span>
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-2 flex-1">
+          <NavItem icon={<LayoutDashboard size={22} />} label="Overview" active={currentView === 'dashboard'} onClick={() => handleNavClick('dashboard')} />
+          <NavItem icon={<History size={22} />} label="History" active={currentView === 'history'} onClick={() => handleNavClick('history')} />
+          <NavItem icon={<Trophy size={22} />} label="Badges" active={currentView === 'achievements'} onClick={() => handleNavClick('achievements')} />
+          <NavItem icon={<Target size={22} />} label="Challenges" active={currentView === 'challenges'} onClick={() => handleNavClick('challenges')} />
+          <NavItem icon={<Settings size={22} />} label="Settings" active={currentView === 'settings'} onClick={() => handleNavClick('settings')} />
+        </div>
+
+        {/* User Info and Logout - Desktop */}
+        <div className="flex flex-col gap-4 mt-auto">
+          <div className="flex items-center gap-4 p-4 rounded-3xl bg-white/5 border border-white/5">
+            <div className="h-10 w-10 rounded-full bg-primary flex items-center justify-center">
+              <User size={20} className="text-black" />
+            </div>
+            <div className="flex flex-col overflow-hidden">
+              <span className="font-semibold text-sm truncate">{user?.name || 'Athlete'}</span>
+              <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Level {userLevel.level}</span>
+            </div>
+          </div>
+          <Button variant="ghost" fullWidth onClick={logout} className="justify-start text-muted-foreground hover:text-red-400">
+            <LogOut size={20} className="mr-3" /> Sign Out
+          </Button>
         </div>
       </nav>
 
@@ -550,6 +581,21 @@ const NavItem = ({ icon, label, active, onClick }: { icon: React.ReactNode, labe
   >
     {icon}
     <span className="sm:block hidden">{label}</span>
+  </button>
+);
+
+const MobileNavItem = ({ icon, label, active, onClick }: { icon: React.ReactNode, label: string, active: boolean, onClick: () => void }) => (
+  <button
+    onClick={onClick}
+    className={`flex flex-col items-center justify-center gap-1 p-2 rounded-xl transition-all active:scale-95 min-w-[48px] ${active
+      ? 'text-primary'
+      : 'text-muted-foreground'
+      }`}
+  >
+    <div className={`p-2 rounded-xl transition-all ${active ? 'bg-primary text-black' : ''}`}>
+      {icon}
+    </div>
+    <span className="text-[10px] font-medium">{label}</span>
   </button>
 );
 
