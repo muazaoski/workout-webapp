@@ -1,6 +1,6 @@
 import React from 'react';
 import { useWorkoutStore } from '../stores/workoutStore';
-import { Trophy, Lock, CheckCircle2, Medal, Zap, Sparkles } from 'lucide-react';
+import { Lock, CheckCircle2 } from 'lucide-react';
 
 const Achievements: React.FC = () => {
   const { achievements } = useWorkoutStore();
@@ -30,14 +30,14 @@ const Achievements: React.FC = () => {
           <div
             key={achievement.id}
             className={`p-6 rounded-3xl border transition-all flex items-center justify-between group relative overflow-hidden ${achievement.unlocked
-                ? 'border-primary/20 bg-primary/5'
-                : 'border-white/5 opacity-50 bg-white/5 grayscale'
+              ? 'border-primary/20 bg-primary/5'
+              : 'border-white/5 opacity-50 bg-white/5 grayscale'
               }`}
           >
             <div className="flex items-center gap-6 relative z-10">
               <div className={`w-16 h-16 rounded-2xl flex items-center justify-center text-3xl transition-transform group-hover:scale-110 ${achievement.unlocked
-                  ? 'bg-primary text-black shadow-lg shadow-primary/20'
-                  : 'bg-muted text-muted-foreground'
+                ? 'bg-primary text-black shadow-lg shadow-primary/20'
+                : 'bg-muted text-muted-foreground'
                 }`}>
                 {achievement.unlocked ? achievement.icon : <Lock size={24} />}
               </div>

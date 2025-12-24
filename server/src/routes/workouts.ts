@@ -1,5 +1,5 @@
 import { Router, Response } from 'express';
-import { body, param, validationResult } from 'express-validator';
+import { body, validationResult } from 'express-validator';
 import { prisma } from '../index.js';
 import { asyncHandler } from '../middleware/errorHandler.js';
 import { authenticate, AuthRequest } from '../middleware/auth.js';
@@ -86,7 +86,7 @@ router.post('/', [
             energy,
             notes,
             exercises: exercises ? {
-                create: exercises.map((ex: any, index: number) => ({
+                create: exercises.map((ex: { exerciseId: string; sets: unknown; notes?: string }, index: number) => ({
                     exerciseId: ex.exerciseId,
                     sets: ex.sets,
                     notes: ex.notes,
@@ -180,7 +180,7 @@ router.delete('/:id', asyncHandler(async (req: AuthRequest, res: Response) => {
 }));
 
 // Helper to update user stats after workout
-async function updateUserStats(userId: string, workout: any) {
+async function updateUserStats(userId: string, workout: { exercises?: { sets?: unknown }[] }) {
     let totalReps = 0;
     let totalWeight = 0;
     let totalSets = 0;
@@ -188,7 +188,8 @@ async function updateUserStats(userId: string, workout: any) {
     if (workout.exercises) {
         for (const we of workout.exercises) {
             if (Array.isArray(we.sets)) {
-                for (const set of we.sets) {
+                const sets = we.sets as { reps?: number; weight?: number }[];
+                for (const set of sets) {
                     totalSets++;
                     totalReps += set.reps || 0;
                     totalWeight += (set.weight || 0) * (set.reps || 0);

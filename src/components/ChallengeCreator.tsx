@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useWorkoutStore } from '../stores/workoutStore';
-import { Target, Plus, CheckCircle2, Zap, Trash2, Trophy, Clock, Flame, User, Activity } from 'lucide-react';
+import { Target, Plus, CheckCircle2, Zap, Trash2, User, Activity } from 'lucide-react';
 import Button from './ui/Button';
 import Input from './ui/Input';
 import Card from './ui/Card';
@@ -8,7 +8,7 @@ import { motion } from 'framer-motion';
 import type { Challenge } from '../types/workout';
 
 const ChallengeCreator: React.FC = () => {
-  const { challenges, addChallenge, deleteChallenge, toggleChallenge, joinedChallengeIds, joinChallenge, leaveChallenge } = useWorkoutStore();
+  const { challenges, addChallenge, deleteChallenge, joinedChallengeIds, joinChallenge, leaveChallenge } = useWorkoutStore();
   const [title, setTitle] = useState('');
   const [type, setType] = useState<Challenge['type']>('workouts');
   const [targetValue, setTargetValue] = useState('');

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useAuthStore } from '../stores/authStore';
 import Button from './ui/Button';
 import Input from './ui/Input';
-import { Mail, Lock, User, Sparkles, Zap, ShieldCheck } from 'lucide-react';
+import { Mail, Lock, User, Sparkles } from 'lucide-react';
 
 interface AuthModalProps {
     isOpen: boolean;

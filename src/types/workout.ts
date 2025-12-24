@@ -31,6 +31,7 @@ export interface Workout {
   mood?: WorkoutMood;
   energy?: number; // 1-10
   notes?: string;
+  synced?: boolean;
 }
 
 export interface BodyWeightLog {

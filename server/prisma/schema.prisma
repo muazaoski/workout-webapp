@@ -21,6 +21,17 @@ model User {
   stats        UserStats?
   achievements UserAchievement[]
   challenges   Challenge[]
+  settings     UserSettings?
+}
+
+model UserSettings {
+  id           String @id @default(uuid())
+  userId       String @unique
+  user         User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  weightUnit   String @default("kg")
+  distanceUnit String @default("km")
+  theme        String @default("dark")
+  updatedAt    DateTime @updatedAt
 }
 
 model Workout {

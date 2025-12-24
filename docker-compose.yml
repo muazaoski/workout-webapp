@@ -29,6 +29,8 @@ services:
   db:
     container_name: workout-db
     image: postgres:16-alpine
+    ports:
+      - "5433:5432"
     environment:
       - POSTGRES_DB=workout_db
       - POSTGRES_USER=workout

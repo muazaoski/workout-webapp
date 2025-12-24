@@ -21,9 +21,7 @@ import {
   LogOut,
   Plus,
   Dumbbell,
-  Search,
   Settings,
-  User as UserIcon,
   ChevronRight,
   Zap,
   Flame,
@@ -34,8 +32,6 @@ import {
   Maximize2
 } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
-import type { WorkoutStats, BodyWeightLog, PerformanceLog } from './types/workout';
-
 const App: React.FC = () => {
   const {
     currentWorkout,
@@ -53,13 +49,13 @@ const App: React.FC = () => {
     settings
   } = useWorkoutStore();
 
-  const { isAuthenticated, logout, user } = useAuthStore();
+  const { updateWorkout, sync, _hasHydrated: workoutHydrated } = useWorkoutStore();
+  const { isAuthenticated, logout, user, _hasHydrated: authHydrated } = useAuthStore();
+
   const [currentView, setCurrentView] = useState<'dashboard' | 'history' | 'achievements' | 'challenges' | 'settings'>('dashboard');
   const [showLibrary, setShowLibrary] = useState(false);
   const [showManualLog, setShowManualLog] = useState(false);
   const [editingWorkout, setEditingWorkout] = useState<Workout | null>(null);
-
-  const { updateWorkout } = useWorkoutStore();
 
   const handleNavClick = (view: typeof currentView) => {
     if (currentWorkout && !isMinimized && view !== currentView) {
@@ -72,13 +68,32 @@ const App: React.FC = () => {
     }
   };
 
-  // Safety cleanup for old gritty labels
+  // Safety cleanup for old labels
   React.useEffect(() => {
     const title = userLevel.title.toLowerCase();
     if (title.includes('protocol') || title.includes('matrix')) {
       useWorkoutStore.getState().calculateLevel();
     }
   }, [userLevel.title]);
+
+  // Cloud Sync on Authentication
+  React.useEffect(() => {
+    if (isAuthenticated) {
+      sync();
+    }
+  }, [isAuthenticated, sync]);
+
+  // Prevent flash of login screen during hydration
+  if (!authHydrated || !workoutHydrated) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6 space-y-4">
+        <div className="h-16 w-16 bg-primary rounded-3xl flex items-center justify-center animate-pulse shadow-2xl shadow-primary/40">
+          <Zap size={32} className="text-black" />
+        </div>
+        <p className="text-[10px] uppercase font-black tracking-[0.2em] text-muted-foreground animate-pulse">Initializing Protocol</p>
+      </div>
+    );
+  }
 
   if (!isAuthenticated) {
     return (
@@ -516,7 +531,7 @@ const NavItem = ({ icon, label, active, onClick }: { icon: React.ReactNode, labe
   </button>
 );
 
-const DashboardStat = ({ icon, label, value, unit, subtitle }: { icon: React.ReactNode, label: string, value: any, unit?: string, subtitle: string }) => (
+const DashboardStat = ({ icon, label, value, unit, subtitle }: { icon: React.ReactNode, label: string, value: string | number, unit?: string, subtitle: string }) => (
   <div className="glass-card p-8">
     <div className="flex items-center gap-3 mb-4">
       <div className="h-10 w-10 rounded-2xl bg-white/5 flex items-center justify-center border border-white/5">
@@ -538,7 +553,7 @@ const ActionCard = ({ icon, label, description, onClick }: { icon: React.ReactNo
     className="glass-card p-8 text-left group hover:scale-[1.02] active:scale-95 transition-all outline-none focus:ring-2 focus:ring-primary"
   >
     <div className="h-14 w-14 bg-white/5 rounded-2xl flex items-center justify-center border border-white/5 mb-6 group-hover:bg-primary group-hover:text-black transition-colors">
-      {React.isValidElement(icon) && React.cloneElement(icon as React.ReactElement<any>, { size: 28 })}
+      {React.isValidElement(icon) && React.cloneElement(icon as React.ReactElement<{ size?: number }>, { size: 28 })}
     </div>
     <h4 className="font-bold text-lg mb-2 group-hover:text-primary transition-colors">{label}</h4>
     <p className="text-sm text-muted-foreground">{description}</p>
@@ -560,7 +575,7 @@ const SettingsView = () => {
         <div className="lg:col-span-2 space-y-6">
           <Card title="Profile Information" description="Personal details.">
             <div className="space-y-6 mt-4">
-              <Input label="Display Name" defaultValue={user?.name || ''} icon={<UserIcon size={18} />} />
+              <Input label="Display Name" defaultValue={user?.name || ''} icon={<User size={18} />} />
               <Input label="Email Address" type="email" defaultValue={user?.email || ''} icon={<Mail size={18} />} disabled />
               <Button className="w-fit">Save Changes</Button>
             </div>

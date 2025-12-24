@@ -6,7 +6,7 @@ import Button from './ui/Button';
 import Input from './ui/Input';
 import Card from './ui/Card';
 import ProgressRing from './ui/ProgressRing';
-import { ChevronLeft, ChevronRight, Check, Zap, Play, Pause, Activity, Dumbbell, X, Plus } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Zap, Activity, Dumbbell, X, Plus } from 'lucide-react';
 
 interface ActiveWorkoutProps {
   onOpenLibrary?: () => void;
@@ -22,9 +22,7 @@ const ActiveWorkout: React.FC<ActiveWorkoutProps> = ({ onOpenLibrary }) => {
     previousExercise,
     finishWorkout,
     cancelWorkout,
-    removeExerciseFromWorkout,
-    stats,
-    startNewWorkout
+    stats
   } = useWorkoutStore();
 
   const [reps, setReps] = useState('');

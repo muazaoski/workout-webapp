@@ -32,6 +32,7 @@ interface AuthStore {
     isAuthenticated: boolean;
     isLoading: boolean;
     error: string | null;
+    _hasHydrated: boolean;
 
     // Actions
     login: (email: string, password: string) => Promise<boolean>;
@@ -51,6 +52,7 @@ export const useAuthStore = create<AuthStore>()(
             isAuthenticated: false,
             isLoading: false,
             error: null,
+            _hasHydrated: false,
 
             login: async (email: string, password: string) => {
                 set({ isLoading: true, error: null });
@@ -79,7 +81,7 @@ export const useAuthStore = create<AuthStore>()(
                     // Fetch user stats after login
                     get().fetchUserStats();
                     return true;
-                } catch (error) {
+                } catch {
                     set({ error: 'Network error. Please try again.', isLoading: false });
                     return false;
                 }
@@ -111,7 +113,7 @@ export const useAuthStore = create<AuthStore>()(
                     });
 
                     return true;
-                } catch (error) {
+                } catch {
                     set({ error: 'Network error. Please try again.', isLoading: false });
                     return false;
                 }
@@ -163,6 +165,9 @@ export const useAuthStore = create<AuthStore>()(
                 token: state.token,
                 isAuthenticated: state.isAuthenticated,
             }),
+            onRehydrateStorage: () => (state) => {
+                if (state) state._hasHydrated = true;
+            },
         }
     )
 );

@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import type { Workout, Exercise, WorkoutStats, TimerState, Achievement, Challenge, UserSettings, BodyWeightLog, PerformanceLog } from '../types/workout';
+import { useAuthStore, API_URL } from './authStore';
 
 export interface UserLevel {
   level: number;
@@ -40,6 +41,8 @@ interface WorkoutStore {
   showAchievementModal: boolean;
   recentAchievement: Achievement | null;
   joinedChallengeIds: string[];
+  isSyncing: boolean;
+  _hasHydrated: boolean;
 
   // Actions
   startNewWorkout: (name: string) => void;
@@ -87,6 +90,7 @@ interface WorkoutStore {
   checkInChallenge: (challengeId: string) => void;
   joinChallenge: (id: string) => void;
   leaveChallenge: (id: string) => void;
+  sync: () => Promise<void>;
   hideAchievementModal: () => void;
 }
 
@@ -293,6 +297,8 @@ export const useWorkoutStore = create<WorkoutStore>()(
       showAchievementModal: false,
       recentAchievement: null,
       joinedChallengeIds: [],
+      isSyncing: false,
+      _hasHydrated: false,
 
       startNewWorkout: (name) => {
         const workout: Workout = {
@@ -419,6 +425,36 @@ export const useWorkoutStore = create<WorkoutStore>()(
         if (totalCompletedSets > 0) {
           get().addXP(100);
         }
+
+        // Upload to cloud
+        fetch(`${API_URL}/workouts`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...useAuthStore.getState().getAuthHeaders()
+          },
+          body: JSON.stringify({
+            id: completedWorkout.id,
+            name: completedWorkout.name,
+            startTime: completedWorkout.startTime,
+            endTime: completedWorkout.endTime,
+            duration: completedWorkout.duration,
+            exercises: completedWorkout.exercises.map(ex => ({
+              exerciseId: ex.exercise.id,
+              sets: ex.sets
+            }))
+          })
+        }).then(res => {
+          if (res.ok) {
+            set(state => ({
+              workoutHistory: state.workoutHistory.map(w =>
+                w.id === completedWorkout.id ? { ...w, synced: true } : w
+              )
+            }));
+          } else if (res.status === 401) {
+            useAuthStore.getState().logout();
+          }
+        }).catch(err => console.error('Failed to upload workout:', err));
       },
 
       cancelWorkout: () => {
@@ -446,6 +482,36 @@ export const useWorkoutStore = create<WorkoutStore>()(
 
         get().checkAchievements();
         get().addXP(50); // Less XP for manual logs
+
+        // Upload to cloud
+        fetch(`${API_URL}/workouts`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...useAuthStore.getState().getAuthHeaders()
+          },
+          body: JSON.stringify({
+            id: workout.id,
+            name: workout.name,
+            startTime: workout.startTime,
+            endTime: workout.endTime,
+            duration: workout.duration,
+            exercises: workout.exercises.map(ex => ({
+              exerciseId: ex.exercise.id,
+              sets: ex.sets
+            }))
+          })
+        }).then(res => {
+          if (res.ok) {
+            set(state => ({
+              workoutHistory: state.workoutHistory.map(w => 
+                w.id === workout.id ? { ...w, synced: true } : w
+              )
+            }));
+          } else if (res.status === 401) {
+            useAuthStore.getState().logout();
+          }
+        }).catch(err => console.error('Failed to upload manual workout:', err));
       },
 
       startTimer: (duration, type) => {
@@ -490,6 +556,20 @@ export const useWorkoutStore = create<WorkoutStore>()(
         set((state) => ({
           settings: { ...state.settings, ...updates }
         }));
+
+        const { token } = useAuthStore.getState();
+        if (token) {
+          fetch(`${API_URL}/settings`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(updates)
+          }).then(res => {
+            if (res.status === 401) useAuthStore.getState().logout();
+          }).catch(err => console.error('Failed to sync settings:', err));
+        }
       },
 
       addBodyWeightLog: (weight) => {
@@ -550,6 +630,12 @@ export const useWorkoutStore = create<WorkoutStore>()(
             stats: calculateStats(newHistory, state.exercises, state.stats),
           };
         });
+
+        // Delete from cloud
+        fetch(`${API_URL}/workouts/${id}`, {
+          method: 'DELETE',
+          headers: useAuthStore.getState().getAuthHeaders()
+        }).catch(err => console.error('Failed to delete workout from cloud:', err));
       },
 
       updateWorkout: (id, updates) => {
@@ -560,6 +646,16 @@ export const useWorkoutStore = create<WorkoutStore>()(
             stats: calculateStats(newHistory, state.exercises, state.stats),
           };
         });
+
+        // Update on cloud
+        fetch(`${API_URL}/workouts/${id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            ...useAuthStore.getState().getAuthHeaders()
+          },
+          body: JSON.stringify(updates)
+        }).catch(err => console.error('Failed to update workout on cloud:', err));
       },
 
       unlockAchievement: (achievementId) => {
@@ -740,6 +836,143 @@ export const useWorkoutStore = create<WorkoutStore>()(
           recentAchievement: null,
         });
       },
+
+      sync: async () => {
+        const { token } = useAuthStore.getState();
+        if (!token) return;
+
+        set({ isSyncing: true });
+        try {
+          // 1. Sync Workouts
+          const response = await fetch(`${API_URL}/workouts`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+
+          if (response.status === 401) {
+            useAuthStore.getState().logout();
+            return;
+          }
+
+          if (response.ok) {
+            const data = await response.json();
+            const remoteWorkouts = data.data.workouts;
+            const { workoutHistory } = get();
+
+            const remoteIds = new Set(remoteWorkouts.map((w: Workout) => w.id));
+            const localHistory = [...workoutHistory];
+            let historyChanged = false;
+
+            // 1a. Upload new workouts or remove deleted ones
+            for (let i = 0; i < localHistory.length; i++) {
+              const w = localHistory[i];
+              if (!remoteIds.has(w.id)) {
+                if (w.synced) {
+                  // Was previously on server but now gone -> delete locally
+                  localHistory.splice(i, 1);
+                  i--;
+                  historyChanged = true;
+                } else {
+                  // Never on server -> upload
+                  try {
+                    const upRes = await fetch(`${API_URL}/workouts`, {
+                      method: 'POST',
+                      headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: `Bearer ${token}`
+                      },
+                      body: JSON.stringify({
+                        id: w.id, // Try to keep same ID if server allows
+                        name: w.name,
+                        startTime: w.startTime,
+                        endTime: w.endTime,
+                        duration: w.duration,
+                        exercises: w.exercises.map(ex => ({
+                          exerciseId: ex.exercise.id,
+                          sets: ex.sets
+                        }))
+                      })
+                    });
+                    if (upRes.status === 401) {
+                      useAuthStore.getState().logout();
+                      return;
+                    }
+                    if (upRes.ok) {
+                      w.synced = true;
+                      historyChanged = true;
+                    }
+                  } catch (e) {
+                    console.error('Failed to upload workout during sync:', e);
+                  }
+                }
+              } else {
+                // On server and local, make sure it's marked as synced
+                if (!w.synced) {
+                  w.synced = true;
+                  historyChanged = true;
+                }
+              }
+            }
+
+            // 1b. Download new workouts from server
+            const localIds = new Set(localHistory.map(w => w.id));
+            for (const rw of remoteWorkouts) {
+              if (!localIds.has(rw.id)) {
+                localHistory.push({ ...rw, synced: true });
+                historyChanged = true;
+              }
+            }
+
+            if (historyChanged) {
+              const sortedHistory = localHistory.sort((a, b) =>
+                new Date(b.startTime).getTime() - new Date(a.startTime).getTime()
+              );
+              set({
+                workoutHistory: sortedHistory,
+                stats: calculateStats(sortedHistory, get().exercises, get().stats)
+              });
+            }
+          }
+
+          // 2. Sync Settings
+          const settingsResponse = await fetch(`${API_URL}/settings`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+
+          if (settingsResponse.status === 401) {
+            useAuthStore.getState().logout();
+            return;
+          }
+
+          if (settingsResponse.ok) {
+            const settingsData = await settingsResponse.json();
+            if (settingsData.data.settings) {
+              // Merge local settings with remote (remote wins for units, but keep local theme if preferred?)
+              // For now, remote wins
+              set((state) => ({
+                settings: {
+                  ...state.settings,
+                  ...settingsData.data.settings
+                }
+              }));
+            } else {
+              // If no remote settings, push local ones
+              const { settings } = get();
+              await fetch(`${API_URL}/settings`, {
+                method: 'PUT',
+                headers: {
+                  'Content-Type': 'application/json',
+                  Authorization: `Bearer ${token}`
+                },
+                body: JSON.stringify(settings)
+              });
+            }
+          }
+        } catch (error) {
+          console.error('Sync failed:', error);
+        } finally {
+          set({ isSyncing: false });
+        }
+      },
     }),
     {
       name: 'workout-v3', // New version for significantly updated schemas
@@ -755,6 +988,9 @@ export const useWorkoutStore = create<WorkoutStore>()(
         unlockedAchievements: state.unlockedAchievements,
         joinedChallengeIds: state.joinedChallengeIds,
       }),
+      onRehydrateStorage: () => (state) => {
+        if (state) state._hasHydrated = true;
+      },
     }
   )
 );

@@ -1,7 +1,7 @@
 import React from 'react';
 import { useWorkoutStore } from '../stores/workoutStore';
 import { motion } from 'framer-motion';
-import { Sparkles, Trophy, Zap } from 'lucide-react';
+import { Sparkles, Trophy } from 'lucide-react';
 
 const LevelProgress: React.FC = () => {
   const { userLevel } = useWorkoutStore();

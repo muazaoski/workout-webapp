@@ -118,7 +118,12 @@ router.post('/login', loginValidation, asyncHandler(async (req: AuthRequest, res
     const token = generateToken(user.id, user.email);
 
     // Remove password from response
-    const { passwordHash, ...userWithoutPassword } = user;
+    const userWithoutPassword = {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        createdAt: user.createdAt,
+    };
 
     res.json({
         success: true,

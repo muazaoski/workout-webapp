@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { useWorkoutStore } from '../stores/workoutStore';
-import { Search, Plus, Trash2, Dumbbell, ChevronRight, Filter, LayoutGrid, List as ListIcon, Zap } from 'lucide-react';
+import { Search, Plus, Trash2 } from 'lucide-react';
 import Button from './ui/Button';
 import Input from './ui/Input';
 import Card from './ui/Card';
-import type { Exercise, ExerciseCategory } from '../types/workout';
+import type { ExerciseCategory, MuscleGroup } from '../types/workout';
 
 const ExerciseLibrary: React.FC = () => {
   const { exercises, addExercise, deleteExercise, addExerciseToWorkout, currentWorkout } = useWorkoutStore();
@@ -15,7 +15,7 @@ const ExerciseLibrary: React.FC = () => {
   // Form State
   const [name, setName] = useState('');
   const [muscleGroups, setMuscleGroups] = useState('');
-  const [category, setCategory] = useState<ExerciseCategory>('strength');
+  const [category] = useState<ExerciseCategory>('strength');
 
   const filtered = exercises.filter(ex => {
     const matchesSearch = ex.name.toLowerCase().includes(searchTerm.toLowerCase());
@@ -30,7 +30,7 @@ const ExerciseLibrary: React.FC = () => {
         id: Date.now().toString(),
         name,
         category,
-        muscleGroups: muscleGroups.split(',').map(m => m.trim()) as any,
+        muscleGroups: muscleGroups.split(',').map(m => m.trim()) as MuscleGroup[],
         icon: '🏋️',
         instructions: []
       });
@@ -56,10 +56,10 @@ const ExerciseLibrary: React.FC = () => {
           {['all', 'strength', 'cardio', 'core', 'flexibility'].map(cat => (
             <button
               key={cat}
-              onClick={() => setSelectedCategory(cat as any)}
+              onClick={() => setSelectedCategory(cat as ExerciseCategory | 'all')}
               className={`px-6 py-2 rounded-xl text-xs font-bold transition-all border ${selectedCategory === cat
-                  ? 'bg-primary border-primary text-black'
-                  : 'bg-white/5 border-transparent text-muted-foreground hover:bg-white/10 hover:text-white'
+                ? 'bg-primary border-primary text-black'
+                : 'bg-white/5 border-transparent text-muted-foreground hover:bg-white/10 hover:text-white'
                 }`}
             >
               {cat.charAt(0).toUpperCase() + cat.slice(1)}

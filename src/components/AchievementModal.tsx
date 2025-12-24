@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Trophy, Zap, Star, X } from 'lucide-react';
+import { Zap } from 'lucide-react';
 import Button from './ui/Button';
 import type { Achievement } from '../types/workout';
 

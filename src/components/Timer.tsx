@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { useWorkoutStore } from '../stores/workoutStore';
-import { Play, Pause, RotateCcw, Zap } from 'lucide-react';
+import { Play, Pause, RotateCcw } from 'lucide-react';
 import Button from './ui/Button';
 
 const Timer: React.FC = () => {
@@ -76,8 +76,8 @@ const Timer: React.FC = () => {
             key={d}
             onClick={() => startTimer(d, 'rest')}
             className={`py-3 rounded-xl text-xs font-bold transition-all border ${timer.duration === d
-                ? 'bg-primary border-primary text-black'
-                : 'bg-white/5 border-transparent text-muted-foreground hover:bg-white/10'
+              ? 'bg-primary border-primary text-black'
+              : 'bg-white/5 border-transparent text-muted-foreground hover:bg-white/10'
               }`}
           >
             {d}s
