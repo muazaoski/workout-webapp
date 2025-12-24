@@ -190,8 +190,8 @@ const ChallengeCreator: React.FC = () => {
                 type="button"
                 onClick={() => setIsPublic(true)}
                 className={`flex-1 py-3 px-4 rounded-xl text-sm font-bold border transition-all flex items-center justify-center gap-2 ${isPublic
-                    ? 'bg-primary border-primary text-black'
-                    : 'bg-white/5 border-transparent text-muted-foreground'
+                  ? 'bg-primary border-primary text-black'
+                  : 'bg-white/5 border-transparent text-muted-foreground'
                   }`}
               >
                 <Globe size={16} /> Public
@@ -200,8 +200,8 @@ const ChallengeCreator: React.FC = () => {
                 type="button"
                 onClick={() => setIsPublic(false)}
                 className={`flex-1 py-3 px-4 rounded-xl text-sm font-bold border transition-all flex items-center justify-center gap-2 ${!isPublic
-                    ? 'bg-primary border-primary text-black'
-                    : 'bg-white/5 border-transparent text-muted-foreground'
+                  ? 'bg-primary border-primary text-black'
+                  : 'bg-white/5 border-transparent text-muted-foreground'
                   }`}
               >
                 <Lock size={16} /> Private
@@ -333,7 +333,7 @@ const ChallengeCard: React.FC<ChallengeCardProps> = ({
           {challenge.description && (
             <p className="text-sm text-muted-foreground truncate">{challenge.description}</p>
           )}
-          <div className="flex items-center gap-3 mt-2 text-[10px] text-muted-foreground uppercase font-bold tracking-wider">
+          <div className="flex items-center gap-3 mt-2 text-[10px] text-muted-foreground uppercase font-bold tracking-wider flex-wrap">
             {challenge.creatorName && (
               <span>by {challenge.creatorName}</span>
             )}
@@ -341,6 +341,9 @@ const ChallengeCard: React.FC<ChallengeCardProps> = ({
               <span className="flex items-center gap-1">
                 <Users size={10} /> {challenge.participantsCount}
               </span>
+            )}
+            {challenge.startDate && (
+              <span>Created {new Date(challenge.startDate).toLocaleDateString()}</span>
             )}
           </div>
         </div>
@@ -422,10 +425,19 @@ interface DetailModalProps {
   onLog: (id: string, value: number) => void;
 }
 
+interface Comment {
+  id: string;
+  content: string;
+  createdAt: Date;
+  user: { id: string; name: string };
+}
+
 const ChallengeDetailModal: React.FC<DetailModalProps> = ({ challenge, userId, token, onClose, onLog }) => {
   const [logs, setLogs] = useState<ChallengeLog[]>([]);
   const [leaderboard, setLeaderboard] = useState<Array<{ userId: string; userName: string; total: number }>>([]);
-  const [tab, setTab] = useState<'logs' | 'leaderboard'>('logs');
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [newComment, setNewComment] = useState('');
+  const [tab, setTab] = useState<'logs' | 'leaderboard' | 'comments'>('logs');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -447,12 +459,44 @@ const ChallengeDetailModal: React.FC<DetailModalProps> = ({ challenge, userId, t
           const data = await lbRes.json();
           setLeaderboard(data.data.leaderboard || []);
         }
+
+        // Fetch comments
+        const commentsRes = await fetch(`${API_URL}/challenges/${challenge.id}/comments`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (commentsRes.ok) {
+          const data = await commentsRes.json();
+          setComments(data.data.comments || []);
+        }
       } catch (err) {
         console.error('Failed to fetch challenge data:', err);
       }
     };
     fetchData();
   }, [challenge.id, token]);
+
+  const handleAddComment = async () => {
+    if (!newComment.trim()) return;
+
+    try {
+      const res = await fetch(`${API_URL}/challenges/${challenge.id}/comments`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ content: newComment })
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setComments(prev => [data.data.comment, ...prev]);
+        setNewComment('');
+      }
+    } catch (err) {
+      console.error('Failed to add comment:', err);
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
@@ -467,18 +511,23 @@ const ChallengeDetailModal: React.FC<DetailModalProps> = ({ challenge, userId, t
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.9, opacity: 0 }}
-        className="relative w-full max-w-lg bg-card border border-card-border rounded-3xl p-6 max-h-[80vh] overflow-y-auto"
+        className="relative w-full max-w-lg bg-card border border-card-border rounded-3xl p-6 max-h-[85vh] overflow-y-auto"
       >
-        <div className="flex items-start justify-between mb-6">
+        <div className="flex items-start justify-between mb-4">
           <div>
             <h2 className="text-2xl font-bold">{challenge.title}</h2>
             <p className="text-sm text-muted-foreground">{challenge.description}</p>
+            {challenge.startDate && (
+              <p className="text-[10px] text-muted-foreground mt-1">
+                Created {new Date(challenge.startDate).toLocaleDateString()}
+              </p>
+            )}
           </div>
           <Button variant="ghost" size="icon" onClick={onClose} className="rounded-full">✕</Button>
         </div>
 
         {/* Quick Log */}
-        <div className="flex gap-2 mb-6">
+        <div className="flex gap-2 mb-4">
           <button
             onClick={() => { onLog(challenge.id, 1); setLogs(prev => [{ id: Date.now().toString(), value: 1, createdAt: new Date() }, ...prev]); }}
             className="flex-1 py-3 bg-primary text-black font-bold rounded-xl flex items-center justify-center gap-2"
@@ -497,20 +546,26 @@ const ChallengeDetailModal: React.FC<DetailModalProps> = ({ challenge, userId, t
         <div className="flex gap-2 mb-4">
           <button
             onClick={() => setTab('logs')}
-            className={`flex-1 py-2 rounded-xl text-sm font-bold transition-all ${tab === 'logs' ? 'bg-primary text-black' : 'bg-white/5 text-muted-foreground'}`}
+            className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${tab === 'logs' ? 'bg-primary text-black' : 'bg-white/5 text-muted-foreground'}`}
           >
-            <Calendar size={14} className="inline mr-1" /> My Logs
+            <Calendar size={12} className="inline mr-1" /> Logs
           </button>
           <button
             onClick={() => setTab('leaderboard')}
-            className={`flex-1 py-2 rounded-xl text-sm font-bold transition-all ${tab === 'leaderboard' ? 'bg-primary text-black' : 'bg-white/5 text-muted-foreground'}`}
+            className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${tab === 'leaderboard' ? 'bg-primary text-black' : 'bg-white/5 text-muted-foreground'}`}
           >
-            <TrendingUp size={14} className="inline mr-1" /> Leaderboard
+            <TrendingUp size={12} className="inline mr-1" /> Ranks
+          </button>
+          <button
+            onClick={() => setTab('comments')}
+            className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${tab === 'comments' ? 'bg-primary text-black' : 'bg-white/5 text-muted-foreground'}`}
+          >
+            💬 Chat
           </button>
         </div>
 
         {/* Content */}
-        <div className="space-y-2 max-h-64 overflow-y-auto">
+        <div className="space-y-2 max-h-56 overflow-y-auto">
           {tab === 'logs' ? (
             logs.length > 0 ? (
               logs.map(log => (
@@ -526,7 +581,7 @@ const ChallengeDetailModal: React.FC<DetailModalProps> = ({ challenge, userId, t
             ) : (
               <p className="text-center text-muted-foreground py-8">No logs yet. Start logging!</p>
             )
-          ) : (
+          ) : tab === 'leaderboard' ? (
             leaderboard.length > 0 ? (
               leaderboard.map((entry, idx) => (
                 <div key={entry.userId} className={`flex items-center justify-between p-3 rounded-xl ${entry.userId === userId ? 'bg-primary/10 border border-primary/20' : 'bg-white/5'}`}>
@@ -543,6 +598,42 @@ const ChallengeDetailModal: React.FC<DetailModalProps> = ({ challenge, userId, t
             ) : (
               <p className="text-center text-muted-foreground py-8">No participants yet.</p>
             )
+          ) : (
+            <>
+              {/* Comment Input */}
+              <div className="flex gap-2 mb-3">
+                <input
+                  value={newComment}
+                  onChange={(e) => setNewComment(e.target.value)}
+                  placeholder="Write a comment..."
+                  className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-primary/50"
+                  onKeyDown={(e) => e.key === 'Enter' && handleAddComment()}
+                />
+                <button
+                  onClick={handleAddComment}
+                  className="px-4 py-2 bg-primary text-black font-bold rounded-xl text-sm"
+                >
+                  Send
+                </button>
+              </div>
+
+              {/* Comments List */}
+              {comments.length > 0 ? (
+                comments.map(comment => (
+                  <div key={comment.id} className="p-3 bg-white/5 rounded-xl space-y-1">
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-sm">{comment.user.name}</span>
+                      <span className="text-[10px] text-muted-foreground">
+                        {new Date(comment.createdAt).toLocaleDateString()}
+                      </span>
+                    </div>
+                    <p className="text-sm text-muted-foreground">{comment.content}</p>
+                  </div>
+                ))
+              ) : (
+                <p className="text-center text-muted-foreground py-8">No comments yet. Be the first!</p>
+              )}
+            </>
           )}
         </div>
       </motion.div>

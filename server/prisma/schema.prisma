@@ -23,6 +23,7 @@ model User {
   createdChallenges     Challenge[]
   challengeParticipants ChallengeParticipant[]
   challengeLogs         ChallengeLog[]
+  challengeComments     ChallengeComment[]
   settings              UserSettings?
 }
 
@@ -122,6 +123,7 @@ model Challenge {
   createdAt    DateTime               @default(now())
   participants ChallengeParticipant[]
   logs         ChallengeLog[]
+  comments     ChallengeComment[]
 
   @@index([creatorId])
 }
@@ -147,6 +149,19 @@ model ChallengeLog {
   user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   value       Int       @default(1)
   note        String?
+  createdAt   DateTime  @default(now())
+
+  @@index([challengeId])
+  @@index([userId])
+}
+
+model ChallengeComment {
+  id          String    @id @default(uuid())
+  challengeId String
+  challenge   Challenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  content     String
   createdAt   DateTime  @default(now())
 
   @@index([challengeId])

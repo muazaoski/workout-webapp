@@ -629,8 +629,88 @@ const ActionCard = ({ icon, label, description, onClick }: { icon: React.ReactNo
 );
 
 const SettingsView = () => {
-  const { user } = useAuthStore();
+  const { user, token, logout } = useAuthStore();
   const { settings, updateSettings } = useWorkoutStore();
+  const [profilePic, setProfilePic] = React.useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = React.useState(false);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+  const API_URL = import.meta.env.VITE_API_URL || 'https://workout.muazaoski.online/api';
+
+  // Compress image before upload
+  const compressImage = (file: File): Promise<string> => {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const MAX_SIZE = 150;
+          let width = img.width;
+          let height = img.height;
+
+          if (width > height) {
+            if (width > MAX_SIZE) {
+              height *= MAX_SIZE / width;
+              width = MAX_SIZE;
+            }
+          } else {
+            if (height > MAX_SIZE) {
+              width *= MAX_SIZE / height;
+              height = MAX_SIZE;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx?.drawImage(img, 0, 0, width, height);
+          resolve(canvas.toDataURL('image/jpeg', 0.7));
+        };
+        img.src = e.target?.result as string;
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleProfilePicChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const compressed = await compressImage(file);
+      setProfilePic(compressed);
+      localStorage.setItem('profilePic', compressed);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!confirm('Are you absolutely sure? This will permanently delete your account and all data. This action cannot be undone.')) return;
+
+    setIsDeleting(true);
+    try {
+      const res = await fetch(`${API_URL}/auth/delete`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (res.ok) {
+        localStorage.clear();
+        logout();
+        alert('Account deleted successfully.');
+      } else {
+        alert('Failed to delete account. Please try again.');
+      }
+    } catch {
+      alert('Failed to delete account. Please try again.');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  // Load saved profile pic
+  React.useEffect(() => {
+    const saved = localStorage.getItem('profilePic');
+    if (saved) setProfilePic(saved);
+  }, []);
 
   return (
     <div className="space-y-8 animate-in fade-in">
@@ -643,6 +723,30 @@ const SettingsView = () => {
         <div className="lg:col-span-2 space-y-6">
           <Card title="Profile Information" description="Personal details.">
             <div className="space-y-6 mt-4">
+              {/* Profile Picture */}
+              <div className="flex items-center gap-6">
+                <div
+                  onClick={() => fileInputRef.current?.click()}
+                  className="h-20 w-20 rounded-2xl bg-white/5 border-2 border-dashed border-white/10 flex items-center justify-center cursor-pointer hover:border-primary/50 transition-all overflow-hidden"
+                >
+                  {profilePic ? (
+                    <img src={profilePic} alt="Profile" className="w-full h-full object-cover" />
+                  ) : (
+                    <User size={32} className="text-muted-foreground" />
+                  )}
+                </div>
+                <div>
+                  <p className="font-semibold">Profile Photo</p>
+                  <p className="text-xs text-muted-foreground">Click to upload (auto-compressed)</p>
+                </div>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleProfilePicChange}
+                />
+              </div>
               <Input label="Display Name" defaultValue={user?.name || ''} icon={<User size={18} />} />
               <Input label="Email Address" type="email" defaultValue={user?.email || ''} icon={<Mail size={18} />} disabled />
               <Button className="w-fit">Save Changes</Button>
@@ -704,17 +808,18 @@ const SettingsView = () => {
         </div>
 
         <div className="space-y-6">
-          <Card title="Subscription" description="Unlimited training.">
-            <div className="p-4 rounded-2xl bg-primary/10 border border-primary/20 text-center">
-              <Zap className="text-primary mx-auto mb-3" size={32} />
-              <p className="font-bold text-primary">Pro Member</p>
-              <p className="text-[10px] text-muted-foreground mt-2 font-bold uppercase tracking-wider leading-none">Standard Access</p>
-            </div>
-          </Card>
-
           <Card title="Danger Zone">
-            <Button variant="danger" fullWidth className="bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white border-none h-auto py-4 rounded-2xl">
-              Delete Account
+            <p className="text-sm text-muted-foreground mb-4">
+              Once you delete your account, there is no going back. All your workouts, stats, and progress will be permanently removed.
+            </p>
+            <Button
+              variant="danger"
+              fullWidth
+              className="bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white border-none h-auto py-4 rounded-2xl"
+              onClick={handleDeleteAccount}
+              disabled={isDeleting}
+            >
+              {isDeleting ? 'Deleting...' : 'Delete Account'}
             </Button>
           </Card>
         </div>

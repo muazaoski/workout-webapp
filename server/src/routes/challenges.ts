@@ -403,4 +403,84 @@ router.get('/:id/leaderboard', asyncHandler(async (req: AuthRequest, res: Respon
     });
 }));
 
+// Type for comment
+interface CommentWithUser {
+    id: string;
+    content: string;
+    createdAt: Date;
+    userId: string;
+    user: { id: string; name: string };
+}
+
+// GET /api/challenges/:id/comments - Get all comments for a challenge
+router.get('/:id/comments', asyncHandler(async (req: AuthRequest, res: Response) => {
+    const comments = await prisma.challengeComment.findMany({
+        where: { challengeId: req.params.id },
+        include: {
+            user: { select: { id: true, name: true } }
+        },
+        orderBy: { createdAt: 'desc' }
+    }) as CommentWithUser[];
+
+    res.json({
+        success: true,
+        data: { comments }
+    });
+}));
+
+// POST /api/challenges/:id/comments - Add a comment
+router.post('/:id/comments', [
+    body('content').trim().isLength({ min: 1, max: 500 }).withMessage('Comment must be 1-500 characters')
+], asyncHandler(async (req: AuthRequest, res: Response) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json({
+            success: false,
+            errors: errors.array()
+        });
+    }
+
+    const comment = await prisma.challengeComment.create({
+        data: {
+            challengeId: req.params.id,
+            userId: req.user!.id,
+            content: req.body.content
+        },
+        include: {
+            user: { select: { id: true, name: true } }
+        }
+    });
+
+    res.status(201).json({
+        success: true,
+        data: { comment }
+    });
+}));
+
+// DELETE /api/challenges/:id/comments/:commentId - Delete own comment
+router.delete('/:id/comments/:commentId', asyncHandler(async (req: AuthRequest, res: Response) => {
+    const comment = await prisma.challengeComment.findFirst({
+        where: {
+            id: req.params.commentId,
+            userId: req.user!.id // Only owner can delete
+        }
+    });
+
+    if (!comment) {
+        return res.status(404).json({
+            success: false,
+            error: 'Comment not found or you are not the author'
+        });
+    }
+
+    await prisma.challengeComment.delete({
+        where: { id: req.params.commentId }
+    });
+
+    res.json({
+        success: true,
+        message: 'Comment deleted'
+    });
+}));
+
 export default router;

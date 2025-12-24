@@ -163,4 +163,19 @@ router.post('/logout', authenticate, (req: AuthRequest, res: Response) => {
     });
 });
 
+// DELETE /api/auth/delete - Delete user account and all data
+router.delete('/delete', authenticate, asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user!.id;
+
+    // Delete user - all related data will cascade delete
+    await prisma.user.delete({
+        where: { id: userId }
+    });
+
+    res.json({
+        success: true,
+        message: 'Account deleted successfully'
+    });
+}));
+
 export default router;
