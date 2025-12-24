@@ -9,6 +9,40 @@ const router = Router();
 // All challenge routes require authentication
 router.use(authenticate);
 
+// Type definitions for Prisma results
+interface ChallengeLog {
+    id: string;
+    challengeId: string;
+    userId: string;
+    value: number;
+    note: string | null;
+    createdAt: Date;
+}
+
+interface Participant {
+    userId: string;
+    user: { name: string; id?: string };
+    joinedAt: Date;
+}
+
+interface ChallengeWithRelations {
+    id: string;
+    creatorId: string;
+    name: string;
+    description: string | null;
+    startDate: Date;
+    endDate: Date | null;
+    isActive: boolean;
+    isPublic: boolean;
+    icon: string | null;
+    color: string | null;
+    targetValue: number;
+    createdAt: Date;
+    creator: { id: string; name: string };
+    participants: Participant[];
+    _count: { participants: number; logs: number };
+}
+
 // GET /api/challenges - Get all public challenges + user's own challenges
 router.get('/', asyncHandler(async (req: AuthRequest, res: Response) => {
     const userId = req.user!.id;
@@ -37,21 +71,21 @@ router.get('/', asyncHandler(async (req: AuthRequest, res: Response) => {
             }
         },
         orderBy: { createdAt: 'desc' }
-    });
+    }) as unknown as ChallengeWithRelations[];
 
     // Get user's logs for each challenge
     const challengesWithUserLogs = await Promise.all(
-        challenges.map(async (c) => {
+        challenges.map(async (c: ChallengeWithRelations) => {
             const userLogs = await prisma.challengeLog.findMany({
                 where: { challengeId: c.id, userId },
                 orderBy: { createdAt: 'desc' }
-            });
-            const userTotal = userLogs.reduce((sum, log) => sum + log.value, 0);
+            }) as ChallengeLog[];
+            const userTotal = userLogs.reduce((sum: number, log: ChallengeLog) => sum + log.value, 0);
 
             return {
                 ...c,
                 isCreator: c.creatorId === userId,
-                isParticipant: c.participants.some(p => p.userId === userId),
+                isParticipant: c.participants.some((p: Participant) => p.userId === userId),
                 userLogs,
                 userTotal
             };
@@ -309,8 +343,8 @@ router.post('/:id/log', [
     // Get updated total for user
     const userLogs = await prisma.challengeLog.findMany({
         where: { challengeId: req.params.id, userId: req.user!.id }
-    });
-    const userTotal = userLogs.reduce((sum, l) => sum + l.value, 0);
+    }) as ChallengeLog[];
+    const userTotal = userLogs.reduce((sum: number, l: ChallengeLog) => sum + l.value, 0);
 
     res.status(201).json({
         success: true,
@@ -326,9 +360,9 @@ router.get('/:id/logs', asyncHandler(async (req: AuthRequest, res: Response) => 
             userId: req.user!.id
         },
         orderBy: { createdAt: 'desc' }
-    });
+    }) as ChallengeLog[];
 
-    const total = logs.reduce((sum, log) => sum + log.value, 0);
+    const total = logs.reduce((sum: number, log: ChallengeLog) => sum + log.value, 0);
 
     res.json({
         success: true,
@@ -343,14 +377,14 @@ router.get('/:id/leaderboard', asyncHandler(async (req: AuthRequest, res: Respon
         include: {
             user: { select: { id: true, name: true } }
         }
-    });
+    }) as Array<{ userId: string; user: { id: string; name: string }; joinedAt: Date }>;
 
     const leaderboard = await Promise.all(
-        participants.map(async (p) => {
+        participants.map(async (p: { userId: string; user: { id: string; name: string }; joinedAt: Date }) => {
             const logs = await prisma.challengeLog.findMany({
                 where: { challengeId: req.params.id, userId: p.userId }
-            });
-            const total = logs.reduce((sum, log) => sum + log.value, 0);
+            }) as ChallengeLog[];
+            const total = logs.reduce((sum: number, log: ChallengeLog) => sum + log.value, 0);
             return {
                 userId: p.userId,
                 userName: p.user.name,
@@ -361,7 +395,7 @@ router.get('/:id/leaderboard', asyncHandler(async (req: AuthRequest, res: Respon
     );
 
     // Sort by total (descending)
-    leaderboard.sort((a, b) => b.total - a.total);
+    leaderboard.sort((a: { total: number }, b: { total: number }) => b.total - a.total);
 
     res.json({
         success: true,
