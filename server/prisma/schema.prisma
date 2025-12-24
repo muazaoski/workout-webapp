@@ -11,17 +11,19 @@ datasource db {
 }
 
 model User {
-  id           String            @id @default(uuid())
-  email        String            @unique
-  passwordHash String
-  name         String
-  createdAt    DateTime          @default(now())
-  updatedAt    DateTime          @updatedAt
-  workouts     Workout[]
-  stats        UserStats?
-  achievements UserAchievement[]
-  challenges   Challenge[]
-  settings     UserSettings?
+  id                    String                 @id @default(uuid())
+  email                 String                 @unique
+  passwordHash          String
+  name                  String
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+  workouts              Workout[]
+  stats                 UserStats?
+  achievements          UserAchievement[]
+  createdChallenges     Challenge[]
+  challengeParticipants ChallengeParticipant[]
+  challengeLogs         ChallengeLog[]
+  settings              UserSettings?
 }
 
 model UserSettings {
@@ -105,19 +107,48 @@ model UserAchievement {
 }
 
 model Challenge {
+  id           String                 @id @default(uuid())
+  creatorId    String
+  creator      User                   @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  name         String
+  description  String?
+  startDate    DateTime
+  endDate      DateTime?
+  isActive     Boolean                @default(true)
+  isPublic     Boolean                @default(false)
+  icon         String?
+  color        String?
+  targetValue  Int                    @default(30)
+  createdAt    DateTime               @default(now())
+  participants ChallengeParticipant[]
+  logs         ChallengeLog[]
+
+  @@index([creatorId])
+}
+
+model ChallengeParticipant {
   id          String    @id @default(uuid())
+  challengeId String
+  challenge   Challenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
   userId      String
   user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  name        String
-  description String?
-  startDate   DateTime
-  endDate     DateTime?
-  isActive    Boolean   @default(true)
-  isCompleted Boolean   @default(false)
-  icon        String?
-  color       String?
-  checkIns    DateTime[]
+  joinedAt    DateTime  @default(now())
+
+  @@unique([challengeId, userId])
+  @@index([challengeId])
+  @@index([userId])
+}
+
+model ChallengeLog {
+  id          String    @id @default(uuid())
+  challengeId String
+  challenge   Challenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  value       Int       @default(1)
+  note        String?
   createdAt   DateTime  @default(now())
 
+  @@index([challengeId])
   @@index([userId])
 }

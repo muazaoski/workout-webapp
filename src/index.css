@@ -161,3 +161,35 @@
     transform: translateY(0);
   }
 }
+
+/* Safe Area for iOS */
+.safe-area-pb {
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+/* Mobile Bottom Nav - Fixed at bottom */
+.mobile-bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+/* Prevent body scroll bounce on iOS */
+html,
+body {
+  overscroll-behavior: none;
+  height: 100%;
+}
+
+/* No scrollbar utility */
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}

@@ -8,6 +8,7 @@ import workoutRoutes from './routes/workouts.js';
 import exerciseRoutes from './routes/exercises.js';
 import userRoutes from './routes/user.js';
 import settingsRoutes from './routes/settings.js';
+import challengeRoutes from './routes/challenges.js';
 import { errorHandler } from './middleware/errorHandler.js';
 
 dotenv.config();
@@ -36,6 +37,7 @@ app.use('/api/workouts', workoutRoutes);
 app.use('/api/exercises', exerciseRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/settings', settingsRoutes);
+app.use('/api/challenges', challengeRoutes);
 
 // Error handler
 app.use(errorHandler);

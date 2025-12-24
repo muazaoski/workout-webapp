@@ -117,8 +117,8 @@ const App: React.FC = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* MOBILE BOTTOM NAVIGATION */}
-      <nav className="fixed bottom-0 left-0 right-0 z-40 sm:hidden">
-        <div className="bg-background/95 backdrop-blur-xl border-t border-white/10 px-2 py-2 safe-area-pb">
+      <nav className="mobile-bottom-nav sm:hidden">
+        <div className="bg-background border-t border-white/10 px-2 py-2">
           <div className="flex items-center justify-around max-w-md mx-auto">
             <MobileNavItem
               icon={<LayoutDashboard size={20} />}
