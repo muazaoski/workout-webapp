@@ -214,30 +214,18 @@ const defaultAchievements: Achievement[] = [
 
 const mockChallenges: Challenge[] = [
   {
-    id: 'comm-1',
-    title: 'Winter Warrior',
-    description: 'Log 20 workouts this season.',
-    type: 'workouts',
-    targetValue: 20,
+    id: 'sample-1',
+    title: 'Getting Started',
+    description: 'Complete 10 activities to build your habit.',
+    type: 'custom',
+    targetValue: 10,
     currentValue: 0,
     completed: false,
-    xpReward: 500,
-    creator: 'System',
-    participantsCount: 1542,
-    isCommunity: true
-  },
-  {
-    id: 'comm-2',
-    title: 'Volume King',
-    description: 'Move 50,000kg in a month.',
-    type: 'volume',
-    targetValue: 50000,
-    currentValue: 0,
-    completed: false,
-    xpReward: 1000,
-    creator: 'Alex Fitness',
-    participantsCount: 843,
-    isCommunity: true
+    xpReward: 100,
+    creatorName: 'System',
+    participantsCount: 0,
+    isPublic: false,
+    isCommunity: false
   }
 ];
 
@@ -1161,9 +1149,9 @@ export const useWorkoutStore = create<WorkoutStore>()(
             console.error('Failed to sync achievements:', e);
           }
 
-          // 5. Sync Challenges
+          // 5. Sync Challenges (using new social challenges API)
           try {
-            const challengesResponse = await fetch(`${API_URL}/user/challenges`, {
+            const challengesResponse = await fetch(`${API_URL}/challenges`, {
               headers: { Authorization: `Bearer ${token}` }
             });
 
@@ -1174,57 +1162,51 @@ export const useWorkoutStore = create<WorkoutStore>()(
                   id: string;
                   name: string;
                   description?: string;
-                  startDate: string;
-                  endDate?: string;
+                  targetValue: number;
+                  isPublic: boolean;
                   isActive: boolean;
-                  isCompleted: boolean;
                   icon?: string;
                   color?: string;
-                  checkIns: string[];
+                  startDate: string;
+                  endDate?: string;
+                  creatorId: string;
+                  isCreator: boolean;
+                  isParticipant: boolean;
+                  creator?: { id: string; name: string };
+                  _count?: { participants: number };
+                  userTotal?: number;
+                  userLogs?: Array<{ id: string; value: number; createdAt: string }>;
                 }
 
                 const remoteChallenges: Challenge[] = challengesData.data.challenges.map((rc: RemoteChallenge) => ({
                   id: rc.id,
                   title: rc.name,
                   description: rc.description || '',
-                  type: 'workouts' as const,
-                  targetValue: 10,
-                  currentValue: rc.checkIns?.length || 0,
-                  completed: rc.isCompleted,
+                  type: 'custom' as const,
+                  targetValue: rc.targetValue || 30,
+                  currentValue: rc.userTotal || 0,
+                  completed: (rc.userTotal || 0) >= (rc.targetValue || 30),
                   xpReward: 100,
+                  creatorId: rc.creatorId || rc.creator?.id,
+                  creatorName: rc.creator?.name,
+                  isPublic: rc.isPublic,
+                  isCreator: rc.isCreator,
+                  isParticipant: rc.isParticipant,
+                  participantsCount: rc._count?.participants || 0,
+                  userTotal: rc.userTotal || 0,
+                  userLogs: rc.userLogs?.map(l => ({
+                    id: l.id,
+                    value: l.value,
+                    createdAt: new Date(l.createdAt)
+                  })),
+                  startDate: rc.startDate ? new Date(rc.startDate) : undefined,
+                  endDate: rc.endDate ? new Date(rc.endDate) : undefined,
+                  icon: rc.icon,
+                  color: rc.color,
                   synced: true
                 }));
 
-                const { challenges } = get();
-                const remoteIds = new Set(remoteChallenges.map(c => c.id));
-                const localChallenges = [...challenges];
-
-                // Download new remote challenges
-                for (const rc of remoteChallenges) {
-                  if (!localChallenges.find(lc => lc.id === rc.id)) {
-                    localChallenges.push(rc);
-                  }
-                }
-
-                // Upload local challenges not on server
-                for (const lc of localChallenges) {
-                  if (!remoteIds.has(lc.id) && !lc.isCommunity) {
-                    await fetch(`${API_URL}/user/challenges`, {
-                      method: 'POST',
-                      headers: {
-                        'Content-Type': 'application/json',
-                        Authorization: `Bearer ${token}`
-                      },
-                      body: JSON.stringify({
-                        name: lc.title,
-                        description: lc.description,
-                        startDate: new Date().toISOString()
-                      })
-                    }).catch(() => { });
-                  }
-                }
-
-                set({ challenges: localChallenges });
+                set({ challenges: remoteChallenges });
               }
             }
           } catch (e) {

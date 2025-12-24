@@ -1,178 +1,551 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useWorkoutStore } from '../stores/workoutStore';
-import { Target, Plus, CheckCircle2, Zap, Trash2, User, Activity } from 'lucide-react';
+import { useAuthStore } from '../stores/authStore';
+import { Target, Plus, CheckCircle2, Zap, Trash2, Users, Minus, Crown, LogOut as LeaveIcon, Globe, Lock, TrendingUp, Calendar } from 'lucide-react';
 import Button from './ui/Button';
 import Input from './ui/Input';
 import Card from './ui/Card';
-import { motion } from 'framer-motion';
-import type { Challenge } from '../types/workout';
+import { motion, AnimatePresence } from 'framer-motion';
+import type { Challenge, ChallengeLog } from '../types/workout';
+
+const API_URL = import.meta.env.VITE_API_URL || 'https://workout.muazaoski.online/api';
 
 const ChallengeCreator: React.FC = () => {
-  const { challenges, addChallenge, deleteChallenge, joinedChallengeIds, joinChallenge, leaveChallenge } = useWorkoutStore();
-  const [title, setTitle] = useState('');
-  const [type, setType] = useState<Challenge['type']>('workouts');
-  const [targetValue, setTargetValue] = useState('');
-  const [showCreator, setShowCreator] = useState(false);
+  const { user, token } = useAuthStore();
+  const { challenges, addChallenge, deleteChallenge, sync } = useWorkoutStore();
 
-  const handleCreate = (e: React.FormEvent) => {
+  const [showCreator, setShowCreator] = useState(false);
+  const [selectedChallenge, setSelectedChallenge] = useState<Challenge | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  // Form state
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [targetValue, setTargetValue] = useState('30');
+  const [isPublic, setIsPublic] = useState(true);
+
+  // Refresh challenges on mount
+  useEffect(() => {
+    sync();
+  }, [sync]);
+
+  const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (title && targetValue) {
-      addChallenge({
-        id: Date.now().toString(),
-        title,
-        description: `Goal: ${targetValue} ${type}`,
-        type,
-        targetValue: parseInt(targetValue),
-        currentValue: 0,
-        completed: false,
-        xpReward: 200,
+    if (!title || !targetValue) return;
+
+    setLoading(true);
+    try {
+      const res = await fetch(`${API_URL}/challenges`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          name: title,
+          description,
+          targetValue: parseInt(targetValue),
+          isPublic
+        })
       });
-      setTitle('');
-      setTargetValue('');
-      setShowCreator(false);
+
+      if (res.ok) {
+        const data = await res.json();
+        addChallenge({
+          id: data.data.challenge.id,
+          title: data.data.challenge.name,
+          description: data.data.challenge.description || '',
+          type: 'custom',
+          targetValue: data.data.challenge.targetValue,
+          currentValue: 0,
+          completed: false,
+          xpReward: 100,
+          creatorId: user?.id,
+          creatorName: user?.name,
+          isPublic: data.data.challenge.isPublic,
+          isCreator: true,
+          isParticipant: true,
+          participantsCount: 1,
+          userTotal: 0,
+          synced: true
+        });
+        setTitle('');
+        setDescription('');
+        setTargetValue('30');
+        setShowCreator(false);
+        sync();
+      }
+    } catch (err) {
+      console.error('Failed to create challenge:', err);
+    } finally {
+      setLoading(false);
     }
   };
 
+  const handleJoin = async (challengeId: string) => {
+    try {
+      await fetch(`${API_URL}/challenges/${challengeId}/join`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      sync();
+    } catch (err) {
+      console.error('Failed to join:', err);
+    }
+  };
+
+  const handleLeave = async (challengeId: string) => {
+    try {
+      await fetch(`${API_URL}/challenges/${challengeId}/leave`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      sync();
+    } catch (err) {
+      console.error('Failed to leave:', err);
+    }
+  };
+
+  const handleLog = async (challengeId: string, value: number) => {
+    try {
+      await fetch(`${API_URL}/challenges/${challengeId}/log`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ value })
+      });
+      sync();
+    } catch (err) {
+      console.error('Failed to log:', err);
+    }
+  };
+
+  const handleDelete = async (challengeId: string) => {
+    if (!confirm('Delete this challenge? This will remove it for all participants.')) return;
+
+    try {
+      await fetch(`${API_URL}/challenges/${challengeId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      deleteChallenge(challengeId);
+      sync();
+    } catch (err) {
+      console.error('Failed to delete:', err);
+    }
+  };
+
+  const myChallenges = challenges.filter(c => c.isCreator || c.isParticipant);
+  const publicChallenges = challenges.filter(c => c.isPublic && !c.isParticipant && !c.isCreator);
+
   return (
-    <div className="space-y-8 fade-in">
+    <div className="space-y-8 fade-in pb-8">
       <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 px-1">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">Active Challenges</h2>
-          <p className="text-muted-foreground mt-1">Push your limits with custom goals.</p>
+          <h2 className="text-3xl font-bold tracking-tight">Challenges</h2>
+          <p className="text-muted-foreground mt-1">Join community goals or create your own.</p>
         </div>
       </header>
 
+      {/* CREATE BUTTON */}
       {!showCreator ? (
         <button
           onClick={() => setShowCreator(true)}
-          className="w-full py-10 border-2 border-dashed border-white/5 rounded-[2rem] flex flex-col items-center justify-center gap-4 text-muted-foreground hover:text-primary hover:border-primary/40 hover:bg-primary/5 transition-all group"
+          className="w-full py-8 border-2 border-dashed border-white/5 rounded-[2rem] flex flex-col items-center justify-center gap-3 text-muted-foreground hover:text-primary hover:border-primary/40 hover:bg-primary/5 transition-all group"
         >
-          <div className="h-14 w-14 rounded-2xl bg-white/5 flex items-center justify-center transition-all group-hover:scale-110 group-hover:bg-primary group-hover:text-black shadow-inner">
-            <Plus size={28} />
+          <div className="h-12 w-12 rounded-xl bg-white/5 flex items-center justify-center transition-all group-hover:scale-110 group-hover:bg-primary group-hover:text-black">
+            <Plus size={24} />
           </div>
-          <span className="font-bold text-sm tracking-wide">Create New Challenge</span>
+          <span className="font-bold text-sm">Create Challenge</span>
         </button>
       ) : (
-        <Card title="New Challenge" description="Define your next performance goal." className="border-primary/20 bg-card p-8">
-          <form onSubmit={handleCreate} className="space-y-8">
-            <Input label="Challenge Title" value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g. Month of Gains" required />
+        <Card title="New Challenge" description="Create a goal for yourself or the community." className="border-primary/20">
+          <form onSubmit={handleCreate} className="space-y-6 mt-4">
+            <Input
+              label="Title"
+              value={title}
+              onChange={e => setTitle(e.target.value)}
+              placeholder="e.g. 30-Day Push-up Challenge"
+              required
+            />
+            <Input
+              label="Description (optional)"
+              value={description}
+              onChange={e => setDescription(e.target.value)}
+              placeholder="What's the goal about?"
+            />
+            <Input
+              label="Target (your goal number)"
+              type="number"
+              value={targetValue}
+              onChange={e => setTargetValue(e.target.value)}
+              placeholder="30"
+              required
+            />
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-muted-foreground uppercase tracking-widest ml-1">Metric Type</label>
-                <div className="grid grid-cols-2 gap-2">
-                  {(['workouts', 'volume'] as const).map(t => (
-                    <button
-                      key={t}
-                      type="button"
-                      onClick={() => setType(t)}
-                      className={`py-3 rounded-xl text-xs font-bold border transition-all ${type === t
-                        ? 'bg-primary border-primary text-black'
-                        : 'bg-white/5 border-transparent text-muted-foreground hover:bg-white/10'
-                        }`}
-                    >
-                      {t.charAt(0).toUpperCase() + t.slice(1)}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <Input label="Target Value" type="number" value={targetValue} onChange={e => setTargetValue(e.target.value)} placeholder="0" required />
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setIsPublic(true)}
+                className={`flex-1 py-3 px-4 rounded-xl text-sm font-bold border transition-all flex items-center justify-center gap-2 ${isPublic
+                    ? 'bg-primary border-primary text-black'
+                    : 'bg-white/5 border-transparent text-muted-foreground'
+                  }`}
+              >
+                <Globe size={16} /> Public
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsPublic(false)}
+                className={`flex-1 py-3 px-4 rounded-xl text-sm font-bold border transition-all flex items-center justify-center gap-2 ${!isPublic
+                    ? 'bg-primary border-primary text-black'
+                    : 'bg-white/5 border-transparent text-muted-foreground'
+                  }`}
+              >
+                <Lock size={16} /> Private
+              </button>
             </div>
 
             <div className="flex gap-3">
-              <Button type="submit" variant="primary" fullWidth>Launch Challenge</Button>
+              <Button type="submit" variant="primary" fullWidth disabled={loading}>
+                {loading ? 'Creating...' : 'Create Challenge'}
+              </Button>
               <Button variant="ghost" onClick={() => setShowCreator(false)}>Cancel</Button>
             </div>
           </form>
         </Card>
       )}
 
-      <div className="grid grid-cols-1 gap-6">
-        {challenges.map(challenge => (
-          <Card key={challenge.id} className="relative overflow-hidden group border-white/5">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-8">
-              <div className="flex items-center gap-6 flex-1">
-                <div className={`h-16 w-16 rounded-2xl flex items-center justify-center transition-all ${challenge.completed
-                  ? 'bg-primary text-black shadow-lg shadow-primary/20'
-                  : 'bg-white/5 text-muted-foreground'
-                  }`}>
-                  {challenge.completed ? <CheckCircle2 size={24} /> : <Target size={24} />}
-                </div>
-                <div className="space-y-3 flex-1">
-                  <div className="flex items-center gap-3">
-                    <h4 className={`font-bold text-xl ${challenge.completed ? 'text-primary' : 'text-white'}`}>
-                      {challenge.title}
-                    </h4>
-                    {challenge.isCommunity && (
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-primary/10 text-primary border border-primary/20">
-                        COMMUNITY
-                      </span>
-                    )}
-                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${challenge.completed ? 'bg-primary/20 text-primary' : 'bg-white/5 text-muted-foreground'
-                      }`}>
-                      {challenge.completed ? 'COMPLETED' : 'IN PROGRESS'}
-                    </span>
-                  </div>
+      {/* MY CHALLENGES */}
+      {myChallenges.length > 0 && (
+        <section className="space-y-4">
+          <h3 className="text-lg font-bold text-muted-foreground flex items-center gap-2">
+            <Target size={18} className="text-primary" /> My Challenges
+          </h3>
+          <div className="grid grid-cols-1 gap-4">
+            {myChallenges.map(challenge => (
+              <ChallengeCard
+                key={challenge.id}
+                challenge={challenge}
+                userId={user?.id}
+                onLog={handleLog}
+                onDelete={handleDelete}
+                onLeave={handleLeave}
+                onSelect={() => setSelectedChallenge(challenge)}
+              />
+            ))}
+          </div>
+        </section>
+      )}
 
-                  <div className="flex items-center gap-4 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
-                    {challenge.creator && (
-                      <span className="flex items-center gap-1">
-                        <User size={12} className="text-primary/60" /> {challenge.creator}
-                      </span>
-                    )}
-                    {challenge.participantsCount !== undefined && (
-                      <span className="flex items-center gap-1">
-                        <Activity size={12} className="text-primary/60" /> {challenge.participantsCount.toLocaleString()} Athletes
-                      </span>
-                    )}
-                  </div>
+      {/* DISCOVER PUBLIC CHALLENGES */}
+      {publicChallenges.length > 0 && (
+        <section className="space-y-4">
+          <h3 className="text-lg font-bold text-muted-foreground flex items-center gap-2">
+            <Globe size={18} className="text-primary" /> Discover
+          </h3>
+          <div className="grid grid-cols-1 gap-4">
+            {publicChallenges.map(challenge => (
+              <ChallengeCard
+                key={challenge.id}
+                challenge={challenge}
+                userId={user?.id}
+                onJoin={handleJoin}
+                onSelect={() => setSelectedChallenge(challenge)}
+              />
+            ))}
+          </div>
+        </section>
+      )}
 
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
-                      <span>Progress: {challenge.currentValue} / {challenge.targetValue}</span>
-                      <span className="text-primary">{Math.round((challenge.currentValue / challenge.targetValue) * 100)}%</span>
-                    </div>
-                    <div className="h-2 bg-white/5 rounded-full overflow-hidden">
-                      <motion.div
-                        initial={{ width: 0 }}
-                        animate={{ width: `${Math.min((challenge.currentValue / challenge.targetValue) * 100, 100)}%` }}
-                        className={`h-full rounded-full ${challenge.completed ? 'bg-primary' : 'bg-primary/40'
-                          }`}
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
+      {/* EMPTY STATE */}
+      {challenges.length === 0 && (
+        <div className="text-center py-16 text-muted-foreground">
+          <Target size={48} className="mx-auto mb-4 opacity-30" />
+          <p className="font-bold">No challenges yet</p>
+          <p className="text-sm">Create one to get started!</p>
+        </div>
+      )}
 
-              <div className="flex items-center gap-4">
-                <div className="text-right px-4 py-2 bg-white/5 rounded-xl border border-white/5">
-                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest opacity-40">Reward</p>
-                  <div className="flex items-center gap-1">
-                    <Zap size={14} className="text-primary" />
-                    <span className="font-bold text-lg">{challenge.xpReward} XP</span>
-                  </div>
-                </div>
-                {challenge.isCommunity && (
-                  <Button
-                    variant={joinedChallengeIds.includes(challenge.id) ? "ghost" : "primary"}
-                    size="sm"
-                    onClick={() => joinedChallengeIds.includes(challenge.id) ? leaveChallenge(challenge.id) : joinChallenge(challenge.id)}
-                    className="h-10 px-6 rounded-xl font-bold"
-                  >
-                    {joinedChallengeIds.includes(challenge.id) ? 'Leave' : 'Join'}
-                  </Button>
-                )}
-                <button
-                  onClick={() => deleteChallenge(challenge.id)}
-                  className="h-10 w-10 rounded-xl bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-all flex items-center justify-center"
-                >
-                  <Trash2 size={20} />
-                </button>
-              </div>
-            </div>
-          </Card>
-        ))}
+      {/* CHALLENGE DETAIL MODAL */}
+      <AnimatePresence>
+        {selectedChallenge && (
+          <ChallengeDetailModal
+            challenge={selectedChallenge}
+            userId={user?.id}
+            token={token}
+            onClose={() => setSelectedChallenge(null)}
+            onLog={handleLog}
+          />
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
+
+// CHALLENGE CARD COMPONENT
+interface ChallengeCardProps {
+  challenge: Challenge;
+  userId?: string;
+  onLog?: (id: string, value: number) => void;
+  onDelete?: (id: string) => void;
+  onJoin?: (id: string) => void;
+  onLeave?: (id: string) => void;
+  onSelect?: () => void;
+}
+
+const ChallengeCard: React.FC<ChallengeCardProps> = ({
+  challenge,
+  userId,
+  onLog,
+  onDelete,
+  onJoin,
+  onLeave,
+  onSelect
+}) => {
+  const isCreator = challenge.creatorId === userId || challenge.isCreator;
+  const isParticipant = challenge.isParticipant;
+  const progress = Math.min((challenge.userTotal || 0) / challenge.targetValue * 100, 100);
+
+  return (
+    <motion.div
+      layout
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="bg-card border border-card-border rounded-2xl p-5 space-y-4"
+    >
+      {/* Header */}
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex-1 min-w-0" onClick={onSelect}>
+          <div className="flex items-center gap-2 mb-1">
+            <h4 className="font-bold text-lg truncate">{challenge.title}</h4>
+            {isCreator && (
+              <Crown size={14} className="text-primary flex-shrink-0" />
+            )}
+            {challenge.isPublic ? (
+              <Globe size={12} className="text-muted-foreground" />
+            ) : (
+              <Lock size={12} className="text-muted-foreground" />
+            )}
+          </div>
+          {challenge.description && (
+            <p className="text-sm text-muted-foreground truncate">{challenge.description}</p>
+          )}
+          <div className="flex items-center gap-3 mt-2 text-[10px] text-muted-foreground uppercase font-bold tracking-wider">
+            {challenge.creatorName && (
+              <span>by {challenge.creatorName}</span>
+            )}
+            {(challenge.participantsCount ?? 0) > 0 && (
+              <span className="flex items-center gap-1">
+                <Users size={10} /> {challenge.participantsCount}
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* XP Badge */}
+        <div className="flex items-center gap-1 px-3 py-1 bg-primary/10 rounded-lg text-primary text-sm font-bold">
+          <Zap size={14} /> {challenge.xpReward}
+        </div>
       </div>
+
+      {/* Progress (only for participants) */}
+      {isParticipant && (
+        <div className="space-y-2">
+          <div className="flex justify-between text-xs font-bold">
+            <span className="text-muted-foreground">Your Progress</span>
+            <span className="text-primary">{challenge.userTotal || 0} / {challenge.targetValue}</span>
+          </div>
+          <div className="h-2 bg-white/5 rounded-full overflow-hidden">
+            <motion.div
+              initial={{ width: 0 }}
+              animate={{ width: `${progress}%` }}
+              className={`h-full rounded-full ${progress >= 100 ? 'bg-primary' : 'bg-primary/60'}`}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Actions */}
+      <div className="flex items-center gap-2 pt-2">
+        {isParticipant ? (
+          <>
+            {/* Log Buttons */}
+            <button
+              onClick={() => onLog?.(challenge.id, 1)}
+              className="flex-1 py-3 px-4 bg-primary text-black font-bold rounded-xl flex items-center justify-center gap-2 hover:bg-primary/90 active:scale-95 transition-all"
+            >
+              <Plus size={18} /> Log +1
+            </button>
+            <button
+              onClick={() => onLog?.(challenge.id, -1)}
+              className="py-3 px-4 bg-white/5 text-muted-foreground font-bold rounded-xl flex items-center justify-center gap-2 hover:bg-white/10 active:scale-95 transition-all"
+            >
+              <Minus size={18} />
+            </button>
+
+            {/* Leave (non-creator) or Delete (creator) */}
+            {isCreator ? (
+              <button
+                onClick={() => onDelete?.(challenge.id)}
+                className="p-3 bg-red-500/10 text-red-400 rounded-xl hover:bg-red-500/20 active:scale-95 transition-all"
+              >
+                <Trash2 size={18} />
+              </button>
+            ) : (
+              <button
+                onClick={() => onLeave?.(challenge.id)}
+                className="p-3 bg-white/5 text-muted-foreground rounded-xl hover:bg-white/10 active:scale-95 transition-all"
+              >
+                <LeaveIcon size={18} />
+              </button>
+            )}
+          </>
+        ) : (
+          <Button variant="primary" fullWidth onClick={() => onJoin?.(challenge.id)}>
+            <Users size={16} className="mr-2" /> Join Challenge
+          </Button>
+        )}
+      </div>
+    </motion.div>
+  );
+};
+
+// CHALLENGE DETAIL MODAL
+interface DetailModalProps {
+  challenge: Challenge;
+  userId?: string;
+  token: string | null;
+  onClose: () => void;
+  onLog: (id: string, value: number) => void;
+}
+
+const ChallengeDetailModal: React.FC<DetailModalProps> = ({ challenge, userId, token, onClose, onLog }) => {
+  const [logs, setLogs] = useState<ChallengeLog[]>([]);
+  const [leaderboard, setLeaderboard] = useState<Array<{ userId: string; userName: string; total: number }>>([]);
+  const [tab, setTab] = useState<'logs' | 'leaderboard'>('logs');
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        // Fetch user's logs
+        const logsRes = await fetch(`${API_URL}/challenges/${challenge.id}/logs`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (logsRes.ok) {
+          const data = await logsRes.json();
+          setLogs(data.data.logs || []);
+        }
+
+        // Fetch leaderboard
+        const lbRes = await fetch(`${API_URL}/challenges/${challenge.id}/leaderboard`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (lbRes.ok) {
+          const data = await lbRes.json();
+          setLeaderboard(data.data.leaderboard || []);
+        }
+      } catch (err) {
+        console.error('Failed to fetch challenge data:', err);
+      }
+    };
+    fetchData();
+  }, [challenge.id, token]);
+
+  return (
+    <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+        onClick={onClose}
+      />
+      <motion.div
+        initial={{ scale: 0.9, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.9, opacity: 0 }}
+        className="relative w-full max-w-lg bg-card border border-card-border rounded-3xl p-6 max-h-[80vh] overflow-y-auto"
+      >
+        <div className="flex items-start justify-between mb-6">
+          <div>
+            <h2 className="text-2xl font-bold">{challenge.title}</h2>
+            <p className="text-sm text-muted-foreground">{challenge.description}</p>
+          </div>
+          <Button variant="ghost" size="icon" onClick={onClose} className="rounded-full">✕</Button>
+        </div>
+
+        {/* Quick Log */}
+        <div className="flex gap-2 mb-6">
+          <button
+            onClick={() => { onLog(challenge.id, 1); setLogs(prev => [{ id: Date.now().toString(), value: 1, createdAt: new Date() }, ...prev]); }}
+            className="flex-1 py-3 bg-primary text-black font-bold rounded-xl flex items-center justify-center gap-2"
+          >
+            <Plus size={18} /> +1
+          </button>
+          <button
+            onClick={() => { onLog(challenge.id, -1); setLogs(prev => [{ id: Date.now().toString(), value: -1, createdAt: new Date() }, ...prev]); }}
+            className="py-3 px-6 bg-white/5 text-muted-foreground font-bold rounded-xl"
+          >
+            <Minus size={18} />
+          </button>
+        </div>
+
+        {/* Tabs */}
+        <div className="flex gap-2 mb-4">
+          <button
+            onClick={() => setTab('logs')}
+            className={`flex-1 py-2 rounded-xl text-sm font-bold transition-all ${tab === 'logs' ? 'bg-primary text-black' : 'bg-white/5 text-muted-foreground'}`}
+          >
+            <Calendar size={14} className="inline mr-1" /> My Logs
+          </button>
+          <button
+            onClick={() => setTab('leaderboard')}
+            className={`flex-1 py-2 rounded-xl text-sm font-bold transition-all ${tab === 'leaderboard' ? 'bg-primary text-black' : 'bg-white/5 text-muted-foreground'}`}
+          >
+            <TrendingUp size={14} className="inline mr-1" /> Leaderboard
+          </button>
+        </div>
+
+        {/* Content */}
+        <div className="space-y-2 max-h-64 overflow-y-auto">
+          {tab === 'logs' ? (
+            logs.length > 0 ? (
+              logs.map(log => (
+                <div key={log.id} className="flex items-center justify-between p-3 bg-white/5 rounded-xl">
+                  <span className="text-sm text-muted-foreground">
+                    {new Date(log.createdAt).toLocaleDateString()}
+                  </span>
+                  <span className={`font-bold ${log.value > 0 ? 'text-primary' : 'text-red-400'}`}>
+                    {log.value > 0 ? '+' : ''}{log.value}
+                  </span>
+                </div>
+              ))
+            ) : (
+              <p className="text-center text-muted-foreground py-8">No logs yet. Start logging!</p>
+            )
+          ) : (
+            leaderboard.length > 0 ? (
+              leaderboard.map((entry, idx) => (
+                <div key={entry.userId} className={`flex items-center justify-between p-3 rounded-xl ${entry.userId === userId ? 'bg-primary/10 border border-primary/20' : 'bg-white/5'}`}>
+                  <div className="flex items-center gap-3">
+                    <span className={`font-bold w-6 text-center ${idx < 3 ? 'text-primary' : 'text-muted-foreground'}`}>
+                      {idx + 1}
+                    </span>
+                    <span className="font-medium">{entry.userName}</span>
+                    {entry.userId === userId && <span className="text-[10px] text-primary">(You)</span>}
+                  </div>
+                  <span className="font-bold text-primary">{entry.total}</span>
+                </div>
+              ))
+            ) : (
+              <p className="text-center text-muted-foreground py-8">No participants yet.</p>
+            )
+          )}
+        </div>
+      </motion.div>
     </div>
   );
 };

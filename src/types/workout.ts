@@ -110,17 +110,44 @@ export interface Achievement {
   };
 }
 
+export interface ChallengeLog {
+  id: string;
+  value: number;
+  note?: string;
+  createdAt: Date;
+}
+
+export interface ChallengeParticipant {
+  userId: string;
+  userName: string;
+  joinedAt: Date;
+}
+
 export interface Challenge {
   id: string;
   title: string;
   description: string;
-  type: 'workouts' | 'volume' | 'reps';
+  type: 'workouts' | 'volume' | 'reps' | 'custom';
   targetValue: number;
   currentValue: number;
   completed: boolean;
   xpReward: number;
-  creator?: string;
+  // Social fields
+  creatorId?: string;
+  creatorName?: string;
+  isPublic?: boolean;
+  isCreator?: boolean;
+  isParticipant?: boolean;
   participantsCount?: number;
+  participants?: ChallengeParticipant[];
+  userLogs?: ChallengeLog[];
+  userTotal?: number;
+  startDate?: Date;
+  endDate?: Date;
+  icon?: string;
+  color?: string;
+  synced?: boolean;
+  // Legacy
   isCommunity?: boolean;
 }
 
