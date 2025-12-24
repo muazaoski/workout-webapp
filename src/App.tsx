@@ -184,12 +184,22 @@ const App: React.FC = () => {
         {/* User Info and Logout - Desktop */}
         <div className="flex flex-col gap-4 mt-auto">
           <div className="flex items-center gap-4 p-4 rounded-3xl bg-white/5 border border-white/5">
-            <div className="h-10 w-10 rounded-full bg-primary flex items-center justify-center">
-              <User size={20} className="text-black" />
+            <div className="h-10 w-10 rounded-full bg-primary flex items-center justify-center overflow-hidden flex-shrink-0">
+              {(() => {
+                const pic = localStorage.getItem('profilePic');
+                return pic ? (
+                  <img src={pic} alt="" className="w-full h-full object-cover" />
+                ) : (
+                  <User size={20} className="text-black" />
+                );
+              })()}
             </div>
-            <div className="flex flex-col overflow-hidden">
-              <span className="font-semibold text-sm truncate">{user?.name || 'Athlete'}</span>
-              <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Level {userLevel.level}</span>
+            <div className="flex flex-col overflow-hidden flex-1">
+              <div className="flex items-center gap-2">
+                <span className="font-semibold text-sm truncate">{user?.name || 'Athlete'}</span>
+                <span className="text-[10px] bg-primary/20 text-primary px-2 py-0.5 rounded-full font-bold">Lv{userLevel.level}</span>
+              </div>
+              <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">{stats.totalWorkouts} workouts</span>
             </div>
           </div>
           <Button variant="ghost" fullWidth onClick={logout} className="justify-start text-muted-foreground hover:text-red-400">
@@ -212,32 +222,49 @@ const App: React.FC = () => {
           ) : (
             <div className="space-y-10">
               {currentView === 'dashboard' && (
-                <div className="space-y-10 fade-in">
-                  <header className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-                    <div>
-                      <h2 className="text-4xl font-extrabold tracking-tight">Daily Progress</h2>
-                      <p className="text-muted-foreground text-lg mt-2 font-medium">Welcome back, {user?.name?.split(' ')[0] || 'Athlete'}.</p>
+                <div className="space-y-8 fade-in">
+                  {/* Welcome Header with Profile */}
+                  <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 p-6 bg-white/5 rounded-3xl border border-white/5">
+                    <div className="flex items-center gap-4">
+                      <div className="h-16 w-16 rounded-2xl bg-primary flex items-center justify-center overflow-hidden flex-shrink-0">
+                        {(() => {
+                          const pic = localStorage.getItem('profilePic');
+                          return pic ? (
+                            <img src={pic} alt="" className="w-full h-full object-cover" />
+                          ) : (
+                            <User size={32} className="text-black" />
+                          );
+                        })()}
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2 mb-1">
+                          <h2 className="text-2xl font-bold">Hey, {user?.name?.split(' ')[0] || 'Athlete'}!</h2>
+                          <span className="text-xs bg-primary text-black px-2 py-1 rounded-lg font-bold">Lv{userLevel.level}</span>
+                        </div>
+                        <p className="text-sm text-muted-foreground">Ready to crush your goals today?</p>
+                      </div>
                     </div>
                     <Button
                       size="lg"
                       onClick={() => startNewWorkout('Workout ' + new Date().toLocaleDateString())}
-                      className="rounded-3xl px-8"
+                      className="rounded-2xl px-6 h-12"
                     >
-                      <Plus size={20} className="mr-2" /> Start Session
+                      <Plus size={20} className="mr-2" /> Start Workout
                     </Button>
                   </header>
 
                   {/* STATS GRID */}
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <DashboardStat icon={<Zap className="text-primary" />} label="Workouts" value={stats.totalWorkouts} subtitle="sessions completed" />
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <DashboardStat icon={<Zap className="text-primary" />} label="Workouts" value={stats.totalWorkouts} subtitle="total" />
                     <DashboardStat
                       icon={<Flame className="text-primary" />}
                       label="Volume"
                       value={settings.weightUnit === 'kg' ? (stats.totalVolume > 1000 ? (stats.totalVolume / 1000).toFixed(1) : stats.totalVolume) : (stats.totalVolume / 1000).toFixed(1)}
                       unit={settings.weightUnit === 'kg' ? (stats.totalVolume > 1000 ? 'T' : 'kg') : 'T'}
-                      subtitle={settings.weightUnit === 'kg' ? (stats.totalVolume > 1000 ? 'tons moved' : 'kg moved') : 'tons moved'}
+                      subtitle="lifted"
                     />
-                    <DashboardStat icon={<Activity className="text-primary" />} label="Total Reps" value={stats.totalReps} subtitle="completed reps" />
+                    <DashboardStat icon={<Activity className="text-primary" />} label="Reps" value={stats.totalReps} subtitle="total" />
+                    <DashboardStat icon={<Target className="text-primary" />} label="XP" value={userLevel.totalXP || 0} subtitle="earned" />
                   </div>
 
                   {/* PERFORMANCE & WEIGHT SECTION */}

@@ -602,6 +602,16 @@ const ChallengeDetailModal: React.FC<DetailModalProps> = ({ challenge, userId, t
             <>
               {/* Comment Input */}
               <div className="flex gap-2 mb-3">
+                <div className="h-9 w-9 rounded-full bg-primary flex items-center justify-center flex-shrink-0 overflow-hidden">
+                  {(() => {
+                    const pic = localStorage.getItem('profilePic');
+                    return pic ? (
+                      <img src={pic} alt="" className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="text-black font-bold text-xs">You</span>
+                    );
+                  })()}
+                </div>
                 <input
                   value={newComment}
                   onChange={(e) => setNewComment(e.target.value)}
@@ -620,14 +630,24 @@ const ChallengeDetailModal: React.FC<DetailModalProps> = ({ challenge, userId, t
               {/* Comments List */}
               {comments.length > 0 ? (
                 comments.map(comment => (
-                  <div key={comment.id} className="p-3 bg-white/5 rounded-xl space-y-1">
-                    <div className="flex items-center justify-between">
-                      <span className="font-bold text-sm">{comment.user.name}</span>
-                      <span className="text-[10px] text-muted-foreground">
-                        {new Date(comment.createdAt).toLocaleDateString()}
+                  <div key={comment.id} className="flex gap-3 p-3 bg-white/5 rounded-xl">
+                    <div className="h-8 w-8 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0">
+                      <span className="text-xs font-bold text-muted-foreground">
+                        {comment.user.name.charAt(0).toUpperCase()}
                       </span>
                     </div>
-                    <p className="text-sm text-muted-foreground">{comment.content}</p>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-2 mb-1">
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-sm">{comment.user.name}</span>
+                          <span className="text-[9px] bg-primary/20 text-primary px-1.5 py-0.5 rounded font-bold">Lv?</span>
+                        </div>
+                        <span className="text-[10px] text-muted-foreground flex-shrink-0">
+                          {new Date(comment.createdAt).toLocaleDateString()}
+                        </span>
+                      </div>
+                      <p className="text-sm text-muted-foreground">{comment.content}</p>
+                    </div>
                   </div>
                 ))
               ) : (
